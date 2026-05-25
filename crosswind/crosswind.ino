@@ -2,6 +2,8 @@
 
 // CrossWind
 // Controls a bidirectional pump/motor with manual, random, flush, and centering modes.
+// This version adds non-blocking flush sequencing, safety checks, and optional serial debug.
+//#define DEBUG_SERIAL
 
 const uint8_t RPWM = 5;
 const uint8_t LPWM = 6;
@@ -23,11 +25,16 @@ const uint16_t PAUSE_MIN_MS = 1000;
 const uint16_t PAUSE_MAX_MS = 5000;
 const uint16_t RANDOM_ACTION_MIN_MS = 1200;
 const uint16_t RANDOM_ACTION_MAX_MS = 3000;
+const uint16_t FLUSH_WAIT_MIN_MS = 1000;
+const uint16_t FLUSH_WAIT_MAX_MS = 5000;
+const uint16_t FLUSH_RUN_MS = 1000;
+const uint16_t FLUSH_DONE_MS = 500;
 const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
 
 enum Direction { FORWARD, REVERSE };
 enum Mode { MANUAL, RANDOM, FLUSH, CENTERING };
+enum FlushState { FLUSH_IDLE, FLUSH_WAIT, FLUSH_RUNNING, FLUSH_DONE };
 
 Mode currentMode = MANUAL;
 Direction currentDirection = FORWARD;
@@ -44,6 +51,21 @@ bool lastStartStopState = HIGH;
 bool lastModeButtonState = HIGH;
 unsigned long lastStartStopChange = 0;
 unsigned long lastModeButtonChange = 0;
+
+FlushState flushState = FLUSH_IDLE;
+unsigned long flushStartTime = 0;
+unsigned long flushWaitDuration = 0;
+Direction flushDirection = FORWARD;
+
+#ifdef DEBUG_SERIAL
+void debugLog(const char* message) {
+  Serial.println(message);
+}
+#else
+void debugLog(const char* message) {
+  (void)message;
+}
+#endif
 
 void setMotor(Direction dir, uint8_t pwm) {
   if (dir == FORWARD) {
@@ -79,6 +101,16 @@ void rampMotor(Direction dir, uint8_t targetPwm) {
   setMotor(dir, targetPwm);
 }
 
+bool bothLimitsHit() {
+  return leftLimitHit && rightLimitHit;
+}
+
+void emergencyStop(const char* reason) {
+  stopMotor();
+  startStopActive = false;
+  debugLog(reason);
+}
+
 void readButtons() {
   bool rawStart = digitalRead(START_STOP_BUTTON);
   bool rawMode = digitalRead(MODE_BUTTON);
@@ -96,8 +128,6 @@ void readButtons() {
   }
   if (now - lastModeButtonChange >= DEBOUNCE_DELAY_MS) {
     modeButtonEvent = (rawMode == LOW && lastModeButtonState == HIGH);
-  } else {
-    modeButtonEvent = false;
   }
 
   lastStartStopState = rawStart;
@@ -107,10 +137,25 @@ void readButtons() {
 void readLimits() {
   leftLimitHit = digitalRead(LEFT_LIMIT) == LOW;
   rightLimitHit = digitalRead(RIGHT_LIMIT) == LOW;
+
+  if (bothLimitsHit() && startStopActive) {
+    emergencyStop("BOTH_LIMITS");
+  }
 }
 
 void readSpeedPot() {
   currentPwm = map(analogRead(SPEED_POT), 0, 1023, MIN_PWM, MAX_PWM);
+}
+
+void handleModeChange() {
+  if (!modeButtonEvent) {
+    return;
+  }
+
+  currentMode = (Mode)((currentMode + 1) % 4);
+  flushState = FLUSH_IDLE;
+  flushStartTime = 0;
+  modeButtonEvent = false;
 }
 
 void manualMode() {
@@ -119,10 +164,14 @@ void manualMode() {
     return;
   }
 
+  if (bothLimitsHit()) {
+    emergencyStop("BOTH_LIMITS");
+    return;
+  }
+
   if (currentDirection == FORWARD) {
     if (rightLimitHit) {
       stopMotor();
-      delay(500);
       currentDirection = REVERSE;
     } else {
       setMotor(FORWARD, currentPwm);
@@ -130,7 +179,6 @@ void manualMode() {
   } else {
     if (leftLimitHit) {
       stopMotor();
-      delay(500);
       currentDirection = FORWARD;
     } else {
       setMotor(REVERSE, currentPwm);
@@ -145,6 +193,11 @@ void randomMode() {
 
   if (!startStopActive) {
     stopMotor();
+    return;
+  }
+
+  if (bothLimitsHit()) {
+    emergencyStop("BOTH_LIMITS");
     return;
   }
 
@@ -164,33 +217,58 @@ void randomMode() {
   setMotor(randomDirection, randomPwm);
 }
 
+void startFlushSequence() {
+  flushDirection = random(0, 2) == 0 ? FORWARD : REVERSE;
+  if (flushDirection == FORWARD && rightLimitHit) {
+    flushDirection = REVERSE;
+  } else if (flushDirection == REVERSE && leftLimitHit) {
+    flushDirection = FORWARD;
+  }
+
+  flushWaitDuration = random(FLUSH_WAIT_MIN_MS, FLUSH_WAIT_MAX_MS);
+  flushStartTime = millis();
+  flushState = FLUSH_WAIT;
+  stopMotor();
+}
+
 void flushMode() {
   if (!startStopActive) {
     stopMotor();
+    flushState = FLUSH_IDLE;
     return;
   }
 
-  stopMotor();
-  delay(random(PAUSE_MIN_MS, PAUSE_MAX_MS));
+  if (bothLimitsHit()) {
+    emergencyStop("BOTH_LIMITS");
+    return;
+  }
 
-  if (random(0, 2) == 1) {
-    setMotor(FORWARD, FLUSH_SPEED);
-    if (rightLimitHit) {
-      stopMotor();
-    } else {
-      rampMotor(FORWARD, FLUSH_SPEED);
-      delay(1000);
-      stopMotor();
-    }
-  } else {
-    setMotor(REVERSE, FLUSH_SPEED);
-    if (leftLimitHit) {
-      stopMotor();
-    } else {
-      rampMotor(REVERSE, FLUSH_SPEED);
-      delay(1000);
-      stopMotor();
-    }
+  unsigned long now = millis();
+  switch (flushState) {
+    case FLUSH_IDLE:
+      startFlushSequence();
+      break;
+    case FLUSH_WAIT:
+      if (now - flushStartTime >= flushWaitDuration) {
+        setMotor(flushDirection, FLUSH_SPEED);
+        flushStartTime = now;
+        flushState = FLUSH_RUNNING;
+      }
+      break;
+    case FLUSH_RUNNING:
+      if (now - flushStartTime >= FLUSH_RUN_MS ||
+          (flushDirection == FORWARD && rightLimitHit) ||
+          (flushDirection == REVERSE && leftLimitHit)) {
+        stopMotor();
+        flushStartTime = now;
+        flushState = FLUSH_DONE;
+      }
+      break;
+    case FLUSH_DONE:
+      if (now - flushStartTime >= FLUSH_DONE_MS) {
+        flushState = FLUSH_IDLE;
+      }
+      break;
   }
 }
 
@@ -200,10 +278,14 @@ void centeringMode() {
     return;
   }
 
+  if (bothLimitsHit()) {
+    emergencyStop("BOTH_LIMITS");
+    return;
+  }
+
   if (currentDirection == FORWARD) {
     if (rightLimitHit) {
       stopMotor();
-      delay(500);
       currentDirection = REVERSE;
     } else {
       setMotor(FORWARD, CENTERING_SPEED);
@@ -211,7 +293,6 @@ void centeringMode() {
   } else {
     if (leftLimitHit) {
       stopMotor();
-      delay(500);
       currentDirection = FORWARD;
     } else {
       setMotor(REVERSE, CENTERING_SPEED);
@@ -220,6 +301,14 @@ void centeringMode() {
 }
 
 void setup() {
+#ifdef DEBUG_SERIAL
+  Serial.begin(9600);
+  while (!Serial) {
+    ;
+  }
+  debugLog("CrossWind setup starting");
+#endif
+
   pinMode(RPWM, OUTPUT);
   pinMode(LPWM, OUTPUT);
   pinMode(R_EN, OUTPUT);
@@ -240,13 +329,7 @@ void loop() {
   readButtons();
   readLimits();
   readSpeedPot();
-
-  if (modeButtonEvent) {
-    currentMode = (Mode)((currentMode + 1) % 4);
-    delay(250);
-  }
-
-  digitalWrite(STATUS_LED, startStopActive ? HIGH : LOW);
+  handleModeChange();
 
   switch (currentMode) {
     case MANUAL:
@@ -262,4 +345,6 @@ void loop() {
       centeringMode();
       break;
   }
+
+  digitalWrite(STATUS_LED, startStopActive ? HIGH : LOW);
 }

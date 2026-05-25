@@ -250,13 +250,13 @@ void setMotor(Direction dir, uint8_t pwm) {
   if (dir == FORWARD) {
     digitalWrite(L_EN_PIN, HIGH);
     digitalWrite(R_EN_PIN, LOW);
-    ledcWriteChannel(PWM_CHANNEL_LEFT, pwm);
-    ledcWriteChannel(PWM_CHANNEL_RIGHT, 0);
+    ledcWrite(PWM_CHANNEL_LEFT, pwm);
+    ledcWrite(PWM_CHANNEL_RIGHT, 0);
   } else {
     digitalWrite(L_EN_PIN, LOW);
     digitalWrite(R_EN_PIN, HIGH);
-    ledcWriteChannel(PWM_CHANNEL_LEFT, 0);
-    ledcWriteChannel(PWM_CHANNEL_RIGHT, pwm);
+    ledcWrite(PWM_CHANNEL_LEFT, 0);
+    ledcWrite(PWM_CHANNEL_RIGHT, pwm);
   }
 }
 
@@ -264,8 +264,8 @@ void setMotor(Direction dir, uint8_t pwm) {
 void stopMotor() {
   digitalWrite(L_EN_PIN, LOW);
   digitalWrite(R_EN_PIN, LOW);
-  ledcWriteChannel(PWM_CHANNEL_LEFT, 0);
-  ledcWriteChannel(PWM_CHANNEL_RIGHT, 0);
+  ledcWrite(PWM_CHANNEL_LEFT, 0);
+  ledcWrite(PWM_CHANNEL_RIGHT, 0);
 }
 
 // Apply a remote speed command and keep it active for 30 seconds.
@@ -332,18 +332,32 @@ bool processControlCommand(const String& cmd, const String& value) {
     return true;
   }
 
+  if (cmd == "PING") {
+    sendCommandResponse("OK", "PONG");
+    return true;
+  }
+
+  if (cmd == "RESET") {
+    currentMode = MANUAL;
+    currentDirection = FORWARD;
+    startStopActive = false;
+    stopMotor();
+    persistState();
+    return true;
+  }
+
   if (cmd == "MODE") {
     String modeValue = normalizeToken(value);
     if (modeValue == "MANUAL") {
       setMode(MANUAL);
       return true;
-    } else if (modeValue == "RANDOM") {
+    } else if (modeValue == "RANDOM" || modeValue == "AUTO") {
       setMode(RANDOM);
       return true;
     } else if (modeValue == "FLUSH") {
       setMode(FLUSH);
       return true;
-    } else if (modeValue == "CENTERING") {
+    } else if (modeValue == "CENTERING" || modeValue == "CENTER") {
       setMode(CENTERING);
       return true;
     }
@@ -409,10 +423,8 @@ void readInputs() {
     emergencyStop("BOTH_LIMITS");
   }
 
-  if (speedOverrideActive) {
-    if (millis() >= speedOverrideExpires) {
-      speedOverrideActive = false;
-    }
+  if (speedOverrideActive && (long)(millis() - speedOverrideExpires) >= 0) {
+    speedOverrideActive = false;
   }
 
   if (!speedOverrideActive) {
@@ -593,8 +605,10 @@ void initPins() {
   pinMode(START_STOP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
 
-  ledcAttachChannel(LPWM_PIN, PWM_FREQ, PWM_RESOLUTION, PWM_CHANNEL_LEFT);
-  ledcAttachChannel(RPWM_PIN, PWM_FREQ, PWM_RESOLUTION, PWM_CHANNEL_RIGHT);
+  ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION);
+  ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION);
+  ledcAttachPin(LPWM_PIN, PWM_CHANNEL_LEFT);
+  ledcAttachPin(RPWM_PIN, PWM_CHANNEL_RIGHT);
 
   pinMode(STATUS_LED_PIN, OUTPUT);
   digitalWrite(STATUS_LED_PIN, LOW);
