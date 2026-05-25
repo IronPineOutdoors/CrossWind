@@ -1,43 +1,94 @@
 # CrossWind
 
-CrossWind is a small motor control project for Iron Pine Outdoors with support for both classic Arduino and ESP32 hardware.
+<p float="left">
+  <img src="assets/img/IronPineOutdoors_logo.png" alt="Iron Pine Outdoors logo" width="180" />
+  <img src="assets/img/CrossWind_logo.png" alt="CrossWind logo" width="180" />
+</p>
+
+CrossWind is a dual-platform motor controller project for Iron Pine Outdoors. It includes a classic Arduino sketch for AVR boards and an ESP32 version with BLE remote control and persistent settings.
 
 ## Repository Layout
 
 - `crosswind/` — Classic Arduino sketch for standard AVR boards.
 - `crosswind_esp32/` — ESP32 sketch with BLE remote control and persistent settings.
+- `assets/img/` — branding assets and logo files used by the README.
+
+## Project Overview
+
+CrossWind drives a bidirectional motor or pump using limit switches, a start/stop button, a mode button, and a speed potentiometer. The controller supports four operating modes:
+
+- `MANUAL` — direct control with the speed pot and automatic direction reversal at limit switches.
+- `RANDOM` — randomized direction and speed changes within the selected range.
+- `FLUSH` — randomized flush sequences with safe pause/run timing.
+- `CENTERING` — move slowly toward the opposite limit and reverse when reached.
+
+The ESP32 variant adds a BLE control interface and stores the last selected mode, direction, and speed in non-volatile memory.
 
 ## Features
 
 ### Classic Arduino (`crosswind/`)
 - Manual, random, flush, and centering drive modes.
-- Non-blocking flush sequencing to keep the controller responsive.
-- Debounced start/stop and mode buttons.
-- Safety stop if both limit switches are triggered.
-- Optional serial debug support via `DEBUG_SERIAL`.
+- Soft start/ramp behavior for flush actions.
+- Debounced button handling for reliable operation.
+- Built-in limit switch safety and emergency stops.
+- Optional serial debug mode via `DEBUG_SERIAL` for troubleshooting.
 
 ### ESP32 (`crosswind_esp32/`)
-- BLE commands for remote control.
-- Supported commands:
-  - `START` / `RUN`
-  - `STOP` / `PAUSE`
-  - `STATUS`
-  - `PING`
-  - `RESET`
-  - `MODE=MANUAL|RANDOM|AUTO|FLUSH|CENTERING|CENTER`
-  - `DIRECTION=FORWARD|REVERSE`
-  - `SPEED=<50-255>`
-- Persisted mode, direction, and speed settings.
-- Safety stop if both limit switches are active.
+- BLE control with remote commands and status notifications.
+- Persistent mode, direction, and speed settings across resets.
+- Safety stop if both limit switches are triggered simultaneously.
+- BLE response support for `PING` and `RESET`.
+
+## BLE Command Reference
+
+The ESP32 version accepts simple BLE commands in the form `COMMAND=VALUE` or `COMMAND`.
+
+- `START` / `RUN`
+- `STOP` / `PAUSE`
+- `STATUS`
+- `PING`
+- `RESET`
+- `MODE=MANUAL|RANDOM|AUTO|FLUSH|CENTERING|CENTER`
+- `DIRECTION=FORWARD|REVERSE`
+- `SPEED=<50-255>`
+
+Example:
+
+```txt
+MODE=RANDOM
+SPEED=180
+START
+```
+
+## Hardware
+
+The lessons below are conceptual. Use the final wiring and motor driver based on your specific hardware.
+
+- `RPWM` / `LPWM` — PWM outputs for right and left motor channels.
+- `R_EN` / `L_EN` — enable pins for the motor driver.
+- `LEFT_LIMIT` / `RIGHT_LIMIT` — limit switch inputs with `INPUT_PULLUP`.
+- `START_STOP_BUTTON` — start/stop toggle button.
+- `MODE_BUTTON` — mode select button.
+- `SPEED_POT` — analog speed control.
+- `STATUS_LED` — status indicator.
 
 ## Getting Started
 
-1. Open the appropriate folder in the Arduino IDE or the ESP32-compatible environment.
-2. Select the correct board and port.
-3. Upload the sketch.
+1. Open the appropriate folder in the Arduino IDE or an ESP32-compatible environment.
+2. Install board support for the selected platform.
+3. Select the correct board and serial port.
+4. Upload the sketch.
 
-## Notes
+## Development Notes
 
-- Use the Arduino IDE or `arduino-cli` for AVR boards.
-- Use ESP32 board support for `crosswind_esp32/`.
-- Add a `LICENSE` file if you want to define usage and distribution terms.
+- `crosswind/crosswind.ino` is designed for standard Arduino boards and uses `analogWrite()` for PWM.
+- `crosswind_esp32/crosswind_esp32.ino` uses ESP32 PWM channels via `ledcSetup()` and `ledcAttachPin()`.
+- Keep platform-specific wiring and code separate to avoid cross-platform mistakes.
+
+## Asset Usage
+
+Logos are stored in `assets/img/` and displayed in this README for branding.
+
+## License
+
+This repository does not include a license yet. Add a `LICENSE` file if you want to define usage and distribution rights.
