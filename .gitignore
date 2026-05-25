@@ -1,0 +1,36 @@
+# Arduino project files
+*.tmp
+*.build
+*.elf
+*.hex
+*.bin
+*.eep
+*.map
+
+# Arduino IDE files
+*.ino.*
+*.ino.bak
+
+# VS Code settings
+.vscode/
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.log
+*.bak
+*~
+
+# PlatformIO
+.platformio
+.pio
+
+# Serial monitor state
+*.json
+
+# Build output directories
+build/
+
+# Libraries installed by Arduino IDE or PlatformIO
+lib_deps/
