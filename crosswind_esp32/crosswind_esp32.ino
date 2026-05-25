@@ -93,6 +93,7 @@ const char* BLE_SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
 const char* BLE_COMMAND_CHAR_UUID = "12345678-1234-1234-1234-1234567890ac";
 const char* BLE_STATUS_CHAR_UUID = "12345678-1234-1234-1234-1234567890ad";
 const char* BLE_RESPONSE_CHAR_UUID = "12345678-1234-1234-1234-1234567890ae";
+const char* FIRMWARE_VERSION = "CrossWind ESP32 v1.1";
 
 Preferences prefs;
 const char* PREFS_NAMESPACE = "uniwobbler";
@@ -140,6 +141,10 @@ class CommandCallback : public BLECharacteristicCallbacks {
     }
 
     int separator = payload.indexOf('=');
+    if (separator < 0) {
+      separator = payload.indexOf(' ');
+    }
+
     String cmd = payload;
     String val = "";
     if (separator >= 0) {
@@ -154,6 +159,7 @@ class CommandCallback : public BLECharacteristicCallbacks {
       return;
     }
 
+    Serial.printf("BLE command received: %s\n", payload.c_str());
     bool handled = processControlCommand(cmd, val);
     if (!handled) {
       sendCommandResponse("ERROR", "Invalid command or value");
@@ -202,7 +208,8 @@ void setMode(Mode mode) {
 
 // Build the current state payload that is sent over BLE.
 String buildStatusPayload() {
-  String payload = "mode=" + modeToString(currentMode);
+  String payload = "fw=" + String(FIRMWARE_VERSION);
+  payload += ";mode=" + modeToString(currentMode);
   payload += ";dir=" + directionToString(currentDirection);
   payload += ";running=" + String(startStopActive ? "1" : "0");
   payload += ";pwm=" + String(currentPwm);
@@ -285,6 +292,7 @@ void emergencyStop(const String& reason) {
 
   startStopActive = false;
   stopMotor();
+  digitalWrite(STATUS_LED_PIN, LOW);
   sendCommandResponse("ERROR", "EMERGENCY_STOP:" + reason);
 }
 
@@ -343,6 +351,21 @@ bool processControlCommand(const String& cmd, const String& value) {
     startStopActive = false;
     stopMotor();
     persistState();
+    return true;
+  }
+
+  if (cmd == "SAVE") {
+    persistState();
+    return true;
+  }
+
+  if (cmd == "INFO") {
+    sendCommandResponse("OK", "INFO:" + buildStatusPayload());
+    return true;
+  }
+
+  if (cmd == "HELP") {
+    sendCommandResponse("OK", "HELP: START,STOP,STATUS,PING,RESET,MODE,DIRECTION,SPEED,SAVE,INFO");
     return true;
   }
 

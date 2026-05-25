@@ -30,24 +30,29 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 - Manual, random, flush, and centering drive modes.
 - Soft start/ramp behavior for flush actions.
 - Debounced button handling for reliable operation.
+- Serialized EEPROM persistence with validation on startup.
 - Built-in limit switch safety and emergency stops.
 - Optional serial debug mode via `DEBUG_SERIAL` for troubleshooting.
 
 ### ESP32 (`crosswind_esp32/`)
 - BLE control with remote commands and status notifications.
 - Persistent mode, direction, and speed settings across resets.
+- Remote `SAVE`, `INFO`, and `HELP` commands for easier control.
 - Safety stop if both limit switches are triggered simultaneously.
 - BLE response support for `PING` and `RESET`.
 
 ## BLE Command Reference
 
-The ESP32 version accepts simple BLE commands in the form `COMMAND=VALUE` or `COMMAND`.
+The ESP32 version accepts simple BLE commands in the form `COMMAND=VALUE`, `COMMAND VALUE`, or `COMMAND`.
 
 - `START` / `RUN`
 - `STOP` / `PAUSE`
 - `STATUS`
 - `PING`
 - `RESET`
+- `SAVE`
+- `INFO`
+- `HELP`
 - `MODE=MANUAL|RANDOM|AUTO|FLUSH|CENTERING|CENTER`
 - `DIRECTION=FORWARD|REVERSE`
 - `SPEED=<50-255>`

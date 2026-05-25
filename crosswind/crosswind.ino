@@ -1,9 +1,12 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 
 // CrossWind
 // Controls a bidirectional pump/motor with manual, random, flush, and centering modes.
-// This version adds non-blocking flush sequencing, safety checks, and optional serial debug.
+// This version adds non-blocking flush sequencing, safety checks, EEPROM persistence, and optional serial debug.
 //#define DEBUG_SERIAL
+
+const char* FIRMWARE_VERSION = "CrossWind AVR v1.1";
 
 const uint8_t RPWM = 5;
 const uint8_t LPWM = 6;
@@ -31,6 +34,15 @@ const uint16_t FLUSH_RUN_MS = 1000;
 const uint16_t FLUSH_DONE_MS = 500;
 const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
+const uint16_t START_STOP_LONG_PRESS_MS = 1500;
+
+const uint8_t EEPROM_ADDR_MODE = 0;
+const uint8_t EEPROM_ADDR_DIRECTION = 1;
+const uint8_t EEPROM_ADDR_PWM = 2;
+const uint8_t EEPROM_ADDR_MAGIC = 3;
+const uint8_t EEPROM_MAGIC = 0xA5;
+
+const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
 enum Direction { FORWARD, REVERSE };
 enum Mode { MANUAL, RANDOM, FLUSH, CENTERING };
@@ -49,6 +61,10 @@ bool modeButtonEvent = false;
 
 bool lastStartStopState = HIGH;
 bool lastModeButtonState = HIGH;
+bool startStopWasPressed = false;
+unsigned long startStopPressStart = 0;
+unsigned long lastStatusBlink = 0;
+bool statusLedState = LOW;
 unsigned long lastStartStopChange = 0;
 unsigned long lastModeButtonChange = 0;
 
@@ -120,7 +136,20 @@ void readButtons() {
     lastStartStopChange = now;
   }
   if (now - lastStartStopChange >= DEBOUNCE_DELAY_MS) {
-    startStopActive = (rawStart == LOW);
+    bool pressed = (rawStart == LOW);
+    if (pressed && !startStopWasPressed) {
+      startStopPressStart = now;
+    }
+    if (!pressed && startStopWasPressed && (now - startStopPressStart >= START_STOP_LONG_PRESS_MS)) {
+      currentMode = MANUAL;
+      currentDirection = FORWARD;
+      currentPwm = MIN_PWM;
+      EEPROM.update(EEPROM_ADDR_MODE, currentMode);
+      EEPROM.update(EEPROM_ADDR_DIRECTION, currentDirection);
+      EEPROM.update(EEPROM_ADDR_PWM, currentPwm);
+    }
+    startStopActive = pressed;
+    startStopWasPressed = pressed;
   }
 
   if (rawMode != lastModeButtonState) {
@@ -143,8 +172,56 @@ void readLimits() {
   }
 }
 
+void loadPersistentState() {
+  uint8_t magic = EEPROM.read(EEPROM_ADDR_MAGIC);
+  if (magic != EEPROM_MAGIC) {
+    currentMode = MANUAL;
+    currentDirection = FORWARD;
+    currentPwm = MIN_PWM;
+    persistState();
+    return;
+  }
+
+  uint8_t storedMode = EEPROM.read(EEPROM_ADDR_MODE);
+  uint8_t storedDirection = EEPROM.read(EEPROM_ADDR_DIRECTION);
+  uint8_t storedPwm = EEPROM.read(EEPROM_ADDR_PWM);
+
+  if (storedMode <= CENTERING) {
+    currentMode = (Mode)storedMode;
+  }
+  if (storedDirection <= REVERSE) {
+    currentDirection = (Direction)storedDirection;
+  }
+  if (storedPwm >= MIN_PWM && storedPwm <= MAX_PWM) {
+    currentPwm = storedPwm;
+  }
+}
+
+void persistState() {
+  EEPROM.update(EEPROM_ADDR_MODE, currentMode);
+  EEPROM.update(EEPROM_ADDR_DIRECTION, currentDirection);
+  EEPROM.update(EEPROM_ADDR_PWM, currentPwm);
+  EEPROM.update(EEPROM_ADDR_MAGIC, EEPROM_MAGIC);
+}
+
+void updateStatusLed() {
+  unsigned long now = millis();
+  if (startStopActive) {
+    digitalWrite(STATUS_LED, HIGH);
+    return;
+  }
+
+  uint16_t blinkInterval = MODE_BLINK_INTERVALS[currentMode];
+  if (now - lastStatusBlink >= blinkInterval) {
+    lastStatusBlink = now;
+    statusLedState = !statusLedState;
+    digitalWrite(STATUS_LED, statusLedState ? HIGH : LOW);
+  }
+}
+
 void readSpeedPot() {
   currentPwm = map(analogRead(SPEED_POT), 0, 1023, MIN_PWM, MAX_PWM);
+  currentPwm = constrain(currentPwm, MIN_PWM, MAX_PWM);
 }
 
 void handleModeChange() {
@@ -173,6 +250,7 @@ void manualMode() {
     if (rightLimitHit) {
       stopMotor();
       currentDirection = REVERSE;
+      persistState();
     } else {
       setMotor(FORWARD, currentPwm);
     }
@@ -180,6 +258,7 @@ void manualMode() {
     if (leftLimitHit) {
       stopMotor();
       currentDirection = FORWARD;
+      persistState();
     } else {
       setMotor(REVERSE, currentPwm);
     }
@@ -306,7 +385,8 @@ void setup() {
   while (!Serial) {
     ;
   }
-  debugLog("CrossWind setup starting");
+  Serial.print("Starting ");
+  Serial.println(FIRMWARE_VERSION);
 #endif
 
   pinMode(RPWM, OUTPUT);
@@ -320,6 +400,7 @@ void setup() {
   pinMode(SPEED_POT, INPUT);
   pinMode(STATUS_LED, OUTPUT);
 
+  loadPersistentState();
   stopMotor();
   digitalWrite(STATUS_LED, LOW);
   randomSeed(analogRead(A1) ^ analogRead(A2) ^ micros());
@@ -346,5 +427,5 @@ void loop() {
       break;
   }
 
-  digitalWrite(STATUS_LED, startStopActive ? HIGH : LOW);
+  updateStatusLed();
 }
