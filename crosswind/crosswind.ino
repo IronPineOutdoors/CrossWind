@@ -35,14 +35,20 @@ const uint16_t FLUSH_DONE_MS = 500;
 const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
 const uint16_t START_STOP_LONG_PRESS_MS = 1500;
+const uint32_t BUTTON_STUCK_TIMEOUT_MS = 10000;
 
-const uint8_t EEPROM_ADDR_MODE = 0;
-const uint8_t EEPROM_ADDR_DIRECTION = 1;
-const uint8_t EEPROM_ADDR_PWM = 2;
-const uint8_t EEPROM_ADDR_MAGIC = 3;
+const uint8_t EEPROM_ADDR_MAGIC = 0;
+const uint8_t EEPROM_ADDR_MODE = 1;
+const uint8_t EEPROM_ADDR_DIRECTION = 2;
+const uint8_t EEPROM_ADDR_PWM = 3;
+const uint8_t EEPROM_ADDR_CHECKSUM = 4;
 const uint8_t EEPROM_MAGIC = 0xA5;
 
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
+
+uint8_t calculateEepromChecksum(uint8_t mode, uint8_t direction, uint8_t pwm) {
+  return mode ^ direction ^ pwm ^ 0x5A;
+}
 
 enum Direction { FORWARD, REVERSE };
 enum Mode { MANUAL, RANDOM, FLUSH, CENTERING };
@@ -124,6 +130,9 @@ bool bothLimitsHit() {
 void emergencyStop(const char* reason) {
   stopMotor();
   startStopActive = false;
+  faultActive = true;
+  statusLedState = LOW;
+  lastStatusBlink = millis();
   debugLog(reason);
 }
 
@@ -140,15 +149,19 @@ void readButtons() {
     if (pressed && !startStopWasPressed) {
       startStopPressStart = now;
     }
+    if (pressed && startStopWasPressed && (now - startStopPressStart >= BUTTON_STUCK_TIMEOUT_MS)) {
+      emergencyStop("BUTTON_STUCK");
+    }
     if (!pressed && startStopWasPressed && (now - startStopPressStart >= START_STOP_LONG_PRESS_MS)) {
       currentMode = MANUAL;
       currentDirection = FORWARD;
       currentPwm = MIN_PWM;
-      EEPROM.update(EEPROM_ADDR_MODE, currentMode);
-      EEPROM.update(EEPROM_ADDR_DIRECTION, currentDirection);
-      EEPROM.update(EEPROM_ADDR_PWM, currentPwm);
+      persistState();
     }
     startStopActive = pressed;
+    if (!startStopActive && faultActive && !bothLimitsHit()) {
+      faultActive = false;
+    }
     startStopWasPressed = pressed;
   }
 
@@ -174,17 +187,18 @@ void readLimits() {
 
 void loadPersistentState() {
   uint8_t magic = EEPROM.read(EEPROM_ADDR_MAGIC);
-  if (magic != EEPROM_MAGIC) {
+  uint8_t storedMode = EEPROM.read(EEPROM_ADDR_MODE);
+  uint8_t storedDirection = EEPROM.read(EEPROM_ADDR_DIRECTION);
+  uint8_t storedPwm = EEPROM.read(EEPROM_ADDR_PWM);
+  uint8_t storedChecksum = EEPROM.read(EEPROM_ADDR_CHECKSUM);
+
+  if (magic != EEPROM_MAGIC || storedChecksum != calculateEepromChecksum(storedMode, storedDirection, storedPwm)) {
     currentMode = MANUAL;
     currentDirection = FORWARD;
     currentPwm = MIN_PWM;
     persistState();
     return;
   }
-
-  uint8_t storedMode = EEPROM.read(EEPROM_ADDR_MODE);
-  uint8_t storedDirection = EEPROM.read(EEPROM_ADDR_DIRECTION);
-  uint8_t storedPwm = EEPROM.read(EEPROM_ADDR_PWM);
 
   if (storedMode <= CENTERING) {
     currentMode = (Mode)storedMode;
@@ -198,14 +212,24 @@ void loadPersistentState() {
 }
 
 void persistState() {
+  EEPROM.update(EEPROM_ADDR_MAGIC, EEPROM_MAGIC);
   EEPROM.update(EEPROM_ADDR_MODE, currentMode);
   EEPROM.update(EEPROM_ADDR_DIRECTION, currentDirection);
   EEPROM.update(EEPROM_ADDR_PWM, currentPwm);
-  EEPROM.update(EEPROM_ADDR_MAGIC, EEPROM_MAGIC);
+  EEPROM.update(EEPROM_ADDR_CHECKSUM, calculateEepromChecksum(currentMode, currentDirection, currentPwm));
 }
 
 void updateStatusLed() {
   unsigned long now = millis();
+  if (faultActive) {
+    if (now - lastStatusBlink >= 200) {
+      lastStatusBlink = now;
+      statusLedState = !statusLedState;
+      digitalWrite(STATUS_LED, statusLedState ? HIGH : LOW);
+    }
+    return;
+  }
+
   if (startStopActive) {
     digitalWrite(STATUS_LED, HIGH);
     return;
@@ -399,6 +423,11 @@ void setup() {
   pinMode(MODE_BUTTON, INPUT_PULLUP);
   pinMode(SPEED_POT, INPUT);
   pinMode(STATUS_LED, OUTPUT);
+
+  readLimits();
+  if (bothLimitsHit()) {
+    emergencyStop("STARTUP_BOTH_LIMITS");
+  }
 
   loadPersistentState();
   stopMotor();

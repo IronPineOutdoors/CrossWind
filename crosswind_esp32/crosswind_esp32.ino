@@ -97,6 +97,11 @@ const char* FIRMWARE_VERSION = "CrossWind ESP32 v1.1";
 
 Preferences prefs;
 const char* PREFS_NAMESPACE = "uniwobbler";
+const int PREFS_MAGIC = 0xA5A5;
+const char* PREFS_MAGIC_KEY = "magic";
+const char* PREFS_CHECKSUM_KEY = "checksum";
+const size_t MAX_BLE_COMMAND_LENGTH = 64;
+bool bleClientConnected = false;
 
 String lastResponseMessage = "READY";
 
@@ -109,6 +114,7 @@ void setMode(Mode mode);
 // Persistence helpers.
 void loadPersistentState();
 void persistState();
+int calculatePrefsChecksum(int mode, int direction, int pwm);
 
 // BLE response helpers.
 String buildResponsePayload();
@@ -139,6 +145,10 @@ class CommandCallback : public BLECharacteristicCallbacks {
     if (payload.length() == 0) {
       return;
     }
+    if (payload.length() > MAX_BLE_COMMAND_LENGTH) {
+      sendCommandResponse("ERROR", "COMMAND_TOO_LONG");
+      return;
+    }
 
     int separator = payload.indexOf('=');
     if (separator < 0) {
@@ -167,6 +177,18 @@ class CommandCallback : public BLECharacteristicCallbacks {
       sendCommandResponse("OK", "Command accepted");
     }
     updateBleStatus();
+  }
+};
+
+class ServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) override {
+    bleClientConnected = true;
+    Serial.println("BLE client connected");
+  }
+
+  void onDisconnect(BLEServer* pServer) override {
+    bleClientConnected = false;
+    Serial.println("BLE client disconnected");
   }
 };
 
@@ -221,7 +243,7 @@ String buildStatusPayload() {
 
 // Send a status notification to connected BLE clients.
 void updateBleStatus() {
-  if (!statusCharacteristic) {
+  if (!statusCharacteristic || !bleClientConnected) {
     return;
   }
   String payload = buildStatusPayload();
@@ -296,12 +318,26 @@ void emergencyStop(const String& reason) {
   sendCommandResponse("ERROR", "EMERGENCY_STOP:" + reason);
 }
 
+int calculatePrefsChecksum(int mode, int direction, int pwm) {
+  return (mode * 31) ^ (direction * 17) ^ pwm;
+}
+
 void loadPersistentState() {
   prefs.begin(PREFS_NAMESPACE, true);
+  int storedMagic = prefs.getInt(PREFS_MAGIC_KEY, 0);
   int storedMode = prefs.getInt("mode", MANUAL);
   int storedDirection = prefs.getInt("direction", FORWARD);
   int storedPwm = prefs.getInt("pwm", MIN_PWM);
+  int storedChecksum = prefs.getInt(PREFS_CHECKSUM_KEY, 0);
   prefs.end();
+
+  if (storedMagic != PREFS_MAGIC || storedChecksum != calculatePrefsChecksum(storedMode, storedDirection, storedPwm)) {
+    currentMode = MANUAL;
+    currentDirection = FORWARD;
+    currentPwm = MIN_PWM;
+    persistState();
+    return;
+  }
 
   if (storedMode >= MANUAL && storedMode <= CENTERING) {
     currentMode = (Mode)storedMode;
@@ -316,9 +352,11 @@ void loadPersistentState() {
 
 void persistState() {
   prefs.begin(PREFS_NAMESPACE, false);
+  prefs.putInt(PREFS_MAGIC_KEY, PREFS_MAGIC);
   prefs.putInt("mode", currentMode);
   prefs.putInt("direction", currentDirection);
   prefs.putInt("pwm", currentPwm);
+  prefs.putInt(PREFS_CHECKSUM_KEY, calculatePrefsChecksum(currentMode, currentDirection, currentPwm));
   prefs.end();
 }
 
@@ -594,6 +632,8 @@ void startBle() {
     BLECharacteristic::PROPERTY_WRITE
   );
   commandCharacteristic->setCallbacks(new CommandCallback());
+
+  bleServer->setCallbacks(new ServerCallbacks());
 
   statusCharacteristic = bleService->createCharacteristic(
     BLE_STATUS_CHAR_UUID,
