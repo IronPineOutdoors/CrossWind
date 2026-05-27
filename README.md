@@ -30,7 +30,7 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 - Manual, random, flush, and centering drive modes.
 - Soft start/ramp behavior for flush actions.
 - Debounced button handling for reliable operation.
-- EEPROM persistence with startup validation and checksum protection.
+- EEPROM persistence backed by packed state records and CRC validation.
 - Built-in limit switch safety and emergency stops.
 - Optional serial debug mode via `DEBUG_SERIAL` for troubleshooting.
 

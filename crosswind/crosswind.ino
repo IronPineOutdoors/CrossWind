@@ -36,18 +36,20 @@ const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
 const uint16_t START_STOP_LONG_PRESS_MS = 1500;
 const uint32_t BUTTON_STUCK_TIMEOUT_MS = 10000;
-
-const uint8_t EEPROM_ADDR_MAGIC = 0;
-const uint8_t EEPROM_ADDR_MODE = 1;
-const uint8_t EEPROM_ADDR_DIRECTION = 2;
-const uint8_t EEPROM_ADDR_PWM = 3;
-const uint8_t EEPROM_ADDR_CHECKSUM = 4;
 const uint8_t EEPROM_MAGIC = 0xA5;
 
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
-uint8_t calculateEepromChecksum(uint8_t mode, uint8_t direction, uint8_t pwm) {
-  return mode ^ direction ^ pwm ^ 0x5A;
+struct __attribute__((packed)) PersistedState {
+  uint8_t magic;
+  uint8_t mode;
+  uint8_t direction;
+  uint8_t pwm;
+  uint8_t checksum;
+};
+
+uint8_t calculateEepromChecksum(const PersistedState& state) {
+  return state.magic ^ state.mode ^ state.direction ^ state.pwm ^ 0x5A;
 }
 
 enum Direction { FORWARD, REVERSE };
@@ -186,19 +188,20 @@ void readLimits() {
 }
 
 void loadPersistentState() {
-  uint8_t magic = EEPROM.read(EEPROM_ADDR_MAGIC);
-  uint8_t storedMode = EEPROM.read(EEPROM_ADDR_MODE);
-  uint8_t storedDirection = EEPROM.read(EEPROM_ADDR_DIRECTION);
-  uint8_t storedPwm = EEPROM.read(EEPROM_ADDR_PWM);
-  uint8_t storedChecksum = EEPROM.read(EEPROM_ADDR_CHECKSUM);
+  PersistedState storedState;
+  EEPROM.get(0, storedState);
 
-  if (magic != EEPROM_MAGIC || storedChecksum != calculateEepromChecksum(storedMode, storedDirection, storedPwm)) {
+  if (storedState.magic != EEPROM_MAGIC || storedState.checksum != calculateEepromChecksum(storedState)) {
     currentMode = MANUAL;
     currentDirection = FORWARD;
     currentPwm = MIN_PWM;
     persistState();
     return;
   }
+
+  uint8_t storedMode = storedState.mode;
+  uint8_t storedDirection = storedState.direction;
+  uint8_t storedPwm = storedState.pwm;
 
   if (storedMode <= CENTERING) {
     currentMode = (Mode)storedMode;
@@ -212,11 +215,13 @@ void loadPersistentState() {
 }
 
 void persistState() {
-  EEPROM.update(EEPROM_ADDR_MAGIC, EEPROM_MAGIC);
-  EEPROM.update(EEPROM_ADDR_MODE, currentMode);
-  EEPROM.update(EEPROM_ADDR_DIRECTION, currentDirection);
-  EEPROM.update(EEPROM_ADDR_PWM, currentPwm);
-  EEPROM.update(EEPROM_ADDR_CHECKSUM, calculateEepromChecksum(currentMode, currentDirection, currentPwm));
+  PersistedState state;
+  state.magic = EEPROM_MAGIC;
+  state.mode = currentMode;
+  state.direction = currentDirection;
+  state.pwm = currentPwm;
+  state.checksum = calculateEepromChecksum(state);
+  EEPROM.put(0, state);
 }
 
 void updateStatusLed() {
