@@ -45,6 +45,7 @@ const uint16_t RANDOM_ACTION_MAX_MS = 3000;
 const uint16_t FLUSH_PAUSE_MIN_MS = 1000;
 const uint16_t FLUSH_PAUSE_MAX_MS = 5000;
 const uint16_t FLUSH_RUN_MS = 1000;
+const uint32_t MOTOR_STALL_TIMEOUT_MS = 5000;
 const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
 
@@ -79,6 +80,9 @@ Direction randomDirection = FORWARD;
 // Flush timing state.
 unsigned long flushActionStart = 0;
 unsigned long flushWaitDuration = 0;
+unsigned long lastMotorCommandTime = 0;
+Direction lastCommandedDirection = FORWARD;
+uint8_t lastCommandedPwm = 0;
 
 // BLE speed override state: remote SPEED commands take priority for a short time.
 bool speedOverrideActive = false;
@@ -276,6 +280,12 @@ void setMotor(Direction dir, uint8_t pwm) {
     pwm = 0;
   }
 
+  if (dir != lastCommandedDirection || pwm != lastCommandedPwm) {
+    lastCommandedDirection = dir;
+    lastCommandedPwm = pwm;
+    lastMotorCommandTime = millis();
+  }
+
   if (dir == FORWARD) {
     digitalWrite(L_EN_PIN, HIGH);
     digitalWrite(R_EN_PIN, LOW);
@@ -295,6 +305,8 @@ void stopMotor() {
   digitalWrite(R_EN_PIN, LOW);
   ledcWrite(PWM_CHANNEL_LEFT, 0);
   ledcWrite(PWM_CHANNEL_RIGHT, 0);
+  lastMotorCommandTime = 0;
+  lastCommandedPwm = 0;
 }
 
 // Apply a remote speed command and keep it active for 30 seconds.
@@ -711,8 +723,12 @@ void loop() {
       break;
   }
 
-  static unsigned long lastBleUpdate = 0;
   unsigned long now = millis();
+  if (startStopActive && lastCommandedPwm >= MIN_PWM && now - lastMotorCommandTime >= MOTOR_STALL_TIMEOUT_MS && !leftLimitHit && !rightLimitHit) {
+    emergencyStop("STALL");
+  }
+
+  static unsigned long lastBleUpdate = 0;
   if (now - lastBleUpdate >= 1000) {
     updateBleStatus();
     lastBleUpdate = now;

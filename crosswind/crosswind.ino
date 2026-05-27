@@ -36,6 +36,7 @@ const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
 const uint16_t START_STOP_LONG_PRESS_MS = 1500;
 const uint32_t BUTTON_STUCK_TIMEOUT_MS = 10000;
+const uint32_t MOTOR_STALL_TIMEOUT_MS = 5000;
 const uint8_t EEPROM_MAGIC = 0xA5;
 
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
@@ -80,6 +81,9 @@ FlushState flushState = FLUSH_IDLE;
 unsigned long flushStartTime = 0;
 unsigned long flushWaitDuration = 0;
 Direction flushDirection = FORWARD;
+unsigned long lastMotorCommandTime = 0;
+Direction lastCommandedDirection = FORWARD;
+uint8_t lastCommandedPwm = 0;
 
 #ifdef DEBUG_SERIAL
 void debugLog(const char* message) {
@@ -92,6 +96,12 @@ void debugLog(const char* message) {
 #endif
 
 void setMotor(Direction dir, uint8_t pwm) {
+  if (dir != lastCommandedDirection || pwm != lastCommandedPwm) {
+    lastCommandedDirection = dir;
+    lastCommandedPwm = pwm;
+    lastMotorCommandTime = millis();
+  }
+
   if (dir == FORWARD) {
     digitalWrite(L_EN, HIGH);
     analogWrite(LPWM, pwm);
@@ -110,6 +120,8 @@ void stopMotor() {
   analogWrite(LPWM, 0);
   digitalWrite(R_EN, LOW);
   analogWrite(RPWM, 0);
+  lastMotorCommandTime = 0;
+  lastCommandedPwm = 0;
 }
 
 void rampMotor(Direction dir, uint8_t targetPwm) {
@@ -459,6 +471,10 @@ void loop() {
     case CENTERING:
       centeringMode();
       break;
+  }
+
+  if (startStopActive && lastCommandedPwm >= MIN_PWM && millis() - lastMotorCommandTime >= MOTOR_STALL_TIMEOUT_MS && !bothLimitsHit()) {
+    emergencyStop("STALL");
   }
 
   updateStatusLed();
