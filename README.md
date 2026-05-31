@@ -38,7 +38,8 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 
 ### ESP32 (`crosswind_esp32/`)
 - BLE control with remote commands and status notifications.
-- Persistent mode, direction, and speed settings across resets.
+- `AUTH=<token>` protected command access, with `HELP`, `PING`, and `STATUS` allowed before authentication.
+- Persistent mode, direction, speed, and fault diagnostics across resets.
 - BLE preference storage with magic and checksum validation.
 - Hardware watchdog support for reset recovery from stuck firmware loops.
 - Command length guarding and connected-client-only status notifications.
@@ -51,6 +52,7 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 
 The ESP32 version accepts simple BLE commands in the form `COMMAND=VALUE`, `COMMAND VALUE`, or `COMMAND`.
 
+- `AUTH=<token>`
 - `START` / `RUN`
 - `STOP` / `PAUSE`
 - `STATUS`

@@ -44,16 +44,20 @@ const uint8_t WATCHDOG_TIMEOUT_SECONDS = 2;
 
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
+enum FaultCode { FAULT_NONE = 0, FAULT_STALL = 1, FAULT_BOTH_LIMITS = 2, FAULT_BUTTON_STUCK = 3, FAULT_STARTUP = 4, FAULT_UNKNOWN = 255 };
+
 struct __attribute__((packed)) PersistedState {
   uint8_t magic;
   uint8_t mode;
   uint8_t direction;
   uint8_t pwm;
+  uint8_t lastFault;
+  uint8_t faultCount;
   uint8_t checksum;
 };
 
 uint8_t calculateEepromChecksum(const PersistedState& state) {
-  return state.magic ^ state.mode ^ state.direction ^ state.pwm ^ 0x5A;
+  return state.magic ^ state.mode ^ state.direction ^ state.pwm ^ state.lastFault ^ state.faultCount ^ 0x5A;
 }
 
 enum Direction { FORWARD, REVERSE };
@@ -67,6 +71,8 @@ bool leftLimitHit = false;
 bool rightLimitHit = false;
 
 uint8_t currentPwm = MIN_PWM;
+int lastFaultCode = FAULT_NONE;
+uint8_t faultCount = 0;
 
 bool startStopActive = false;
 bool modeButtonEvent = false;
@@ -144,12 +150,46 @@ bool bothLimitsHit() {
   return leftLimitHit && rightLimitHit;
 }
 
+void recordFault(FaultCode fault) {
+  lastFaultCode = fault;
+  faultCount++;
+  persistState();
+}
+
+const char* faultCodeToString(FaultCode fault) {
+  switch (fault) {
+    case FAULT_STALL:
+      return "STALL";
+    case FAULT_BOTH_LIMITS:
+      return "BOTH_LIMITS";
+    case FAULT_BUTTON_STUCK:
+      return "BUTTON_STUCK";
+    case FAULT_STARTUP:
+      return "STARTUP";
+    case FAULT_NONE:
+      return "NONE";
+    default:
+      return "UNKNOWN";
+  }
+}
+
 void emergencyStop(const char* reason) {
   stopMotor();
   startStopActive = false;
   faultActive = true;
   statusLedState = LOW;
   lastStatusBlink = millis();
+  if (strcmp(reason, "STALL") == 0) {
+    recordFault(FAULT_STALL);
+  } else if (strcmp(reason, "BOTH_LIMITS") == 0) {
+    recordFault(FAULT_BOTH_LIMITS);
+  } else if (strcmp(reason, "BUTTON_STUCK") == 0) {
+    recordFault(FAULT_BUTTON_STUCK);
+  } else if (strcmp(reason, "STARTUP_BOTH_LIMITS") == 0) {
+    recordFault(FAULT_STARTUP);
+  } else {
+    recordFault(FAULT_UNKNOWN);
+  }
   debugLog(reason);
 }
 
@@ -210,6 +250,8 @@ void loadPersistentState() {
     currentMode = MANUAL;
     currentDirection = FORWARD;
     currentPwm = MIN_PWM;
+    lastFaultCode = FAULT_NONE;
+    faultCount = 0;
     persistState();
     return;
   }
@@ -217,6 +259,8 @@ void loadPersistentState() {
   uint8_t storedMode = storedState.mode;
   uint8_t storedDirection = storedState.direction;
   uint8_t storedPwm = storedState.pwm;
+  lastFaultCode = storedState.lastFault;
+  faultCount = storedState.faultCount;
 
   if (storedMode <= CENTERING) {
     currentMode = (Mode)storedMode;
@@ -235,6 +279,8 @@ void persistState() {
   state.mode = currentMode;
   state.direction = currentDirection;
   state.pwm = currentPwm;
+  state.lastFault = lastFaultCode;
+  state.faultCount = faultCount;
   state.checksum = calculateEepromChecksum(state);
   EEPROM.put(0, state);
 }
@@ -433,6 +479,9 @@ void setup() {
   Serial.println(FIRMWARE_VERSION);
 #endif
 
+  uint8_t resetFlags = MCUSR;
+  MCUSR = 0;
+
   wdt_enable(WDTO_2S);
 
   pinMode(RPWM, OUTPUT);
@@ -452,6 +501,15 @@ void setup() {
   }
 
   loadPersistentState();
+  if (resetFlags & _BV(WDRF)) {
+    lastFaultCode = FAULT_UNKNOWN;
+    faultCount++;
+    persistState();
+#ifdef DEBUG_SERIAL
+    Serial.println("Watchdog reset detected during startup.");
+#endif
+  }
+
   stopMotor();
   digitalWrite(STATUS_LED, LOW);
   randomSeed(analogRead(A1) ^ analogRead(A2) ^ micros());

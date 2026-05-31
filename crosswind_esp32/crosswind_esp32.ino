@@ -106,8 +106,14 @@ const char* PREFS_NAMESPACE = "uniwobbler";
 const int PREFS_MAGIC = 0xA5A5;
 const char* PREFS_MAGIC_KEY = "magic";
 const char* PREFS_CHECKSUM_KEY = "checksum";
+const char* PREFS_LAST_FAULT_KEY = "lastFault";
+const char* PREFS_FAULT_COUNT_KEY = "faultCount";
+const char* BLE_AUTH_TOKEN = "CROSSWIND";
 const size_t MAX_BLE_COMMAND_LENGTH = 64;
 bool bleClientConnected = false;
+bool bleAuthorized = false;
+int lastFaultCode = 0;
+int faultCount = 0;
 
 String lastResponseMessage = "READY";
 
@@ -194,6 +200,7 @@ class ServerCallbacks : public BLEServerCallbacks {
 
   void onDisconnect(BLEServer* pServer) override {
     bleClientConnected = false;
+    bleAuthorized = false;
     Serial.println("BLE client disconnected");
   }
 };
@@ -244,6 +251,8 @@ String buildStatusPayload() {
   payload += ";speedOverride=" + String(speedOverrideActive ? "1" : "0");
   payload += ";leftLimit=" + String(leftLimitHit ? "1" : "0");
   payload += ";rightLimit=" + String(rightLimitHit ? "1" : "0");
+  payload += ";faultCount=" + String(faultCount);
+  payload += ";lastFault=" + String(lastFaultCode);
   return payload;
 }
 
@@ -329,6 +338,19 @@ void emergencyStop(const String& reason) {
   startStopActive = false;
   stopMotor();
   digitalWrite(STATUS_LED_PIN, LOW);
+  if (reason == "STALL") {
+    lastFaultCode = 1;
+  } else if (reason == "BOTH_LIMITS") {
+    lastFaultCode = 2;
+  } else if (reason == "BUTTON_STUCK") {
+    lastFaultCode = 3;
+  } else if (reason == "STARTUP_BOTH_LIMITS") {
+    lastFaultCode = 4;
+  } else {
+    lastFaultCode = 255;
+  }
+  faultCount++;
+  persistState();
   sendCommandResponse("ERROR", "EMERGENCY_STOP:" + reason);
 }
 
@@ -343,6 +365,8 @@ void loadPersistentState() {
   int storedDirection = prefs.getInt("direction", FORWARD);
   int storedPwm = prefs.getInt("pwm", MIN_PWM);
   int storedChecksum = prefs.getInt(PREFS_CHECKSUM_KEY, 0);
+  lastFaultCode = prefs.getInt(PREFS_LAST_FAULT_KEY, 0);
+  faultCount = prefs.getInt(PREFS_FAULT_COUNT_KEY, 0);
   prefs.end();
 
   if (storedMagic != PREFS_MAGIC || storedChecksum != calculatePrefsChecksum(storedMode, storedDirection, storedPwm)) {
@@ -371,11 +395,28 @@ void persistState() {
   prefs.putInt("direction", currentDirection);
   prefs.putInt("pwm", currentPwm);
   prefs.putInt(PREFS_CHECKSUM_KEY, calculatePrefsChecksum(currentMode, currentDirection, currentPwm));
+  prefs.putInt(PREFS_LAST_FAULT_KEY, lastFaultCode);
+  prefs.putInt(PREFS_FAULT_COUNT_KEY, faultCount);
   prefs.end();
 }
 
 // Handle a parsed BLE command and update the system state accordingly.
 bool processControlCommand(const String& cmd, const String& value) {
+  if (cmd == "AUTH") {
+    if (normalizeToken(value) == String(BLE_AUTH_TOKEN)) {
+      bleAuthorized = true;
+      sendCommandResponse("OK", "AUTHENTICATED");
+      return true;
+    }
+    sendCommandResponse("ERROR", "AUTH_FAILED");
+    return true;
+  }
+
+  if (!bleAuthorized && cmd != "HELP" && cmd != "PING" && cmd != "STATUS" && cmd != "AUTH") {
+    sendCommandResponse("ERROR", "NOT_AUTHENTICATED");
+    return true;
+  }
+
   if (cmd == "START" || cmd == "RUN") {
     startStopActive = true;
     return true;
@@ -402,6 +443,8 @@ bool processControlCommand(const String& cmd, const String& value) {
     currentDirection = FORWARD;
     startStopActive = false;
     stopMotor();
+    faultCount = 0;
+    lastFaultCode = 0;
     persistState();
     return true;
   }
@@ -417,7 +460,7 @@ bool processControlCommand(const String& cmd, const String& value) {
   }
 
   if (cmd == "HELP") {
-    sendCommandResponse("OK", "HELP: START,STOP,STATUS,PING,RESET,MODE,DIRECTION,SPEED,SAVE,INFO");
+    sendCommandResponse("OK", "HELP: AUTH,START,STOP,STATUS,PING,RESET,MODE,DIRECTION,SPEED,SAVE,INFO");
     return true;
   }
 
@@ -702,6 +745,16 @@ void setup() {
 
   initPins();
   loadPersistentState();
+
+  esp_reset_reason_t resetReason = esp_reset_reason();
+  Serial.printf("Reset reason: %d\n", (int)resetReason);
+  if (resetReason == ESP_RST_WDT) {
+    faultCount++;
+    lastFaultCode = 255;
+    persistState();
+    Serial.println("Watchdog reset detected, state persisted.");
+  }
+
   randomSeed(esp_random());
   stopMotor();
 
