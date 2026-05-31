@@ -48,6 +48,9 @@ const uint16_t STALL_RECOVERY_MS = 800;
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
 enum FaultCode { FAULT_NONE = 0, FAULT_STALL = 1, FAULT_BOTH_LIMITS = 2, FAULT_BUTTON_STUCK = 3, FAULT_STARTUP = 4, FAULT_UNKNOWN = 255 };
+enum Direction { FORWARD, REVERSE };
+enum Mode { MANUAL, RANDOM, FLUSH, CENTERING };
+enum FlushState { FLUSH_IDLE, FLUSH_WAIT, FLUSH_RUNNING, FLUSH_DONE };
 
 struct __attribute__((packed)) PersistedState {
   uint8_t magic;
@@ -62,10 +65,6 @@ struct __attribute__((packed)) PersistedState {
 uint8_t calculateEepromChecksum(const PersistedState& state) {
   return state.magic ^ state.mode ^ state.direction ^ state.pwm ^ state.lastFault ^ state.faultCount ^ 0x5A;
 }
-
-enum Direction { FORWARD, REVERSE };
-enum Mode { MANUAL, RANDOM, FLUSH, CENTERING };
-enum FlushState { FLUSH_IDLE, FLUSH_WAIT, FLUSH_RUNNING, FLUSH_DONE };
 
 Mode currentMode = MANUAL;
 Direction currentDirection = FORWARD;
