@@ -1,5 +1,7 @@
 # CrossWind
 
+[![CI Compile](https://github.com/IronPineOutdoors/CrossWind/actions/workflows/ci.yml/badge.svg)](https://github.com/IronPineOutdoors/CrossWind/actions/workflows/ci.yml)
+
 <p float="left">
   <img src="assets/img/IronPineOutdoors_logo.png" alt="Iron Pine Outdoors logo" width="180" />
   <img src="assets/img/CrossWind_logo.png" alt="CrossWind logo" width="180" />
@@ -40,7 +42,8 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 - BLE control with remote commands and status notifications.
 - `AUTH=<token>` protected command access, with `HELP`, `PING`, and `STATUS` allowed before authentication.
 - Persistent mode, direction, speed, and fault diagnostics across resets.
-- BLE preference storage with magic and checksum validation.
+- BLE auth failure locking and command rate limiting for improved security.
+- Preference storage with versioning, magic, and checksum validation.
 - Hardware watchdog support for reset recovery from stuck firmware loops.
 - Command length guarding and connected-client-only status notifications.
 - Motor stall timeout protection after sustained commanded motion.
@@ -97,6 +100,7 @@ The lessons below are conceptual. Use the final wiring and motor driver based on
 - `crosswind/crosswind.ino` is designed for standard Arduino boards and uses `analogWrite()` for PWM.
 - `crosswind_esp32/crosswind_esp32.ino` uses ESP32 PWM channels via `ledcSetup()` and `ledcAttachPin()`.
 - Keep platform-specific wiring and code separate to avoid cross-platform mistakes.
+- Continuous integration is enabled via GitHub Actions in `.github/workflows/ci.yml`, which compiles both the AVR and ESP32 sketches on every push and pull request.
 
 ## Asset Usage
 
