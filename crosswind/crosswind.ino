@@ -42,6 +42,9 @@ const uint8_t EEPROM_MAGIC = 0xA5;
 
 const uint8_t WATCHDOG_TIMEOUT_SECONDS = 2;
 
+const uint8_t MAX_STALL_RETRIES = 2;
+const uint16_t STALL_RECOVERY_MS = 800;
+
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
 enum FaultCode { FAULT_NONE = 0, FAULT_STALL = 1, FAULT_BOTH_LIMITS = 2, FAULT_BUTTON_STUCK = 3, FAULT_STARTUP = 4, FAULT_UNKNOWN = 255 };
@@ -73,6 +76,7 @@ bool rightLimitHit = false;
 uint8_t currentPwm = MIN_PWM;
 int lastFaultCode = FAULT_NONE;
 uint8_t faultCount = 0;
+uint8_t stallRetryCount = 0;
 
 bool startStopActive = false;
 bool modeButtonEvent = false;
@@ -109,6 +113,8 @@ void setMotor(Direction dir, uint8_t pwm) {
     lastCommandedDirection = dir;
     lastCommandedPwm = pwm;
     lastMotorCommandTime = millis();
+    // clear stall retry state when a new command is issued
+    stallRetryCount = 0;
   }
 
   if (dir == FORWARD) {
@@ -537,7 +543,20 @@ void loop() {
   }
 
   if (startStopActive && lastCommandedPwm >= MIN_PWM && millis() - lastMotorCommandTime >= MOTOR_STALL_TIMEOUT_MS && !bothLimitsHit()) {
-    emergencyStop("STALL");
+    if (stallRetryCount < MAX_STALL_RETRIES) {
+      // attempt a brief reverse nudge to clear stalls
+      stallRetryCount++;
+      debugLog("STALL_RECOVERY_ATTEMPT");
+      Direction recoveryDir = (lastCommandedDirection == FORWARD) ? REVERSE : FORWARD;
+      setMotor(recoveryDir, MIN_PWM + 30);
+      delay(STALL_RECOVERY_MS);
+      setMotor(lastCommandedDirection, lastCommandedPwm);
+      debugLog("STALL_RECOVERY_DONE");
+      // refresh lastMotorCommandTime so we give it another timeout window
+      lastMotorCommandTime = millis();
+    } else {
+      emergencyStop("STALL");
+    }
   }
 
   wdt_reset();
