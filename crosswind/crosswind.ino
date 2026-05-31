@@ -48,6 +48,7 @@ const uint16_t STALL_RECOVERY_MS = 800;
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
 enum FaultCode { FAULT_NONE = 0, FAULT_STALL = 1, FAULT_BOTH_LIMITS = 2, FAULT_BUTTON_STUCK = 3, FAULT_STARTUP = 4, FAULT_UNKNOWN = 255 };
+enum ResetCause { RESET_NONE = 0, RESET_POWER_ON = 1, RESET_WATCHDOG = 2, RESET_EEPROM_FAILURE = 3 };
 enum Direction { FORWARD, REVERSE };
 enum Mode { MANUAL, RANDOM, FLUSH, CENTERING };
 enum FlushState { FLUSH_IDLE, FLUSH_WAIT, FLUSH_RUNNING, FLUSH_DONE };
@@ -59,11 +60,12 @@ struct __attribute__((packed)) PersistedState {
   uint8_t pwm;
   uint8_t lastFault;
   uint8_t faultCount;
+  uint8_t lastResetCause;
   uint8_t checksum;
 };
 
 uint8_t calculateEepromChecksum(const PersistedState& state) {
-  return state.magic ^ state.mode ^ state.direction ^ state.pwm ^ state.lastFault ^ state.faultCount ^ 0x5A;
+  return state.magic ^ state.mode ^ state.direction ^ state.pwm ^ state.lastFault ^ state.faultCount ^ state.lastResetCause ^ 0x5A;
 }
 
 Mode currentMode = MANUAL;
@@ -75,6 +77,7 @@ bool rightLimitHit = false;
 uint8_t currentPwm = MIN_PWM;
 int lastFaultCode = FAULT_NONE;
 uint8_t faultCount = 0;
+uint8_t lastResetCause = RESET_NONE;
 uint8_t stallRetryCount = 0;
 
 bool startStopActive = false;
@@ -199,6 +202,20 @@ void emergencyStop(const char* reason) {
   debugLog(reason);
 }
 
+void restoreSafeDefaults() {
+  currentMode = MANUAL;
+  currentDirection = FORWARD;
+  currentPwm = MIN_PWM;
+  faultActive = false;
+  lastFaultCode = FAULT_NONE;
+  stallRetryCount = 0;
+  lastResetCause = RESET_NONE;
+  persistState();
+#ifdef DEBUG_SERIAL
+  Serial.println("SAFE_DEFAULTS_RESTORED");
+#endif
+}
+
 void readButtons() {
   bool rawStart = digitalRead(START_STOP_BUTTON);
   bool rawMode = digitalRead(MODE_BUTTON);
@@ -216,10 +233,7 @@ void readButtons() {
       emergencyStop("BUTTON_STUCK");
     }
     if (!pressed && startStopWasPressed && (now - startStopPressStart >= START_STOP_LONG_PRESS_MS)) {
-      currentMode = MANUAL;
-      currentDirection = FORWARD;
-      currentPwm = MIN_PWM;
-      persistState();
+      restoreSafeDefaults();
     }
     startStopActive = pressed;
     if (!startStopActive && faultActive && !bothLimitsHit()) {
@@ -253,6 +267,7 @@ void loadPersistentState() {
   EEPROM.get(0, storedState);
 
   if (storedState.magic != EEPROM_MAGIC || storedState.checksum != calculateEepromChecksum(storedState)) {
+    lastResetCause = RESET_EEPROM_FAILURE;
     currentMode = MANUAL;
     currentDirection = FORWARD;
     currentPwm = MIN_PWM;
@@ -267,6 +282,7 @@ void loadPersistentState() {
   uint8_t storedPwm = storedState.pwm;
   lastFaultCode = storedState.lastFault;
   faultCount = storedState.faultCount;
+  lastResetCause = storedState.lastResetCause;
 
   if (storedMode <= CENTERING) {
     currentMode = (Mode)storedMode;
@@ -287,6 +303,7 @@ void persistState() {
   state.pwm = currentPwm;
   state.lastFault = lastFaultCode;
   state.faultCount = faultCount;
+  state.lastResetCause = lastResetCause;
   state.checksum = calculateEepromChecksum(state);
   EEPROM.put(0, state);
 }
@@ -294,7 +311,8 @@ void persistState() {
 void updateStatusLed() {
   unsigned long now = millis();
   if (faultActive) {
-    if (now - lastStatusBlink >= 200) {
+    uint16_t blinkInterval = faultCount > 5 ? 100 : 200;
+    if (now - lastStatusBlink >= blinkInterval) {
       lastStatusBlink = now;
       statusLedState = !statusLedState;
       digitalWrite(STATUS_LED, statusLedState ? HIGH : LOW);
@@ -328,6 +346,7 @@ void handleModeChange() {
   currentMode = (Mode)((currentMode + 1) % 4);
   flushState = FLUSH_IDLE;
   flushStartTime = 0;
+  persistState();
   modeButtonEvent = false;
 }
 
@@ -462,6 +481,7 @@ void centeringMode() {
     if (rightLimitHit) {
       stopMotor();
       currentDirection = REVERSE;
+      persistState();
     } else {
       setMotor(FORWARD, CENTERING_SPEED);
     }
@@ -469,6 +489,7 @@ void centeringMode() {
     if (leftLimitHit) {
       stopMotor();
       currentDirection = FORWARD;
+      persistState();
     } else {
       setMotor(REVERSE, CENTERING_SPEED);
     }
@@ -508,12 +529,16 @@ void setup() {
 
   loadPersistentState();
   if (resetFlags & _BV(WDRF)) {
+    lastResetCause = RESET_WATCHDOG;
     lastFaultCode = FAULT_UNKNOWN;
     faultCount++;
     persistState();
 #ifdef DEBUG_SERIAL
     Serial.println("Watchdog reset detected during startup.");
 #endif
+  } else if (resetFlags == 0) {
+    lastResetCause = RESET_POWER_ON;
+    persistState();
   }
 
   stopMotor();
