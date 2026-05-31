@@ -108,7 +108,8 @@ const char* PREFS_MAGIC_KEY = "magic";
 const char* PREFS_CHECKSUM_KEY = "checksum";
 const char* PREFS_LAST_FAULT_KEY = "lastFault";
 const char* PREFS_FAULT_COUNT_KEY = "faultCount";
-const char* BLE_AUTH_TOKEN = "CROSSWIND";
+const char* PREFS_AUTH_KEY = "auth";
+String bleAuthToken = "CROSSWIND";
 const size_t MAX_BLE_COMMAND_LENGTH = 64;
 bool bleClientConnected = false;
 bool bleAuthorized = false;
@@ -127,6 +128,11 @@ void setMode(Mode mode);
 void loadPersistentState();
 void persistState();
 int calculatePrefsChecksum(int mode, int direction, int pwm);
+
+// auth helper
+String getStoredAuth() {
+  return bleAuthToken;
+}
 
 // BLE response helpers.
 String buildResponsePayload();
@@ -367,6 +373,8 @@ void loadPersistentState() {
   int storedChecksum = prefs.getInt(PREFS_CHECKSUM_KEY, 0);
   lastFaultCode = prefs.getInt(PREFS_LAST_FAULT_KEY, 0);
   faultCount = prefs.getInt(PREFS_FAULT_COUNT_KEY, 0);
+  // load stored auth token if present
+  bleAuthToken = prefs.getString(PREFS_AUTH_KEY, bleAuthToken.c_str());
   prefs.end();
 
   if (storedMagic != PREFS_MAGIC || storedChecksum != calculatePrefsChecksum(storedMode, storedDirection, storedPwm)) {
@@ -397,13 +405,30 @@ void persistState() {
   prefs.putInt(PREFS_CHECKSUM_KEY, calculatePrefsChecksum(currentMode, currentDirection, currentPwm));
   prefs.putInt(PREFS_LAST_FAULT_KEY, lastFaultCode);
   prefs.putInt(PREFS_FAULT_COUNT_KEY, faultCount);
+  prefs.putString(PREFS_AUTH_KEY, bleAuthToken.c_str());
   prefs.end();
 }
 
 // Handle a parsed BLE command and update the system state accordingly.
 bool processControlCommand(const String& cmd, const String& value) {
+  if (cmd == "SETAUTH" || cmd == "SET_AUTH") {
+    String newToken = normalizeToken(value);
+    // if the current token is default or caller already authorized, allow change
+    if (bleAuthorized || bleAuthToken == "CROSSWIND") {
+      if (newToken.length() >= 6 && newToken.length() < 64) {
+        bleAuthToken = newToken;
+        persistState();
+        sendCommandResponse("OK", "SETAUTH:OK");
+        return true;
+      }
+      sendCommandResponse("ERROR", "SETAUTH:INVALID");
+      return true;
+    }
+    sendCommandResponse("ERROR", "SETAUTH:NOT_AUTHORIZED");
+    return true;
+  }
   if (cmd == "AUTH") {
-    if (normalizeToken(value) == String(BLE_AUTH_TOKEN)) {
+    if (normalizeToken(value) == String(bleAuthToken)) {
       bleAuthorized = true;
       sendCommandResponse("OK", "AUTHENTICATED");
       return true;
