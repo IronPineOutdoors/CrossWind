@@ -4,6 +4,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <esp_task_wdt.h>
 
 // CrossWind ESP32
 // BLE-controlled pump/motor controller with manual, random, flush, and centering modes.
@@ -46,6 +47,7 @@ const uint16_t FLUSH_PAUSE_MIN_MS = 1000;
 const uint16_t FLUSH_PAUSE_MAX_MS = 5000;
 const uint16_t FLUSH_RUN_MS = 1000;
 const uint32_t MOTOR_STALL_TIMEOUT_MS = 5000;
+const uint8_t WATCHDOG_TIMEOUT_SECONDS = 5;
 const uint8_t FLUSH_SPEED = 255;
 const uint8_t CENTERING_SPEED = 100;
 
@@ -695,6 +697,9 @@ void setup() {
   delay(500);
   Serial.println("Starting CrossWind ESP32...");
 
+  esp_task_wdt_init(WATCHDOG_TIMEOUT_SECONDS, true);
+  esp_task_wdt_add(NULL);
+
   initPins();
   loadPersistentState();
   randomSeed(esp_random());
@@ -727,6 +732,8 @@ void loop() {
   if (startStopActive && lastCommandedPwm >= MIN_PWM && now - lastMotorCommandTime >= MOTOR_STALL_TIMEOUT_MS && !leftLimitHit && !rightLimitHit) {
     emergencyStop("STALL");
   }
+
+  esp_task_wdt_reset();
 
   static unsigned long lastBleUpdate = 0;
   if (now - lastBleUpdate >= 1000) {

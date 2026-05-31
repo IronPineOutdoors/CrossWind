@@ -32,6 +32,7 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 - Debounced button handling for reliable operation.
 - EEPROM persistence backed by packed state records and CRC validation.
 - Motor stall timeout protection that stops the motor after sustained commanded motion without a limit transition.
+- Hardware watchdog support for reset recovery from stuck firmware loops.
 - Built-in limit switch safety and emergency stops.
 - Optional serial debug mode via `DEBUG_SERIAL` for troubleshooting.
 
@@ -39,6 +40,7 @@ The ESP32 variant adds a BLE control interface and stores the last selected mode
 - BLE control with remote commands and status notifications.
 - Persistent mode, direction, and speed settings across resets.
 - BLE preference storage with magic and checksum validation.
+- Hardware watchdog support for reset recovery from stuck firmware loops.
 - Command length guarding and connected-client-only status notifications.
 - Motor stall timeout protection after sustained commanded motion.
 - Remote `SAVE`, `INFO`, and `HELP` commands for easier control.

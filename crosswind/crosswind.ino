@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <EEPROM.h>
+#include <avr/wdt.h>
 
 // CrossWind
 // Controls a bidirectional pump/motor with manual, random, flush, and centering modes.
@@ -38,6 +39,8 @@ const uint16_t START_STOP_LONG_PRESS_MS = 1500;
 const uint32_t BUTTON_STUCK_TIMEOUT_MS = 10000;
 const uint32_t MOTOR_STALL_TIMEOUT_MS = 5000;
 const uint8_t EEPROM_MAGIC = 0xA5;
+
+const uint8_t WATCHDOG_TIMEOUT_SECONDS = 2;
 
 const uint16_t MODE_BLINK_INTERVALS[] = { 800, 500, 300, 1200 };
 
@@ -430,6 +433,8 @@ void setup() {
   Serial.println(FIRMWARE_VERSION);
 #endif
 
+  wdt_enable(WDTO_2S);
+
   pinMode(RPWM, OUTPUT);
   pinMode(LPWM, OUTPUT);
   pinMode(R_EN, OUTPUT);
@@ -477,5 +482,6 @@ void loop() {
     emergencyStop("STALL");
   }
 
+  wdt_reset();
   updateStatusLed();
 }
