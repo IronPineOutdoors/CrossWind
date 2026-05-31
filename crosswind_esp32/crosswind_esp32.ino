@@ -109,12 +109,24 @@ const char* PREFS_CHECKSUM_KEY = "checksum";
 const char* PREFS_LAST_FAULT_KEY = "lastFault";
 const char* PREFS_FAULT_COUNT_KEY = "faultCount";
 const char* PREFS_AUTH_KEY = "auth";
-String bleAuthToken = "CROSSWIND";
+const char* PREFS_RESET_CAUSE_KEY = "resetCause";
+const char* PREFS_AUTH_FAILURE_KEY = "authFails";
+const char* PREFS_AUTH_LOCKOUT_KEY = "authLockout";
+const char* PREFS_VERSION_KEY = "version";
+const int PREFS_VERSION = 1;
 const size_t MAX_BLE_COMMAND_LENGTH = 64;
+const uint8_t MAX_AUTH_FAILURES = 3;
+const unsigned long AUTH_LOCKOUT_MS = 60000;
+String bleAuthToken = "CROSSWIND";
 bool bleClientConnected = false;
 bool bleAuthorized = false;
 int lastFaultCode = 0;
 int faultCount = 0;
+int lastResetCause = 0;
+int authFailureCount = 0;
+unsigned long authLockoutUntil = 0;
+const unsigned long BLE_COMMAND_RATE_MS = 200;
+unsigned long lastBleCommandMillis = 0;
 
 String lastResponseMessage = "READY";
 
@@ -132,6 +144,10 @@ int calculatePrefsChecksum(int mode, int direction, int pwm);
 // auth helper
 String getStoredAuth() {
   return bleAuthToken;
+}
+
+bool isAuthLocked() {
+  return authLockoutUntil > 0 && ((long)(authLockoutUntil - millis()) > 0);
 }
 
 // BLE response helpers.
@@ -158,6 +174,13 @@ void setSpeedOverride(uint8_t pwm);
 // The expected payload format is COMMAND=VALUE (or just COMMAND).
 class CommandCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* pCharacteristic) override {
+    unsigned long now = millis();
+    if (now - lastBleCommandMillis < BLE_COMMAND_RATE_MS) {
+      sendCommandResponse("ERROR", "RATE_LIMIT");
+      return;
+    }
+    lastBleCommandMillis = now;
+
     String payload = pCharacteristic->getValue();
     payload.trim();
     if (payload.length() == 0) {
@@ -248,6 +271,27 @@ void setMode(Mode mode) {
 }
 
 // Build the current state payload that is sent over BLE.
+String resetCauseToString(int cause) {
+  switch (cause) {
+    case ESP_RST_POWERON:
+      return "POWERON";
+    case ESP_RST_WDT:
+      return "WATCHDOG";
+    case ESP_RST_BROWNOUT:
+      return "BROWNOUT";
+    case ESP_RST_SW:
+      return "SOFTWARE";
+    case ESP_RST_SDIO:
+      return "SDIO";
+    case ESP_RST_DEEPSLEEP:
+      return "DEEPSLEEP";
+    case ESP_RST_EXT:
+      return "EXTERNAL";
+    default:
+      return "UNKNOWN";
+  }
+}
+
 String buildStatusPayload() {
   String payload = "fw=" + String(FIRMWARE_VERSION);
   payload += ";mode=" + modeToString(currentMode);
@@ -259,6 +303,9 @@ String buildStatusPayload() {
   payload += ";rightLimit=" + String(rightLimitHit ? "1" : "0");
   payload += ";faultCount=" + String(faultCount);
   payload += ";lastFault=" + String(lastFaultCode);
+  payload += ";resetCause=" + resetCauseToString(lastResetCause);
+  payload += ";authLocked=" + String(isAuthLocked() ? "1" : "0");
+  payload += ";authFails=" + String(authFailureCount);
   return payload;
 }
 
@@ -367,20 +414,33 @@ int calculatePrefsChecksum(int mode, int direction, int pwm) {
 void loadPersistentState() {
   prefs.begin(PREFS_NAMESPACE, true);
   int storedMagic = prefs.getInt(PREFS_MAGIC_KEY, 0);
+  int storedVersion = prefs.getInt(PREFS_VERSION_KEY, 0);
   int storedMode = prefs.getInt("mode", MANUAL);
   int storedDirection = prefs.getInt("direction", FORWARD);
   int storedPwm = prefs.getInt("pwm", MIN_PWM);
   int storedChecksum = prefs.getInt(PREFS_CHECKSUM_KEY, 0);
   lastFaultCode = prefs.getInt(PREFS_LAST_FAULT_KEY, 0);
   faultCount = prefs.getInt(PREFS_FAULT_COUNT_KEY, 0);
+  lastResetCause = prefs.getInt(PREFS_RESET_CAUSE_KEY, ESP_RST_POWERON);
+  authFailureCount = prefs.getInt(PREFS_AUTH_FAILURE_KEY, 0);
+  authLockoutUntil = prefs.getULong(PREFS_AUTH_LOCKOUT_KEY, 0);
+  if (authLockoutUntil > 0 && ((long)(authLockoutUntil - millis()) <= 0)) {
+    authLockoutUntil = 0;
+    authFailureCount = 0;
+  }
   // load stored auth token if present
   bleAuthToken = prefs.getString(PREFS_AUTH_KEY, bleAuthToken.c_str());
   prefs.end();
 
-  if (storedMagic != PREFS_MAGIC || storedChecksum != calculatePrefsChecksum(storedMode, storedDirection, storedPwm)) {
+  if (storedMagic != PREFS_MAGIC || storedVersion != PREFS_VERSION || storedChecksum != calculatePrefsChecksum(storedMode, storedDirection, storedPwm)) {
     currentMode = MANUAL;
     currentDirection = FORWARD;
     currentPwm = MIN_PWM;
+    lastFaultCode = 0;
+    faultCount = 0;
+    authFailureCount = 0;
+    authLockoutUntil = 0;
+    lastResetCause = ESP_RST_POWERON;
     persistState();
     return;
   }
@@ -399,6 +459,7 @@ void loadPersistentState() {
 void persistState() {
   prefs.begin(PREFS_NAMESPACE, false);
   prefs.putInt(PREFS_MAGIC_KEY, PREFS_MAGIC);
+  prefs.putInt(PREFS_VERSION_KEY, PREFS_VERSION);
   prefs.putInt("mode", currentMode);
   prefs.putInt("direction", currentDirection);
   prefs.putInt("pwm", currentPwm);
@@ -406,6 +467,9 @@ void persistState() {
   prefs.putInt(PREFS_LAST_FAULT_KEY, lastFaultCode);
   prefs.putInt(PREFS_FAULT_COUNT_KEY, faultCount);
   prefs.putString(PREFS_AUTH_KEY, bleAuthToken.c_str());
+  prefs.putInt(PREFS_RESET_CAUSE_KEY, lastResetCause);
+  prefs.putInt(PREFS_AUTH_FAILURE_KEY, authFailureCount);
+  prefs.putULong(PREFS_AUTH_LOCKOUT_KEY, authLockoutUntil);
   prefs.end();
 }
 
@@ -428,11 +492,26 @@ bool processControlCommand(const String& cmd, const String& value) {
     return true;
   }
   if (cmd == "AUTH") {
+    if (isAuthLocked()) {
+      sendCommandResponse("ERROR", "AUTH_LOCKED");
+      return true;
+    }
     if (normalizeToken(value) == String(bleAuthToken)) {
       bleAuthorized = true;
+      authFailureCount = 0;
+      authLockoutUntil = 0;
+      persistState();
       sendCommandResponse("OK", "AUTHENTICATED");
       return true;
     }
+    authFailureCount++;
+    if (authFailureCount >= MAX_AUTH_FAILURES) {
+      authLockoutUntil = millis() + AUTH_LOCKOUT_MS;
+      persistState();
+      sendCommandResponse("ERROR", "AUTH_LOCKED");
+      return true;
+    }
+    persistState();
     sendCommandResponse("ERROR", "AUTH_FAILED");
     return true;
   }
@@ -584,6 +663,7 @@ void handleModeChange() {
   currentMode = (Mode)((currentMode + 1) % 4);
   flushState = FLUSH_IDLE;
   nextRandomChange = 0;
+  persistState();
   modeButtonEvent = false;
 }
 
@@ -599,6 +679,7 @@ void handleManualMode() {
     if (rightLimitHit) {
       stopMotor();
       currentDirection = REVERSE;
+      persistState();
       return;
     }
     setMotor(FORWARD, currentPwm);
@@ -606,6 +687,7 @@ void handleManualMode() {
     if (leftLimitHit) {
       stopMotor();
       currentDirection = FORWARD;
+      persistState();
       return;
     }
     setMotor(REVERSE, currentPwm);
@@ -690,6 +772,7 @@ void handleCenteringMode() {
     if (rightLimitHit) {
       stopMotor();
       currentDirection = REVERSE;
+      persistState();
       return;
     }
     setMotor(FORWARD, CENTERING_SPEED);
@@ -697,6 +780,7 @@ void handleCenteringMode() {
     if (leftLimitHit) {
       stopMotor();
       currentDirection = FORWARD;
+      persistState();
       return;
     }
     setMotor(REVERSE, CENTERING_SPEED);
@@ -750,10 +834,8 @@ void initPins() {
   pinMode(START_STOP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
 
-  ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION);
-  ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION);
-  ledcAttachPin(LPWM_PIN, PWM_CHANNEL_LEFT);
-  ledcAttachPin(RPWM_PIN, PWM_CHANNEL_RIGHT);
+  ledcAttach(LPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
+  ledcAttach(RPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
 
   pinMode(STATUS_LED_PIN, OUTPUT);
   digitalWrite(STATUS_LED_PIN, LOW);
@@ -765,7 +847,12 @@ void setup() {
   delay(500);
   Serial.println("Starting CrossWind ESP32...");
 
-  esp_task_wdt_init(WATCHDOG_TIMEOUT_SECONDS, true);
+  esp_task_wdt_config_t wdtConfig = {
+    .timeout_ms = WATCHDOG_TIMEOUT_SECONDS * 1000,
+    .idle_core_mask = UINT32_MAX,
+    .trigger_panic = true,
+  };
+  esp_task_wdt_init(&wdtConfig);
   esp_task_wdt_add(NULL);
 
   initPins();
