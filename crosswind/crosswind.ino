@@ -80,6 +80,7 @@ uint8_t stallRetryCount = 0;
 
 bool startStopActive = false;
 bool modeButtonEvent = false;
+bool faultActive = false;
 
 bool lastStartStopState = HIGH;
 bool lastModeButtonState = HIGH;
