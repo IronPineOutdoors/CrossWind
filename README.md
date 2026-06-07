@@ -19,7 +19,7 @@ CrossWind is a dual-platform motor controller project for Iron Pine Outdoors. It
 
 CrossWind drives a bidirectional motor or pump using limit switches, a start/stop button, a mode button, and a speed potentiometer. The controller supports four operating modes:
 
-- `MANUAL` — direct control with the speed pot and automatic direction reversal at limit switches.
+- `SWEEP` — Phase 1 default mode; drive right until the right limit switch is hit, dwell, reverse left until the left limit switch is hit, dwell, and repeat.
 - `RANDOM` — randomized direction and speed changes within the selected range.
 - `FLUSH` — randomized flush sequences with safe pause/run timing.
 - `CENTERING` — move slowly toward the opposite limit and reverse when reached.
@@ -64,9 +64,9 @@ The ESP32 version accepts simple BLE commands in the form `COMMAND=VALUE`, `COMM
 - `SAVE`
 - `INFO`
 - `HELP`
-- `MODE=MANUAL|RANDOM|AUTO|FLUSH|CENTERING|CENTER`
-- `DIRECTION=FORWARD|REVERSE`
-- `SPEED=<50-255>`
+- `CLEAR_FAULT`
+- `MODE=SWEEP|RANDOM|AUTO|FLUSH|CENTERING|CENTER`
+- `SPEED=<0-255>`
 
 Example:
 
