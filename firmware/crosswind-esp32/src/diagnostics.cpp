@@ -3,6 +3,7 @@
 #include "inputs.h"
 #include "limits.h"
 #include "motor.h"
+#include "trigger.h"
 
 const char* modeToString(Mode mode) {
   switch (mode) {
@@ -46,6 +47,10 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(state.speed);
   Serial.print("  Last stored fault: ");
   Serial.println(faultToString(state.lastFault));
+  Serial.print("  Thrower trigger enabled: ");
+  Serial.println(ENABLE_THROWER_TRIGGER ? "YES" : "NO");
+  Serial.print("  Trigger active: ");
+  Serial.println(isTriggerActive() ? "YES" : "NO");
   Serial.println();
 }
 
@@ -71,5 +76,8 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";leftLimit=" + String(leftLimitActive() ? "1" : "0");
   payload += ";rightLimit=" + String(rightLimitActive() ? "1" : "0");
   payload += ";potRaw=" + String(readSpeedRaw());
+  payload += ";triggerEnabled=" + String(ENABLE_THROWER_TRIGGER ? "1" : "0");
+  payload += ";triggerActive=" + String(isTriggerActive() ? "1" : "0");
+  payload += ";lastTriggerMs=" + String(getLastTriggerTime());
   return payload;
 }

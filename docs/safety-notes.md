@@ -9,3 +9,6 @@
 - Add a reachable power disconnect before field testing.
 - Secure the base before powered motion.
 - Treat stored faults as useful evidence; investigate before clearing and retesting.
+- Treat trigger testing like live thrower testing: unload the thrower, point it safely, and keep people clear.
+- Confirm the VEVOR NH113 pedal wires with a continuity test before wiring Crosswind in parallel.
+- The ESP32 must not send voltage into the thrower pedal circuit; use relay contacts as dry contact only.

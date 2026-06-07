@@ -8,6 +8,7 @@
 #include "modes.h"
 #include "motor.h"
 #include "storage.h"
+#include "trigger.h"
 
 static ControllerState state = {
   SWEEP,
@@ -22,7 +23,11 @@ static unsigned long lastBleStatus = 0;
 
 static void latchFault(FaultCode fault) {
   stopMotor();
+  cancelThrowerTrigger();
   state.running = false;
+  if (state.faultActive) {
+    return;
+  }
   state.faultActive = true;
   state.lastFault = fault;
   resetModeState();
@@ -33,6 +38,7 @@ static void latchFault(FaultCode fault) {
 
 static void clearFault() {
   stopMotor();
+  cancelThrowerTrigger();
   state.running = false;
   state.faultActive = false;
   state.lastFault = FAULT_NONE;
@@ -43,8 +49,35 @@ static void clearFault() {
 static void setMode(Mode mode) {
   state.mode = mode;
   state.running = false;
+  cancelThrowerTrigger();
   resetModeState();
   saveSettings(state);
+}
+
+static bool triggerAllowed() {
+  if (state.faultActive) {
+    Serial.println("Trigger ignored: fault active");
+    sendBleResponse("ERROR", "TRIGGER_BLOCKED_FAULT");
+    return false;
+  }
+
+  if (!state.running && !ALLOW_TRIGGER_WHEN_STOPPED) {
+    Serial.println("Trigger ignored: controller stopped");
+    sendBleResponse("ERROR", "TRIGGER_BLOCKED_STOPPED");
+    return false;
+  }
+
+  return true;
+}
+
+static bool requestSafeTrigger() {
+  if (!triggerAllowed()) {
+    return false;
+  }
+
+  bool accepted = requestThrowerTrigger();
+  sendBleResponse(accepted ? "OK" : "ERROR", accepted ? "TRIGGER_REQUESTED" : "TRIGGER_BLOCKED_INTERVAL");
+  return accepted;
 }
 
 static bool handleBleCommand(const String& command, const String& value) {
@@ -61,6 +94,7 @@ static bool handleBleCommand(const String& command, const String& value) {
   if (command == "STOP") {
     state.running = false;
     stopMotor();
+    cancelThrowerTrigger();
     resetModeState();
     sendBleResponse("OK", "STOPPED");
     return true;
@@ -75,6 +109,11 @@ static bool handleBleCommand(const String& command, const String& value) {
   if (command == "STATUS") {
     sendBleResponse("OK", buildStatusPayload(state));
     updateBleStatus(state);
+    return true;
+  }
+
+  if (command == "TRIGGER" || command == "FIRE" || command == "LAUNCH") {
+    requestSafeTrigger();
     return true;
   }
 
@@ -128,6 +167,7 @@ void setup() {
   digitalWrite(STATUS_LED_PIN, LOW);
 
   beginMotor();
+  initTrigger();
   beginLimits();
   beginInputs();
   beginStorage();
@@ -160,6 +200,7 @@ void loop() {
     } else if (!state.faultActive) {
       state.running = !state.running;
       if (!state.running) {
+        cancelThrowerTrigger();
         resetModeState();
       }
     }
@@ -180,12 +221,14 @@ void loop() {
   bool wasFaulted = state.faultActive;
   updateMode(state);
   if (!wasFaulted && state.faultActive) {
+    cancelThrowerTrigger();
     saveSettings(state);
     Serial.print("FAULT: ");
     Serial.println(faultToString(state.lastFault));
   }
 
   updateMotorRamp();
+  updateTrigger();
   printRuntimeStatus(state);
 
   unsigned long now = millis();

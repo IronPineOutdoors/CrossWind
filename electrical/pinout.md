@@ -13,6 +13,7 @@
 | Start/stop button | GPIO18 | INPUT_PULLUP |
 | Mode button | GPIO19 | INPUT_PULLUP |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
+| Thrower trigger relay | GPIO23 | Relay input only; relay contacts are dry contact across pedal wires |
 | Status LED | GPIO2 | Onboard LED on many dev boards |
 
 ## BTS7960 Pins
@@ -33,6 +34,12 @@ Start/stop and mode buttons connect from their GPIO pin to ground and use intern
 ## Potentiometer
 
 Use a potentiometer wired between 3.3V and GND, with the wiper to GPIO39. Do not connect 5V to an ESP32 analog pin.
+
+## Thrower Trigger Relay
+
+Use an opto-isolated relay module or equivalent dry-contact relay output. ESP32 GPIO23 drives the relay input. The relay `COM` and `NO` contacts wire in parallel with the VEVOR NH113 factory foot pedal wires after confirming the pedal pair with a continuity test.
+
+The ESP32 must never send voltage into the thrower pedal circuit. Use the relay contacts as a switch only.
 
 ## Future OLED, Encoder, And Battery Sense
 

@@ -115,8 +115,13 @@ void updateMode(ControllerState& state) {
       break;
     case RANDOM:
     case FLUSH:
+      // Future automatic trigger hooks live here. Keep disabled unless
+      // ENABLE_AUTOMATIC_TRIGGER is intentionally enabled and safety-tested.
+      (void)ENABLE_AUTOMATIC_TRIGGER;
+      updateSweep(state);
+      break;
     case CENTERING:
-      // Future Crosswind product modes. Phase 1 keeps safe sweep behavior.
+      // CENTERING should never trigger the thrower. Phase 1 keeps safe sweep behavior.
       updateSweep(state);
       break;
   }

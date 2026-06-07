@@ -32,6 +32,10 @@ Mount left and right roller switches on adjustable stationary brackets. A single
 
 Mount the ESP32, BTS7960, buck converter, fuse block, and wiring terminals in a waterproof electronics box. Add strain relief for motor, battery, switch, and control wiring.
 
+Add an opto-isolated trigger relay if thrower launch control is being tested. Keep the factory VEVOR NH113 pedal connected and wire the relay contacts in parallel with the pedal switch.
+
 ## First Powered Test
 
 Remove the thrower. Power the ESP32 first, verify Serial diagnostics, verify switch states, then power the motor driver and test low-PWM sweep.
+
+Test trigger output only after confirming the thrower is unloaded, pointed safely, and the black/white pedal wires behave like a simple open/short momentary switch.

@@ -16,6 +16,7 @@
     GPIO18 -> start/stop button to GND, INPUT_PULLUP
     GPIO19 -> mode button to GND, INPUT_PULLUP
     GPIO39 -> speed potentiometer wiper, 0-3.3V only
+    GPIO23 -> opto-isolated relay input for thrower pedal dry contact
     GPIO2  -> status LED
 
   Normally closed limit switches are preferred for Phase 1. With INPUT_PULLUP,
@@ -33,6 +34,7 @@ const int RIGHT_LIMIT_PIN = 33;
 const int START_STOP_BUTTON_PIN = 18;
 const int MODE_BUTTON_PIN = 19;
 const int SPEED_POT_PIN = 39;
+const int THROWER_TRIGGER_PIN = 23;
 const int STATUS_LED_PIN = 2;
 
 // Future expansion placeholders for Phase 2 and production hardware.
@@ -63,6 +65,16 @@ const uint16_t DIRECTION_CHANGE_DEADTIME_MS = 50;
 const uint8_t WATCHDOG_TIMEOUT_SECONDS = 5;
 const uint16_t BLE_STATUS_INTERVAL_MS = 1000;
 const uint16_t SERIAL_STATUS_INTERVAL_MS = 1000;
+
+// Thrower trigger relay settings. The relay contacts should be dry-contact
+// only, wired in parallel with the factory pedal. The ESP32 must not inject
+// voltage into the thrower pedal circuit.
+const bool ENABLE_THROWER_TRIGGER = true;
+const bool ALLOW_TRIGGER_WHEN_STOPPED = false;
+const bool ENABLE_AUTOMATIC_TRIGGER = false;
+const uint16_t TRIGGER_PULSE_MS = 500;
+const uint32_t MIN_TRIGGER_INTERVAL_MS = 3000UL;
+const int TRIGGER_ACTIVE_STATE = HIGH;
 
 const char BLE_DEVICE_NAME[] = "Crosswind-ESP32";
 const char BLE_SERVICE_UUID[] = "12345678-1234-1234-1234-1234567890ab";

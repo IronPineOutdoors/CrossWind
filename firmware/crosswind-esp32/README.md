@@ -52,3 +52,8 @@ pio run --target upload
 - `SPEED=0-255`
 - `STATUS`
 - `CLEAR_FAULT`
+- `TRIGGER`
+- `FIRE`
+- `LAUNCH`
+
+Trigger commands pulse the optional thrower relay. They are ignored while faulted, and ignored while stopped unless `ALLOW_TRIGGER_WHEN_STOPPED` is enabled in `config.h`.
