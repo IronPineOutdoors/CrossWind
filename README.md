@@ -1,111 +1,63 @@
-# CrossWind
+# Crosswind
 
-[![CI Compile](https://github.com/IronPineOutdoors/CrossWind/actions/workflows/ci.yml/badge.svg)](https://github.com/IronPineOutdoors/CrossWind/actions/workflows/ci.yml)
+Crosswind is an Iron Pine Outdoors prototype for programmable target presentation: a universal wobbler base that can add controlled yaw, and later pitch, to automatic clay throwers.
 
-<p float="left">
-  <img src="assets/img/IronPineOutdoors_logo.png" alt="Iron Pine Outdoors logo" width="180" />
-  <img src="assets/img/CrossWind_logo.png" alt="CrossWind logo" width="180" />
-</p>
+Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating top plate on a lazy susan bearing, a wiper motor, a BTS7960 / IBT-2 motor driver, and two roller limit switches to sweep a thrower left and right.
 
-CrossWind is a dual-platform motor controller project for Iron Pine Outdoors. It includes a classic Arduino sketch for AVR boards and an ESP32 version with BLE remote control and persistent settings.
+Phase 2 is planned as a dual-axis yaw + pitch system with programmable presentation modes.
 
-## Repository Layout
+## Current Phase
 
-- `crosswind/` — Classic Arduino sketch for standard AVR boards.
-- `crosswind_esp32/` — ESP32 sketch with BLE remote control and persistent settings.
-- `assets/img/` — branding assets and logo files used by the README.
+Phase 1: single-axis sweep prototype.
 
-## Project Overview
+The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rails, and mounting approach should remain adjustable so Crosswind can support other automatic throwers later.
 
-CrossWind drives a bidirectional motor or pump using limit switches, a start/stop button, a mode button, and a speed potentiometer. The controller supports four operating modes:
+## Phase 1 Hardware
 
-- `SWEEP` — Phase 1 default mode; drive right until the right limit switch is hit, dwell, reverse left until the left limit switch is hit, dwell, and repeat.
-- `RANDOM` — randomized direction and speed changes within the selected range.
-- `FLUSH` — randomized flush sequences with safe pause/run timing.
-- `CENTERING` — move slowly toward the opposite limit and reverse when reached.
+- ESP32 dev board
+- Optional Arduino Uno/Nano fallback controller
+- BTS7960 / IBT-2 motor driver
+- 12V Mitsubishi Outlander rear wiper motor
+- Left and right roller limit switches
+- Start/stop button
+- Mode button
+- Speed potentiometer, with future rotary encoder option
+- 12V battery
+- 12V-to-5V buck converter
+- Waterproof electronics box
+- 28" x 28" 3/4" plywood base
+- 20" x 20" rotating top plate
+- 12" lazy susan bearing
 
-The ESP32 variant adds a BLE control interface and stores the last selected mode, direction, and speed in non-volatile memory.
+## Folder Structure
 
-## Features
+- `firmware/crosswind-esp32/` - PlatformIO-style ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, and diagnostics modules.
+- `firmware/crosswind-arduino/` - Arduino Uno/Nano fallback firmware.
+- `mechanical/` - Phase 1 and Phase 2 mechanical notes, dimensions, fitment, and cut lists.
+- `electrical/` - Pinout, power system, fusing, limit switch wiring, and wiring checklist.
+- `cad/` - CAD export/drop folders for Phase 1 and Phase 2.
+- `testing/` - Bench, motor, sweep, runtime, and field test records.
+- `branding/` - Iron Pine Outdoors and Crosswind product identity notes.
+- `docs/` - Requirements, build plans, safety notes, changelog, and roadmap.
 
-### Classic Arduino (`crosswind/`)
-- Manual, random, flush, and centering drive modes.
-- Soft start/ramp behavior for flush actions.
-- Debounced button handling for reliable operation.
-- EEPROM persistence backed by packed state records and CRC validation.
-- Motor stall timeout protection that stops the motor after sustained commanded motion without a limit transition.
-- Hardware watchdog support for reset recovery from stuck firmware loops.
-- Built-in limit switch safety and emergency stops.
-- Optional serial debug mode via `DEBUG_SERIAL` for troubleshooting.
+## Quick Start
 
-### ESP32 (`crosswind_esp32/`)
-- BLE control with remote commands and status notifications.
-- `AUTH=<token>` protected command access, with `HELP`, `PING`, and `STATUS` allowed before authentication.
-- Persistent mode, direction, speed, and fault diagnostics across resets.
-- BLE auth failure locking and command rate limiting for improved security.
-- Preference storage with versioning, magic, and checksum validation.
-- Hardware watchdog support for reset recovery from stuck firmware loops.
-- Command length guarding and connected-client-only status notifications.
-- Motor stall timeout protection after sustained commanded motion.
-- Remote `SAVE`, `INFO`, and `HELP` commands for easier control.
-- Safety stop if both limit switches are triggered simultaneously.
-- BLE response support for `PING` and `RESET`.
+1. Read `docs/safety-notes.md`.
+2. Review `electrical/pinout.md` before wiring.
+3. Build the Phase 1 base from `mechanical/phase-1/dimensions.md` and `mechanical/phase-1/cut-list.md`.
+4. Flash the ESP32 firmware from `firmware/crosswind-esp32/`.
+5. Run `testing/bench-test-checklist.md` with the thrower removed.
+6. Mount the thrower only after switch, motor, and fault behavior are verified.
 
-## BLE Command Reference
+## Safety Warning
 
-The ESP32 version accepts simple BLE commands in the form `COMMAND=VALUE`, `COMMAND VALUE`, or `COMMAND`.
+Crosswind moves heavy equipment with a 12V motor. Keep hands clear of linkages, rotating plates, pinch points, and the thrower arm path. Use fuses, a shared ground, strain relief, and a reachable power disconnect. Bench test without the thrower mounted before any live thrower test.
 
-- `AUTH=<token>`
-- `START` / `RUN`
-- `STOP` / `PAUSE`
-- `STATUS`
-- `PING`
-- `RESET`
-- `SAVE`
-- `INFO`
-- `HELP`
-- `CLEAR_FAULT`
-- `MODE=SWEEP|RANDOM|AUTO|FLUSH|CENTERING|CENTER`
-- `SPEED=<0-255>`
+## Next Milestones
 
-Example:
-
-```txt
-MODE=RANDOM
-SPEED=180
-START
-```
-
-## Hardware
-
-The lessons below are conceptual. Use the final wiring and motor driver based on your specific hardware.
-
-- `RPWM` / `LPWM` — PWM outputs for right and left motor channels.
-- `R_EN` / `L_EN` — enable pins for the motor driver.
-- `LEFT_LIMIT` / `RIGHT_LIMIT` — limit switch inputs with `INPUT_PULLUP`.
-- `START_STOP_BUTTON` — start/stop toggle button.
-- `MODE_BUTTON` — mode select button.
-- `SPEED_POT` — analog speed control.
-- `STATUS_LED` — status indicator.
-
-## Getting Started
-
-1. Open the appropriate folder in the Arduino IDE or an ESP32-compatible environment.
-2. Install board support for the selected platform.
-3. Select the correct board and serial port.
-4. Upload the sketch.
-
-## Development Notes
-
-- `crosswind/crosswind.ino` is designed for standard Arduino boards and uses `analogWrite()` for PWM.
-- `crosswind_esp32/crosswind_esp32.ino` uses ESP32 PWM channels via `ledcSetup()` and `ledcAttachPin()`.
-- Keep platform-specific wiring and code separate to avoid cross-platform mistakes.
-- Continuous integration is enabled via GitHub Actions in `.github/workflows/ci.yml`, which compiles both the AVR and ESP32 sketches on every push and pull request.
-
-## Asset Usage
-
-Logos are stored in `assets/img/` and displayed in this README for branding.
-
-## License
-
-This repository does not include a license yet. Add a `LICENSE` file if you want to define usage and distribution rights.
+- Finish Phase 1 wiring and enclosure layout.
+- Validate switch placement with the striker tab.
+- Record no-load motor current and loaded sweep current.
+- Fit the VEVOR NH113 on adjustable rails.
+- Add Phase 2 pitch-axis mechanical sketches.
+- Decide whether the production controller remains ESP32-only or keeps an AVR fallback.

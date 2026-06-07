@@ -14,13 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          - fqbn: arduino:avr:uno
-            sketch: crosswind
+        include:
+          - name: Arduino AVR
+            fqbn: arduino:avr:uno
+            sketch: firmware/crosswind-arduino/Crosswind_Controller
             core: arduino:avr
-          - fqbn: esp32:esp32:esp32
-            sketch: crosswind_esp32
-            core: esp32:esp32
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +26,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.arduino15/packages
-          key: ${{ runner.os }}-arduino-cores-${{ matrix.target.core }}
+          key: ${{ runner.os }}-arduino-cores-${{ matrix.core }}
           restore-keys: |
             ${{ runner.os }}-arduino-cores-
 
@@ -41,7 +39,19 @@ jobs:
       - name: Update and install board core
         run: |
           arduino-cli core update-index
-          arduino-cli core install ${{ matrix.target.core }}
+          arduino-cli core install ${{ matrix.core }}
 
       - name: Compile firmware
-        run: arduino-cli compile --fqbn ${{ matrix.target.fqbn }} ${{ matrix.target.sketch }}
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ${{ matrix.sketch }}
+
+  platformio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PlatformIO
+        run: pipx install platformio
+
+      - name: Compile ESP32 firmware
+        working-directory: firmware/crosswind-esp32
+        run: pio run
