@@ -12,3 +12,6 @@
 - Treat trigger testing like live thrower testing: unload the thrower, point it safely, and keep people clear.
 - Confirm the VEVOR NH113 pedal wires with a continuity test before wiring Crosswind in parallel.
 - The ESP32 must not send voltage into the thrower pedal circuit; use relay contacts as dry contact only.
+- Crosswind Alpha uses a DHT11 only as an enclosure temperature/humidity indicator. Treat it as low-precision telemetry, not a certified safety instrument.
+- Keep the DHT11 away from the BTS7960 heat sink and motor driver. Do not mount it directly against the case wall, where sun or surface heating can distort readings.
+- Temperature faults stop the motor only at `TEMP_FAULT_F`; investigate enclosure airflow, motor driver heating, and wiring before clearing a temperature fault.

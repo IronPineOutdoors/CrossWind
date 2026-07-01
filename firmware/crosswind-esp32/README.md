@@ -11,6 +11,8 @@ The code is split into beginner-readable modules:
 - `modes.*` - SWEEP state machine plus future hooks for RANDOM, FLUSH, and CENTERING.
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
+- `environment.*` - DHT11 Alpha sensor support with BME280 upgrade hooks.
+- `display.*` - SSD1306 OLED status display.
 - `diagnostics.*` - Serial startup diagnostics and runtime status payloads.
 
 ## Phase 1 Behavior
@@ -57,3 +59,9 @@ pio run --target upload
 - `LAUNCH`
 
 Trigger commands pulse the optional thrower relay. They are ignored while faulted, and ignored while stopped unless `ALLOW_TRIGGER_WHEN_STOPPED` is enabled in `config.h`.
+
+## Environmental Sensor
+
+Alpha firmware reads a DHT11 on GPIO26 no faster than once every 2 seconds, stores the last valid reading, and reports `ENV ERR` if a read fails. `HOT` appears at `TEMP_WARNING_F`; `TEMP FAULT` stops the motor when `ENABLE_TEMP_FAULTS` is true and temperature reaches `TEMP_FAULT_F`.
+
+Beta should swap this module to a BME280 on the existing OLED I2C bus, GPIO21/GPIO22, using address `0x76` or `0x77`.

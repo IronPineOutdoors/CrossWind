@@ -20,7 +20,7 @@ static String normalizeToken(String token) {
 
 class CommandCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* characteristic) override {
-    String payload = characteristic->getValue();
+    String payload = characteristic->getValue().c_str();
     payload.trim();
     if (payload.length() == 0) {
       return;

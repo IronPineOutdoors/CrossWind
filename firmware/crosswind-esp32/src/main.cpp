@@ -1,8 +1,11 @@
 #include <Arduino.h>
+#include <esp_arduino_version.h>
 #include <esp_task_wdt.h>
 
 #include "ble_control.h"
 #include "diagnostics.h"
+#include "display.h"
+#include "environment.h"
 #include "inputs.h"
 #include "limits.h"
 #include "modes.h"
@@ -155,12 +158,16 @@ void setup() {
   Serial.begin(115200);
   delay(300);
 
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
   esp_task_wdt_config_t wdtConfig = {
     .timeout_ms = WATCHDOG_TIMEOUT_SECONDS * 1000,
     .idle_core_mask = UINT32_MAX,
     .trigger_panic = true,
   };
   esp_task_wdt_init(&wdtConfig);
+#else
+  esp_task_wdt_init(WATCHDOG_TIMEOUT_SECONDS, true);
+#endif
   esp_task_wdt_add(NULL);
 
   pinMode(STATUS_LED_PIN, OUTPUT);
@@ -170,6 +177,8 @@ void setup() {
   initTrigger();
   beginLimits();
   beginInputs();
+  initEnvironment();
+  initDisplay();
   beginStorage();
 
   StoredSettings settings = loadSettings();
@@ -193,6 +202,11 @@ void setup() {
 void loop() {
   updateInputs();
   updateLimits();
+  updateEnvironment();
+
+  if (ENABLE_TEMP_FAULTS && environmentTempFaultActive()) {
+    latchFault(FAULT_TEMP);
+  }
 
   if (consumeStartPressed()) {
     if (state.faultActive && !bothLimitsActive()) {
@@ -229,6 +243,7 @@ void loop() {
 
   updateMotorRamp();
   updateTrigger();
+  updateDisplay(state);
   printRuntimeStatus(state);
 
   unsigned long now = millis();

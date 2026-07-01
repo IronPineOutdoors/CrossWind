@@ -2,15 +2,19 @@
 #define CROSSWIND_CONFIG_H
 
 #include <Arduino.h>
+#include <DHT.h>
 
 /*
   Crosswind ESP32 Phase 1 configuration
 
   Wiring summary:
     GPIO25 -> BTS7960 RPWM
-    GPIO26 -> BTS7960 LPWM
+    GPIO13 -> BTS7960 LPWM
     GPIO27 -> BTS7960 R_EN
     GPIO14 -> BTS7960 L_EN
+    GPIO26 -> DHT11 data
+    GPIO21 -> OLED SDA
+    GPIO22 -> OLED SCL
     GPIO32 -> left roller limit switch to GND, INPUT_PULLUP
     GPIO33 -> right roller limit switch to GND, INPUT_PULLUP
     GPIO18 -> start/stop button to GND, INPUT_PULLUP
@@ -23,10 +27,10 @@
   normal travel reads LOW and an opened limit switch reads HIGH.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.3";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.4-env";
 
 const int RPWM_PIN = 25;
-const int LPWM_PIN = 26;
+const int LPWM_PIN = 13;
 const int R_EN_PIN = 27;
 const int L_EN_PIN = 14;
 const int LEFT_LIMIT_PIN = 32;
@@ -36,12 +40,13 @@ const int MODE_BUTTON_PIN = 19;
 const int SPEED_POT_PIN = 39;
 const int THROWER_TRIGGER_PIN = 23;
 const int STATUS_LED_PIN = 2;
+const int OLED_SDA_PIN = 21;
+const int OLED_SCL_PIN = 22;
+const int DHT_PIN = 26;
 
 // Future expansion placeholders for Phase 2 and production hardware.
 const int PITCH_ACTUATOR_PIN = -1;
 const int BATTERY_VOLTAGE_PIN = -1;
-const int OLED_SDA_PIN = -1;
-const int OLED_SCL_PIN = -1;
 const int ROTARY_ENCODER_A_PIN = -1;
 const int ROTARY_ENCODER_B_PIN = -1;
 
@@ -65,6 +70,20 @@ const uint16_t DIRECTION_CHANGE_DEADTIME_MS = 50;
 const uint8_t WATCHDOG_TIMEOUT_SECONDS = 5;
 const uint16_t BLE_STATUS_INTERVAL_MS = 1000;
 const uint16_t SERIAL_STATUS_INTERVAL_MS = 1000;
+
+enum EnvSensorType { ENV_SENSOR_DHT11, ENV_SENSOR_BME280 };
+const EnvSensorType ENV_SENSOR_TYPE = ENV_SENSOR_DHT11;
+const uint8_t DHT_TYPE = DHT11;
+const uint16_t ENV_UPDATE_INTERVAL_MS = 2000;
+const float TEMP_WARNING_F = 120.0F;
+const float TEMP_FAULT_F = 150.0F;
+const bool ENABLE_TEMP_FAULTS = true;
+
+// BME280 Beta upgrade notes: use the existing I2C bus on GPIO21/GPIO22.
+// Most breakout boards use address 0x76 or 0x77. See environment.cpp for
+// the compile-time hook; the Alpha build stays on DHT11.
+const uint8_t BME280_I2C_ADDRESS_PRIMARY = 0x76;
+const uint8_t BME280_I2C_ADDRESS_SECONDARY = 0x77;
 
 // Thrower trigger relay settings. The relay contacts should be dry-contact
 // only, wired in parallel with the factory pedal. The ESP32 must not inject
@@ -90,6 +109,7 @@ enum FaultCode {
   FAULT_BOTH_LIMITS = 2,
   FAULT_BUTTON_STUCK = 3,
   FAULT_STARTUP_BOTH_LIMITS = 4,
+  FAULT_TEMP = 5,
   FAULT_UNKNOWN = 255
 };
 

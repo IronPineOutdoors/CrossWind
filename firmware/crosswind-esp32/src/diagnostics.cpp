@@ -1,5 +1,6 @@
 #include "diagnostics.h"
 
+#include "environment.h"
 #include "inputs.h"
 #include "limits.h"
 #include "motor.h"
@@ -26,6 +27,7 @@ const char* faultToString(FaultCode fault) {
     case FAULT_BOTH_LIMITS: return "BOTH_LIMITS";
     case FAULT_BUTTON_STUCK: return "BUTTON_STUCK";
     case FAULT_STARTUP_BOTH_LIMITS: return "STARTUP_BOTH_LIMITS";
+    case FAULT_TEMP: return "TEMP_FAULT";
     default: return "UNKNOWN";
   }
 }
@@ -79,5 +81,8 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";triggerEnabled=" + String(ENABLE_THROWER_TRIGGER ? "1" : "0");
   payload += ";triggerActive=" + String(isTriggerActive() ? "1" : "0");
   payload += ";lastTriggerMs=" + String(getLastTriggerTime());
+  payload += ";envStatus=" + String(environmentStatusToString(getEnvironmentStatus()));
+  payload += ";tempF=" + String(environmentDataValid() ? getTemperatureF() : NAN, 1);
+  payload += ";humidity=" + String(environmentDataValid() ? getHumidity() : NAN, 1);
   return payload;
 }
