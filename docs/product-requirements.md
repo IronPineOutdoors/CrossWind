@@ -7,7 +7,7 @@
 - Keep the thrower mounting approach adjustable for universal compatibility.
 - Use two roller limit switches and one striker tab for left/right travel boundaries.
 - Run from a shared 12V battery system.
-- Use an ESP32 controller with physical start/stop, mode, and speed controls.
+- Use an ESP32 controller with rotary speed control, ARM/FIRE safety controls, OLED status, and dry-contact relay triggering.
 - Default to `SWEEP` mode.
 - Stop immediately if both limits are active.
 - Stop and fault if travel exceeds the configured timeout.
@@ -30,7 +30,7 @@
 - Stable mounting rails for multiple thrower footprints.
 - Repeatable calibration procedure.
 - Battery voltage monitoring.
-- Optional OLED or app-based status display.
+- OLED or app-based status display.
 - Field test logs for durability, runtime, and transport vibration.
 
 ## Non-Goals

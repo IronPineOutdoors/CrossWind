@@ -7,12 +7,13 @@ The code is split into beginner-readable modules:
 - `config.h` - pin assignments, constants, shared enums, and the main controller state.
 - `motor.*` - BTS7960 / IBT-2 motor control, safe reversal, soft-start ramping, and stop behavior.
 - `limits.*` - left/right roller switch reads and debounce.
-- `inputs.*` - start/stop button, mode button, and speed potentiometer reads.
+- `inputs.*` - ARM/FIRE buttons, rotary encoder speed/menu input, and optional speed potentiometer reads.
 - `modes.*` - SWEEP state machine plus future hooks for RANDOM, FLUSH, and CENTERING.
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - DHT11 Alpha sensor support with BME280 upgrade hooks.
 - `display.*` - SSD1306 OLED status display.
+- `trigger.*` - non-blocking thrower relay pulse control.
 - `diagnostics.*` - Serial startup diagnostics and runtime status payloads.
 
 ## Phase 1 Behavior
@@ -27,7 +28,11 @@ Default mode is `SWEEP`.
 6. Dwell.
 7. Repeat.
 
-The controller works fully from the physical buttons and speed potentiometer without BLE connected.
+The Alpha bench controller uses the rotary encoder for speed, encoder press for the `MAIN`/`SETUP` display menu, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
+
+On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
+
+The OLED shows the current motor speed percentage, `SAFE` or `ARMED`, relay `ON`/`OFF`, and the active menu page.
 
 ## Build
 
@@ -58,7 +63,28 @@ pio run --target upload
 - `FIRE`
 - `LAUNCH`
 
-Trigger commands pulse the optional thrower relay. They are ignored while faulted, and ignored while stopped unless `ALLOW_TRIGGER_WHEN_STOPPED` is enabled in `config.h`.
+Trigger commands and the FIRE / TEST button pulse the thrower relay only when the system is armed. They are ignored while faulted. The relay pulse remains non-blocking and uses `TRIGGER_PULSE_MS`.
+
+## Current Alpha Pinout
+
+| Function | ESP32 GPIO |
+| --- | ---: |
+| BTS7960 RPWM | 18 |
+| BTS7960 LPWM | 19 |
+| BTS7960 R_EN | 23 |
+| BTS7960 L_EN | 13 |
+| Thrower relay input | 14 |
+| ARM button | 16 |
+| FIRE / TEST button | 17 |
+| Rotary encoder CLK | 32 |
+| Rotary encoder DT | 33 |
+| Rotary encoder SW | 25 |
+| Left limit | 34 |
+| Right limit | 35 |
+| OLED SDA | 21 |
+| OLED SCL | 22 |
+| DHT11 data | 26 |
+| Status LED | 2 |
 
 ## Environmental Sensor
 

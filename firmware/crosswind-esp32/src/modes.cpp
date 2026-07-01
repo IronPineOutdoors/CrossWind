@@ -26,6 +26,17 @@ void resetModeState() {
   stopMotor();
 }
 
+const char* sweepStateToString() {
+  switch (sweepState) {
+    case SWEEP_IDLE: return "IDLE";
+    case SWEEP_MOVING_RIGHT: return "MOVE_R";
+    case SWEEP_DWELL_RIGHT: return "DWELL_R";
+    case SWEEP_MOVING_LEFT: return "MOVE_L";
+    case SWEEP_DWELL_LEFT: return "DWELL_L";
+    default: return "UNKNOWN";
+  }
+}
+
 static void fault(ControllerState& state, FaultCode code) {
   stopMotor();
   state.running = false;
@@ -49,13 +60,17 @@ static void updateSweep(ControllerState& state) {
   switch (sweepState) {
     case SWEEP_IDLE:
       if (rightLimitActive() && !leftLimitActive()) {
+        state.direction = DIR_LEFT;
         sweepState = SWEEP_DWELL_RIGHT;
         dwellStart = now;
         stopMotor();
+        Serial.println("Right limit active: reversing left after dwell");
       } else if (leftLimitActive() && !rightLimitActive()) {
+        state.direction = DIR_RIGHT;
         sweepState = SWEEP_DWELL_LEFT;
         dwellStart = now;
         stopMotor();
+        Serial.println("Left limit active: reversing right after dwell");
       } else {
         sweepState = state.direction == DIR_LEFT ? SWEEP_MOVING_LEFT : SWEEP_MOVING_RIGHT;
         beginMotion(state, state.direction);
@@ -69,6 +84,7 @@ static void updateSweep(ControllerState& state) {
         motionStart = 0;
         dwellStart = now;
         sweepState = SWEEP_DWELL_RIGHT;
+        Serial.println("Right limit hit: reversing left after dwell");
       } else if (travelTimedOut()) {
         fault(state, FAULT_TRAVEL_TIMEOUT);
       } else {
@@ -91,6 +107,7 @@ static void updateSweep(ControllerState& state) {
         motionStart = 0;
         dwellStart = now;
         sweepState = SWEEP_DWELL_LEFT;
+        Serial.println("Left limit hit: reversing right after dwell");
       } else if (travelTimedOut()) {
         fault(state, FAULT_TRAVEL_TIMEOUT);
       } else {

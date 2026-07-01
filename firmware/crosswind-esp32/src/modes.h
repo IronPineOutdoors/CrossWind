@@ -4,3 +4,4 @@
 
 void resetModeState();
 void updateMode(ControllerState& state);
+const char* sweepStateToString();

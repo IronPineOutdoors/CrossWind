@@ -11,6 +11,12 @@
 - Trigger the left roller switch and confirm Serial status changes.
 - Trigger the right roller switch and confirm Serial status changes.
 - Trigger both and confirm a fault is reported.
+- Turn the rotary encoder and confirm OLED motor percentage and Serial speed output change.
+- Press the encoder switch and confirm OLED menu toggles between `MAIN` and `SETUP`.
+- Press FIRE while OLED shows `SAFE` and confirm Serial prints `FIRE BLOCKED - NOT ARMED`.
+- Press ARM and confirm OLED shows `ARMED` and Serial prints `ARM ON`.
+- Press FIRE while armed and confirm the relay pulses briefly.
+- Press ARM again and confirm OLED returns to `SAFE`.
 
 ## Motor Driver Test
 
@@ -21,7 +27,7 @@
 ## Low PWM Motor Test
 
 - Set speed low.
-- Press start.
+- Send BLE `START` or use the current bench start mechanism.
 - Confirm the wiper motor ramps rather than jerks.
 
 ## Sweep Mode No-Load Test

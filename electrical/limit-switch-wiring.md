@@ -1,12 +1,14 @@
 # Limit Switch Wiring
 
-Use normally closed roller switches where possible. This gives a safer default because a disconnected or opened switch can be treated like an active limit.
+Crosswind Alpha currently uses YL-99 limit switch modules on GPIO34 and GPIO35.
 
 For ESP32 Phase 1:
 
-- One side of the switch goes to the GPIO input.
-- The other side goes to ground.
-- Firmware uses `INPUT_PULLUP`.
-- `LIMIT_ACTIVE_STATE` is configurable in `config.h`.
+- Left limit module signal output goes to GPIO34.
+- Right limit module signal output goes to GPIO35.
+- Module `VCC` goes to ESP32 `3V3`.
+- Module `GND` goes to common ground.
+- GPIO34/GPIO35 are input-only pins and do not provide internal pullups.
+- Firmware uses `LIMIT_ACTIVE_STATE = 0` for the current YL-99 behavior: triggered reads LOW/active.
 
 Check each switch in Serial diagnostics before connecting motor power.

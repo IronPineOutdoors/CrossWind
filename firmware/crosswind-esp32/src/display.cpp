@@ -4,8 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
-#include "environment.h"
-#include "motor.h"
+#include "trigger.h"
 
 static constexpr int SCREEN_WIDTH = 128;
 static constexpr int SCREEN_HEIGHT = 64;
@@ -17,8 +16,8 @@ static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 static bool displayReady = false;
 static unsigned long lastDisplayUpdate = 0;
 
-static int motorPercent() {
-  return map(motorAppliedPwm(), 0, 255, 0, 100);
+static int motorPercent(const ControllerState& state) {
+  return map(state.speed, 0, 255, 0, 100);
 }
 
 void initDisplay() {
@@ -38,7 +37,7 @@ void initDisplay() {
   display.display();
 }
 
-void updateDisplay(const ControllerState& state) {
+void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDisplayMode) {
   if (!displayReady) {
     return;
   }
@@ -55,29 +54,16 @@ void updateDisplay(const ControllerState& state) {
   display.println("CROSSWIND");
 
   display.print("Motor: ");
-  display.print(state.running && !state.faultActive ? motorPercent() : 0);
+  display.print(motorPercent(state));
   display.println("%");
 
-  display.print("Temp: ");
-  if (environmentDataValid()) {
-    display.print((int)(getTemperatureF() + 0.5F));
-    display.println("F");
-  } else {
-    display.println("--F");
-  }
+  display.print("State: ");
+  display.println(systemArmed ? "ARMED" : "SAFE");
 
-  display.print("Hum: ");
-  if (environmentDataValid()) {
-    display.print((int)(getHumidity() + 0.5F));
-    display.println("%");
-  } else {
-    display.println("--%");
-  }
+  display.print("Relay: ");
+  display.println(isTriggerActive() ? "ON" : "OFF");
 
-  EnvironmentStatus envStatus = getEnvironmentStatus();
-  if (state.faultActive && state.lastFault == FAULT_TEMP) {
-    envStatus = ENV_STATUS_TEMP_FAULT;
-  }
-  display.println(environmentStatusToString(envStatus));
+  display.print("Menu: ");
+  display.println(setupDisplayMode ? "SETUP" : "MAIN");
   display.display();
 }

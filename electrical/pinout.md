@@ -4,20 +4,23 @@
 
 | Function | ESP32 Pin | Notes |
 | --- | --- | --- |
-| BTS7960 RPWM | GPIO25 | Right direction PWM |
-| BTS7960 LPWM | GPIO13 | Left direction PWM; moved off GPIO26 for DHT11 data |
-| BTS7960 R_EN | GPIO27 | Right enable |
-| BTS7960 L_EN | GPIO14 | Left enable |
+| BTS7960 RPWM | GPIO18 | Right direction PWM |
+| BTS7960 LPWM | GPIO19 | Left direction PWM |
+| BTS7960 R_EN | GPIO23 | Right enable |
+| BTS7960 L_EN | GPIO13 | Left enable |
 | DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
 | OLED SDA | GPIO21 | Shared I2C bus |
 | OLED SCL | GPIO22 | Shared I2C bus |
-| Left limit | GPIO32 | INPUT_PULLUP |
-| Right limit | GPIO33 | INPUT_PULLUP |
-| Start/stop button | GPIO18 | INPUT_PULLUP |
-| Mode button | GPIO19 | INPUT_PULLUP |
+| Left limit | GPIO34 | YL-99 module signal output |
+| Right limit | GPIO35 | YL-99 module signal output |
+| ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
+| FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
-| Thrower trigger relay | GPIO23 | Relay input only; relay contacts are dry contact across pedal wires |
-| Status LED | GPIO2 | Onboard LED on many dev boards |
+| Rotary encoder CLK | GPIO32 | Active speed input in current ESP32 build |
+| Rotary encoder DT | GPIO33 | Active speed input in current ESP32 build |
+| Rotary encoder SW | GPIO25 | Menu/select button |
+| Thrower trigger relay | GPIO14 | Relay input only; relay contacts are dry contact across pedal wires |
+| Status LED | GPIO2 | Startup test, slow blink stopped, solid running, fast blink fault |
 
 ## BTS7960 Pins
 
@@ -28,15 +31,21 @@
 
 ## Limit Switches
 
-Phase 1 assumes normally closed roller switches if possible. With ESP32 `INPUT_PULLUP`, normal travel reads LOW and an opened/triggered switch reads HIGH.
+GPIO34/GPIO35 are input-only ESP32 pins. For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. The firmware uses `LIMIT_ACTIVE_STATE = 0`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW.
 
 ## Buttons
 
-Start/stop and mode buttons connect from their GPIO pin to ground and use internal pullups.
+ARM and FIRE / TEST buttons connect from their GPIO pin to ground and use internal pullups. Pressed reads LOW.
 
 ## Potentiometer
 
-Use a potentiometer wired between 3.3V and GND, with the wiper to GPIO39. Do not connect 5V to an ESP32 analog pin.
+Use a potentiometer wired between 3.3V and GND, with the wiper to GPIO39. Do not connect 5V to an ESP32 analog pin. The current ESP32 build is configured for the rotary encoder instead; switch `SPEED_INPUT_TYPE` in firmware if using the potentiometer.
+
+## Rotary Encoder
+
+Wire encoder `CLK` to GPIO32, `DT` to GPIO33, `SW` to GPIO25, `+`/`VCC` to ESP32 `3V3`, and `GND` to common ground. The firmware uses internal pullups, so the encoder outputs and switch should pull the pins to ground when active.
+
+The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never triggers the relay.
 
 ## Environmental Sensor
 
@@ -48,14 +57,13 @@ Crosswind Beta should prefer a BME280 for better temperature, humidity, and pres
 
 ## Thrower Trigger Relay
 
-Use an opto-isolated relay module or equivalent dry-contact relay output. ESP32 GPIO23 drives the relay input. The relay `COM` and `NO` contacts wire in parallel with the VEVOR NH113 factory foot pedal wires after confirming the pedal pair with a continuity test.
+Use an opto-isolated relay module or equivalent dry-contact relay output. ESP32 GPIO14 drives the relay input. The relay `COM` and `NO` contacts wire in parallel with the VEVOR NH113 factory foot pedal wires after confirming the pedal pair with a continuity test.
 
 The ESP32 must never send voltage into the thrower pedal circuit. Use the relay contacts as a switch only.
 
-## Future Encoder And Battery Sense
+## Future Battery Sense
 
 Reserved placeholders exist in firmware for:
 
-- Rotary encoder A/B
 - Battery voltage divider input
 - Pitch actuator output

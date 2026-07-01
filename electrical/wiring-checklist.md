@@ -5,10 +5,20 @@
 - Buck converter branch is fused.
 - ESP32/Arduino ground and BTS7960 ground are common.
 - ESP32 analog input never sees more than 3.3V.
-- BTS7960 `LPWM` is wired to GPIO13, not GPIO26.
+- BTS7960 `RPWM` is wired to GPIO18.
+- BTS7960 `LPWM` is wired to GPIO19.
+- BTS7960 `R_EN` is wired to GPIO23.
+- BTS7960 `L_EN` is wired to GPIO13.
 - DHT11 `VCC` is wired to ESP32 `3V3`, `GND` to common ground, and `DATA` to GPIO26.
 - DHT11 is mounted inside the Apache case with airflow, away from the BTS7960 heat sink, motor driver, and case wall.
 - OLED `SDA` is wired to GPIO21 and `SCL` is wired to GPIO22.
+- Rotary encoder `CLK` is wired to GPIO32, `DT` to GPIO33, and `SW` to GPIO25.
+- ARM button is wired between GPIO16 and GND.
+- FIRE / TEST button is wired between GPIO17 and GND.
+- Left YL-99 limit module signal is wired to GPIO34 and powered from ESP32 3V3.
+- Right YL-99 limit module signal is wired to GPIO35 and powered from ESP32 3V3.
+- Thrower trigger relay input is wired to GPIO14.
+- Status LED is wired to GPIO2 through a current-limiting resistor.
 - Limit switches read correctly in Serial diagnostics.
 - Thrower pedal black/white wires are confirmed with a continuity test before relay wiring.
 - Trigger relay COM and NO are wired in parallel with the factory pedal, not in series.

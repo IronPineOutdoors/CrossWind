@@ -23,10 +23,13 @@ static ControllerState state = {
 };
 
 static unsigned long lastBleStatus = 0;
+static bool systemArmed = false;
+static bool setupDisplayMode = false;
 
 static void latchFault(FaultCode fault) {
   stopMotor();
   cancelThrowerTrigger();
+  systemArmed = false;
   state.running = false;
   if (state.faultActive) {
     return;
@@ -74,6 +77,12 @@ static bool triggerAllowed() {
 }
 
 static bool requestSafeTrigger() {
+  if (!systemArmed) {
+    Serial.println("FIRE BLOCKED - NOT ARMED");
+    sendBleResponse("ERROR", "FIRE_BLOCKED_NOT_ARMED");
+    return false;
+  }
+
   if (!triggerAllowed()) {
     return false;
   }
@@ -171,7 +180,11 @@ void setup() {
   esp_task_wdt_add(NULL);
 
   pinMode(STATUS_LED_PIN, OUTPUT);
+  digitalWrite(STATUS_LED_PIN, HIGH);
+  delay(500);
   digitalWrite(STATUS_LED_PIN, LOW);
+  systemArmed = false;
+  setupDisplayMode = false;
 
   beginMotor();
   initTrigger();
@@ -226,6 +239,20 @@ void loop() {
     saveSettings(state);
   }
 
+  if (consumeMenuPressed()) {
+    setupDisplayMode = !setupDisplayMode;
+    Serial.println(setupDisplayMode ? "MENU SETUP" : "MENU MAIN");
+  }
+
+  if (consumeArmPressed()) {
+    systemArmed = !systemArmed;
+    Serial.println(systemArmed ? "ARM ON" : "ARM OFF");
+  }
+
+  if (consumeFirePressed()) {
+    requestSafeTrigger();
+  }
+
   state.speed = readSpeedPwm();
 
   if (bothLimitsActive()) {
@@ -243,7 +270,7 @@ void loop() {
 
   updateMotorRamp();
   updateTrigger();
-  updateDisplay(state);
+  updateDisplay(state, systemArmed, setupDisplayMode);
   printRuntimeStatus(state);
 
   unsigned long now = millis();
@@ -252,6 +279,12 @@ void loop() {
     lastBleStatus = now;
   }
 
-  digitalWrite(STATUS_LED_PIN, state.running && !state.faultActive ? HIGH : (state.faultActive ? (millis() / 200) % 2 : LOW));
+  if (state.faultActive) {
+    digitalWrite(STATUS_LED_PIN, (millis() / 200) % 2);
+  } else if (state.running) {
+    digitalWrite(STATUS_LED_PIN, HIGH);
+  } else {
+    digitalWrite(STATUS_LED_PIN, (millis() / 1000) % 2);
+  }
   esp_task_wdt_reset();
 }

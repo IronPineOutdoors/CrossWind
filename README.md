@@ -18,10 +18,13 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - Optional Arduino Uno/Nano fallback controller
 - BTS7960 / IBT-2 motor driver
 - 12V Mitsubishi Outlander rear wiper motor
-- Left and right roller limit switches
-- Start/stop button
-- Mode button
-- Speed potentiometer, with future rotary encoder option
+- Left and right YL-99 limit switch modules
+- Rotary encoder speed control with menu/select button
+- Dedicated ARM and FIRE / TEST buttons
+- SSD1306 OLED status display
+- DHT11 enclosure temperature/humidity sensor
+- Dry-contact thrower trigger relay
+- Status LED
 - 12V battery
 - 12V-to-5V buck converter
 - Waterproof electronics box
@@ -31,7 +34,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 
 ## Folder Structure
 
-- `firmware/crosswind-esp32/` - PlatformIO-style ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, and diagnostics modules.
+- `firmware/crosswind-esp32/` - PlatformIO-style ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, environment, display, trigger, and diagnostics modules.
 - `firmware/crosswind-arduino/` - Arduino Uno/Nano fallback firmware.
 - `mechanical/` - Phase 1 and Phase 2 mechanical notes, dimensions, fitment, and cut lists.
 - `electrical/` - Pinout, power system, fusing, limit switch wiring, and wiring checklist.

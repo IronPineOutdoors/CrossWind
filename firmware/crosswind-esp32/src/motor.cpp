@@ -37,16 +37,22 @@ static void writeLeftPwm(uint8_t pwm) {
 #endif
 }
 
+static void writeOptionalPin(int pin, uint8_t value) {
+  if (pin >= 0) {
+    digitalWrite(pin, value);
+  }
+}
+
 static void writeOutputs(Direction dir, uint8_t pwm) {
   if (dir == DIR_RIGHT) {
-    digitalWrite(L_EN_PIN, LOW);
+    writeOptionalPin(L_EN_PIN, LOW);
     writeLeftPwm(0);
-    digitalWrite(R_EN_PIN, HIGH);
+    writeOptionalPin(R_EN_PIN, HIGH);
     writeRightPwm(pwm);
   } else {
-    digitalWrite(R_EN_PIN, LOW);
+    writeOptionalPin(R_EN_PIN, LOW);
     writeRightPwm(0);
-    digitalWrite(L_EN_PIN, HIGH);
+    writeOptionalPin(L_EN_PIN, HIGH);
     writeLeftPwm(pwm);
   }
 }
@@ -54,8 +60,12 @@ static void writeOutputs(Direction dir, uint8_t pwm) {
 void beginMotor() {
   pinMode(RPWM_PIN, OUTPUT);
   pinMode(LPWM_PIN, OUTPUT);
-  pinMode(R_EN_PIN, OUTPUT);
-  pinMode(L_EN_PIN, OUTPUT);
+  if (R_EN_PIN >= 0) {
+    pinMode(R_EN_PIN, OUTPUT);
+  }
+  if (L_EN_PIN >= 0) {
+    pinMode(L_EN_PIN, OUTPUT);
+  }
 
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
   ledcAttach(RPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
@@ -75,8 +85,8 @@ void stopMotor() {
   appliedPwm = 0;
   motorRunning = false;
   directionChangePending = false;
-  digitalWrite(R_EN_PIN, LOW);
-  digitalWrite(L_EN_PIN, LOW);
+  writeOptionalPin(R_EN_PIN, LOW);
+  writeOptionalPin(L_EN_PIN, LOW);
   writeRightPwm(0);
   writeLeftPwm(0);
 }
@@ -94,8 +104,8 @@ void driveMotor(Direction dir, uint8_t pwm) {
   if (motorRunning && dir != activeDirection && !directionChangePending) {
     writeRightPwm(0);
     writeLeftPwm(0);
-    digitalWrite(R_EN_PIN, LOW);
-    digitalWrite(L_EN_PIN, LOW);
+    writeOptionalPin(R_EN_PIN, LOW);
+    writeOptionalPin(L_EN_PIN, LOW);
     appliedPwm = 0;
     motorRunning = false;
     directionChangePending = true;

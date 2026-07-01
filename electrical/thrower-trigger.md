@@ -22,7 +22,7 @@ Crosswind triggers the thrower by closing a relay contact in parallel with the f
 
 Default firmware pin:
 
-- `GPIO23` -> opto-isolated relay module input
+- `GPIO14` -> opto-isolated relay module input
 
 Configurable settings live in `firmware/crosswind-esp32/src/config.h`:
 
@@ -33,6 +33,8 @@ Configurable settings live in `firmware/crosswind-esp32/src/config.h`:
 - `ENABLE_THROWER_TRIGGER`
 - `ALLOW_TRIGGER_WHEN_STOPPED`
 
+Current Alpha firmware also requires the ARM button to put the controller in `ARMED` state before the FIRE / TEST button or BLE trigger commands can pulse the relay.
+
 ## Safe Test Procedure
 
 1. Disconnect thrower power.
@@ -40,7 +42,8 @@ Configurable settings live in `firmware/crosswind-esp32/src/config.h`:
 3. Wire relay `COM` and `NO` in parallel with the pedal.
 4. Confirm the factory pedal still works.
 5. Power ESP32 and verify Serial diagnostics show trigger inactive.
-6. Test the relay with the thrower unloaded and pointed safely.
-7. Confirm repeated trigger commands are blocked by `MIN_TRIGGER_INTERVAL_MS`.
+6. Press FIRE while `SAFE` and confirm the relay is blocked.
+7. Press ARM, then test the relay with the thrower unloaded and pointed safely.
+8. Confirm repeated trigger commands are blocked by `MIN_TRIGGER_INTERVAL_MS`.
 
 Do not use thrower triggering during Phase 1 movement testing unless the thrower is secured, unloaded, and pointed in a safe direction.

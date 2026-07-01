@@ -3,6 +3,7 @@
 #include "environment.h"
 #include "inputs.h"
 #include "limits.h"
+#include "modes.h"
 #include "motor.h"
 #include "trigger.h"
 
@@ -73,6 +74,7 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";running=" + String(state.running ? "1" : "0");
   payload += ";fault=" + String(state.faultActive ? faultToString(state.lastFault) : "NONE");
   payload += ";dir=" + String(directionToString(state.direction));
+  payload += ";sweepState=" + String(sweepStateToString());
   payload += ";speed=" + String(state.speed);
   payload += ";motorPwm=" + String(motorAppliedPwm());
   payload += ";leftLimit=" + String(leftLimitActive() ? "1" : "0");
