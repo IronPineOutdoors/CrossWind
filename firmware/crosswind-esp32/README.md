@@ -79,8 +79,8 @@ Trigger commands and the FIRE / TEST button pulse the thrower relay only when th
 | Rotary encoder CLK | 32 |
 | Rotary encoder DT | 33 |
 | Rotary encoder SW | 25 |
-| Left limit | 34 |
-| Right limit | 35 |
+| Left limit | 27 |
+| Right limit | 5 |
 | OLED SDA | 21 |
 | OLED SCL | 22 |
 | DHT11 data | 26 |

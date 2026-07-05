@@ -11,8 +11,8 @@
 | DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
 | OLED SDA | GPIO21 | Shared I2C bus |
 | OLED SCL | GPIO22 | Shared I2C bus |
-| Left limit | GPIO34 | YL-99 module signal output |
-| Right limit | GPIO35 | YL-99 module signal output |
+| Left limit | GPIO27 | YL-99 module signal output, active LOW |
+| Right limit | GPIO5 | YL-99 module signal output, active LOW |
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
@@ -31,7 +31,7 @@
 
 ## Limit Switches
 
-GPIO34/GPIO35 are input-only ESP32 pins. For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. The firmware uses `LIMIT_ACTIVE_STATE = 0`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW.
+For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. The firmware uses `INPUT_PULLUP` and `LIMIT_ACTIVE_STATE = 0`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW. Do not hold the GPIO5/right-limit switch active while powering or resetting the ESP32.
 
 ## Buttons
 

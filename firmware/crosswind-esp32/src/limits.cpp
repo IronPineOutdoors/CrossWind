@@ -76,3 +76,17 @@ bool rightLimitActive() {
 bool bothLimitsActive() {
   return leftLimitActive() && rightLimitActive();
 }
+
+int leftLimitRawLevel() {
+  if (!ENABLE_LIMIT_SWITCHES || LEFT_LIMIT_PIN < 0) {
+    return -1;
+  }
+  return digitalRead(LEFT_LIMIT_PIN);
+}
+
+int rightLimitRawLevel() {
+  if (!ENABLE_LIMIT_SWITCHES || RIGHT_LIMIT_PIN < 0) {
+    return -1;
+  }
+  return digitalRead(RIGHT_LIMIT_PIN);
+}

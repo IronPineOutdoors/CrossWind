@@ -15,8 +15,8 @@
 - Rotary encoder `CLK` is wired to GPIO32, `DT` to GPIO33, and `SW` to GPIO25.
 - ARM button is wired between GPIO16 and GND.
 - FIRE / TEST button is wired between GPIO17 and GND.
-- Left YL-99 limit module signal is wired to GPIO34 and powered from ESP32 3V3.
-- Right YL-99 limit module signal is wired to GPIO35 and powered from ESP32 3V3.
+- Left YL-99 limit module signal is wired to GPIO27 and powered from ESP32 3V3.
+- Right YL-99 limit module signal is wired to GPIO5 and powered from ESP32 3V3.
 - Thrower trigger relay input is wired to GPIO14.
 - Status LED is wired to GPIO2 through a current-limiting resistor.
 - Limit switches read correctly in Serial diagnostics.

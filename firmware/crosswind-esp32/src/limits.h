@@ -13,6 +13,8 @@ void updateLimits();
 bool leftLimitActive();
 bool rightLimitActive();
 bool bothLimitsActive();
+int leftLimitRawLevel();
+int rightLimitRawLevel();
 
 #ifdef __cplusplus
 }

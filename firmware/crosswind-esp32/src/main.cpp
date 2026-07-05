@@ -202,9 +202,8 @@ void setup() {
   updateInputs();
   updateLimits();
   if (bothLimitsActive()) {
-    state.faultActive = true;
     state.lastFault = FAULT_STARTUP_BOTH_LIMITS;
-    saveSettings(state);
+    Serial.println("WARNING: both limits active at startup; controller will fault if started with both active");
   }
 
   printStartupDiagnostics(state);
@@ -255,7 +254,7 @@ void loop() {
 
   state.speed = readSpeedPwm();
 
-  if (bothLimitsActive()) {
+  if (state.running && bothLimitsActive()) {
     latchFault(FAULT_BOTH_LIMITS);
   }
 

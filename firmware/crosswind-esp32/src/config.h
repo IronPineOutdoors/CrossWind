@@ -16,8 +16,8 @@
     GPIO26 -> DHT11 data
     GPIO21 -> OLED SDA
     GPIO22 -> OLED SCL
-    GPIO34 -> left roller limit switch with external pullup
-    GPIO35 -> right roller limit switch with external pullup
+    GPIO27 -> left roller limit switch, INPUT_PULLUP
+    GPIO5  -> right roller limit switch, INPUT_PULLUP
     GPIO32 -> rotary encoder CLK to GND, INPUT_PULLUP
     GPIO33 -> rotary encoder DT to GND, INPUT_PULLUP
     GPIO25 -> rotary encoder SW to GND, INPUT_PULLUP, menu/select button
@@ -26,8 +26,7 @@
     GPIO39 -> speed potentiometer wiper, 0-3.3V only
     GPIO2  -> status LED
 
-  Normally closed limit switches are preferred for Phase 1. GPIO34/GPIO35
-  require external pullup resistors because ESP32 input-only pins do not have
+  YL-99 limit modules are currently active LOW. Limit inputs use ESP32
   internal pullups.
 */
 
@@ -37,10 +36,10 @@ const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
 const int R_EN_PIN = 23;
 const int L_EN_PIN = 13;
-const int LEFT_LIMIT_PIN = 34;
-const int RIGHT_LIMIT_PIN = 35;
+const int LEFT_LIMIT_PIN = 27;
+const int RIGHT_LIMIT_PIN = 5;
 const bool ENABLE_LIMIT_SWITCHES = true;
-const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
+const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = true;
 const int START_STOP_BUTTON_PIN = -1;
 const int MODE_BUTTON_PIN = -1;
 const int ARM_BUTTON_PIN = 16;

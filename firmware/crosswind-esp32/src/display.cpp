@@ -4,6 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
+#include "limits.h"
 #include "trigger.h"
 
 static constexpr int SCREEN_WIDTH = 128;
@@ -63,7 +64,19 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
   display.print("Relay: ");
   display.println(isTriggerActive() ? "ON" : "OFF");
 
-  display.print("Menu: ");
-  display.println(setupDisplayMode ? "SETUP" : "MAIN");
+  if (setupDisplayMode) {
+    display.print("L:");
+    display.print(leftLimitActive() ? "1" : "0");
+    display.print(" raw:");
+    display.println(leftLimitRawLevel());
+
+    display.print("R:");
+    display.print(rightLimitActive() ? "1" : "0");
+    display.print(" raw:");
+    display.println(rightLimitRawLevel());
+  } else {
+    display.print("Menu: ");
+    display.println("MAIN");
+  }
   display.display();
 }

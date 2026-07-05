@@ -42,8 +42,12 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(modeToString(state.mode));
   Serial.print("  Left limit active: ");
   Serial.println(leftLimitActive() ? "YES" : "NO");
+  Serial.print("  Left limit raw: ");
+  Serial.println(leftLimitRawLevel());
   Serial.print("  Right limit active: ");
   Serial.println(rightLimitActive() ? "YES" : "NO");
+  Serial.print("  Right limit raw: ");
+  Serial.println(rightLimitRawLevel());
   Serial.print("  Pot raw: ");
   Serial.println(readSpeedRaw());
   Serial.print("  Current speed PWM: ");
@@ -79,6 +83,8 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";motorPwm=" + String(motorAppliedPwm());
   payload += ";leftLimit=" + String(leftLimitActive() ? "1" : "0");
   payload += ";rightLimit=" + String(rightLimitActive() ? "1" : "0");
+  payload += ";leftLimitRaw=" + String(leftLimitRawLevel());
+  payload += ";rightLimitRaw=" + String(rightLimitRawLevel());
   payload += ";potRaw=" + String(readSpeedRaw());
   payload += ";triggerEnabled=" + String(ENABLE_THROWER_TRIGGER ? "1" : "0");
   payload += ";triggerActive=" + String(isTriggerActive() ? "1" : "0");
