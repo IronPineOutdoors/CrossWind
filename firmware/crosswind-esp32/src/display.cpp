@@ -4,6 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
+#include "environment.h"
 #include "limits.h"
 #include "trigger.h"
 
@@ -19,6 +20,20 @@ static unsigned long lastDisplayUpdate = 0;
 
 static int motorPercent(const ControllerState& state) {
   return map(state.speed, 0, 255, 0, 100);
+}
+
+static const char* displayStatusText(const ControllerState& state, bool systemArmed) {
+  EnvironmentStatus environmentStatus = getEnvironmentStatus();
+  if (isTriggerActive()) {
+    return "FIRING";
+  }
+  if (state.faultActive) {
+    return "FAULT";
+  }
+  if (environmentStatus == ENV_STATUS_HOT || environmentStatus == ENV_STATUS_TEMP_FAULT || environmentStatus == ENV_STATUS_ERROR) {
+    return "WARNING";
+  }
+  return systemArmed ? "ARMED" : "SAFE";
 }
 
 void initDisplay() {
@@ -58,8 +73,8 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
   display.print(motorPercent(state));
   display.println("%");
 
-  display.print("State: ");
-  display.println(systemArmed ? "ARMED" : "SAFE");
+  display.print("Status: ");
+  display.println(displayStatusText(state, systemArmed));
 
   display.print("Relay: ");
   display.println(isTriggerActive() ? "ON" : "OFF");

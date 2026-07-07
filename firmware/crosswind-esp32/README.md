@@ -13,6 +13,7 @@ The code is split into beginner-readable modules:
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - DHT11 Alpha sensor support with BME280 upgrade hooks.
 - `display.*` - SSD1306 OLED status display.
+- `status_led.*` - non-blocking DIYables RGB status LED control.
 - `trigger.*` - non-blocking thrower relay pulse control.
 - `diagnostics.*` - Serial startup diagnostics and runtime status payloads.
 
@@ -32,7 +33,7 @@ The Alpha bench controller uses the rotary encoder for speed, encoder press for 
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
 
-The OLED shows the current motor speed percentage, `SAFE` or `ARMED`, relay `ON`/`OFF`, and the active menu page.
+The OLED shows the current motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and the active menu page. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
 
 ## Build
 
@@ -79,12 +80,16 @@ Trigger commands and the FIRE / TEST button pulse the thrower relay only when th
 | Rotary encoder CLK | 32 |
 | Rotary encoder DT | 33 |
 | Rotary encoder SW | 25 |
-| Left limit | 27 |
-| Right limit | 5 |
+| Left limit | 34 |
+| Right limit | 35 |
 | OLED SDA | 21 |
 | OLED SCL | 22 |
 | DHT11 data | 26 |
-| Status LED | 2 |
+| RGB LED red | 27 |
+| RGB LED green | 12 |
+| RGB LED blue | 4 |
+
+The DIYables RGB LED module is common cathode with built-in resistors: connect module `GND` to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4. GPIO12 is a boot strapping pin on many ESP32 boards; keep it for the Alpha wiring above, but if boot or upload problems appear, move green to another PWM-capable non-strapping pin such as GPIO5 and update `RGB_GREEN_PIN`.
 
 ## Environmental Sensor
 

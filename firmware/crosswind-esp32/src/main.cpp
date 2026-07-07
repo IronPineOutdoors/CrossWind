@@ -11,6 +11,7 @@
 #include "modes.h"
 #include "motor.h"
 #include "storage.h"
+#include "status_led.h"
 #include "trigger.h"
 
 static ControllerState state = {
@@ -179,10 +180,7 @@ void setup() {
 #endif
   esp_task_wdt_add(NULL);
 
-  pinMode(STATUS_LED_PIN, OUTPUT);
-  digitalWrite(STATUS_LED_PIN, HIGH);
-  delay(500);
-  digitalWrite(STATUS_LED_PIN, LOW);
+  initStatusLed();
   systemArmed = false;
   setupDisplayMode = false;
 
@@ -209,6 +207,19 @@ void setup() {
   printStartupDiagnostics(state);
   beginBle(handleBleCommand);
   updateBleStatus(state);
+}
+
+static void selectStatusLedMode() {
+  EnvironmentStatus environmentStatus = getEnvironmentStatus();
+  if (state.faultActive) {
+    showFaultStatus();
+  } else if (environmentStatus == ENV_STATUS_HOT || environmentStatus == ENV_STATUS_TEMP_FAULT || environmentStatus == ENV_STATUS_ERROR) {
+    showWarningStatus();
+  } else if (systemArmed) {
+    showArmedStatus();
+  } else {
+    showReadyStatus();
+  }
 }
 
 void loop() {
@@ -269,6 +280,8 @@ void loop() {
 
   updateMotorRamp();
   updateTrigger();
+  selectStatusLedMode();
+  updateStatusLed();
   updateDisplay(state, systemArmed, setupDisplayMode);
   printRuntimeStatus(state);
 
@@ -278,12 +291,5 @@ void loop() {
     lastBleStatus = now;
   }
 
-  if (state.faultActive) {
-    digitalWrite(STATUS_LED_PIN, (millis() / 200) % 2);
-  } else if (state.running) {
-    digitalWrite(STATUS_LED_PIN, HIGH);
-  } else {
-    digitalWrite(STATUS_LED_PIN, (millis() / 1000) % 2);
-  }
   esp_task_wdt_reset();
 }

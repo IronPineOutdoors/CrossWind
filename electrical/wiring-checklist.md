@@ -15,10 +15,11 @@
 - Rotary encoder `CLK` is wired to GPIO32, `DT` to GPIO33, and `SW` to GPIO25.
 - ARM button is wired between GPIO16 and GND.
 - FIRE / TEST button is wired between GPIO17 and GND.
-- Left YL-99 limit module signal is wired to GPIO27 and powered from ESP32 3V3.
-- Right YL-99 limit module signal is wired to GPIO5 and powered from ESP32 3V3.
+- Left YL-99 limit module signal is wired to GPIO34 with an external pullup and powered from ESP32 3V3.
+- Right YL-99 limit module signal is wired to GPIO35 with an external pullup and powered from ESP32 3V3.
 - Thrower trigger relay input is wired to GPIO14.
-- Status LED is wired to GPIO2 through a current-limiting resistor.
+- DIYables RGB LED module `GND` is wired to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4.
+- GPIO12 is checked for boot/upload issues after wiring the RGB green channel.
 - Limit switches read correctly in Serial diagnostics.
 - Thrower pedal black/white wires are confirmed with a continuity test before relay wiring.
 - Trigger relay COM and NO are wired in parallel with the factory pedal, not in series.

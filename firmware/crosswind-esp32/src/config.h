@@ -16,30 +16,42 @@
     GPIO26 -> DHT11 data
     GPIO21 -> OLED SDA
     GPIO22 -> OLED SCL
-    GPIO27 -> left roller limit switch, INPUT_PULLUP
-    GPIO5  -> right roller limit switch, INPUT_PULLUP
+    GPIO34 -> left roller limit switch with external pullup
+    GPIO35 -> right roller limit switch with external pullup
+    GPIO27 -> DIYables RGB LED module R input, PWM
+    GPIO12 -> DIYables RGB LED module G input, PWM
+    GPIO4  -> DIYables RGB LED module B input, PWM
     GPIO32 -> rotary encoder CLK to GND, INPUT_PULLUP
     GPIO33 -> rotary encoder DT to GND, INPUT_PULLUP
     GPIO25 -> rotary encoder SW to GND, INPUT_PULLUP, menu/select button
     GPIO16 -> ARM button to GND, INPUT_PULLUP
     GPIO17 -> FIRE / TEST button to GND, INPUT_PULLUP
     GPIO39 -> speed potentiometer wiper, 0-3.3V only
-    GPIO2  -> status LED
 
-  YL-99 limit modules are currently active LOW. Limit inputs use ESP32
-  internal pullups.
+  YL-99 limit modules are currently active LOW. GPIO34/GPIO35 require
+  external pullup resistors because ESP32 input-only pins do not have internal
+  pullups.
+
+  DIYables common cathode RGB LED module wiring:
+    GND -> common ground
+    R   -> GPIO27
+    G   -> GPIO12
+    B   -> GPIO4
+  Common cathode means HIGH/PWM > 0 turns a color ON.
+  GPIO12 is a strapping pin on many ESP32 boards; if boot/upload issues appear,
+  move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.4-env";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.5-rgb";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
 const int R_EN_PIN = 23;
 const int L_EN_PIN = 13;
-const int LEFT_LIMIT_PIN = 27;
-const int RIGHT_LIMIT_PIN = 5;
+const int LEFT_LIMIT_PIN = 34;
+const int RIGHT_LIMIT_PIN = 35;
 const bool ENABLE_LIMIT_SWITCHES = true;
-const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = true;
+const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
 const int START_STOP_BUTTON_PIN = -1;
 const int MODE_BUTTON_PIN = -1;
 const int ARM_BUTTON_PIN = 16;
@@ -49,7 +61,9 @@ const int ROTARY_ENCODER_CLK_PIN = 32;
 const int ROTARY_ENCODER_DT_PIN = 33;
 const int ROTARY_ENCODER_SW_PIN = 25;
 const int THROWER_TRIGGER_PIN = 14;
-const int STATUS_LED_PIN = 2;
+const int RGB_RED_PIN = 27;
+const int RGB_GREEN_PIN = 12;
+const int RGB_BLUE_PIN = 4;
 const int OLED_SDA_PIN = 21;
 const int OLED_SCL_PIN = 22;
 const int DHT_PIN = 26;
@@ -62,6 +76,11 @@ const int PWM_CHANNEL_RIGHT = 0;
 const int PWM_CHANNEL_LEFT = 1;
 const int PWM_FREQ = 5000;
 const int PWM_RESOLUTION = 8;
+const int RGB_RED_CHANNEL = 2;
+const int RGB_GREEN_CHANNEL = 3;
+const int RGB_BLUE_CHANNEL = 4;
+const int RGB_PWM_FREQ = 1000;
+const int RGB_PWM_RESOLUTION = 8;
 
 const uint8_t MIN_PWM = 45;
 const uint8_t MAX_PWM = 255;

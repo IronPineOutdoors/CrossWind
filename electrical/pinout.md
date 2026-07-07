@@ -11,8 +11,8 @@
 | DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
 | OLED SDA | GPIO21 | Shared I2C bus |
 | OLED SCL | GPIO22 | Shared I2C bus |
-| Left limit | GPIO27 | YL-99 module signal output, active LOW |
-| Right limit | GPIO5 | YL-99 module signal output, active LOW |
+| Left limit | GPIO34 | YL-99 module signal output, active LOW, external pullup required |
+| Right limit | GPIO35 | YL-99 module signal output, active LOW, external pullup required |
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
@@ -20,7 +20,9 @@
 | Rotary encoder DT | GPIO33 | Active speed input in current ESP32 build |
 | Rotary encoder SW | GPIO25 | Menu/select button |
 | Thrower trigger relay | GPIO14 | Relay input only; relay contacts are dry contact across pedal wires |
-| Status LED | GPIO2 | Startup test, slow blink stopped, solid running, fast blink fault |
+| RGB LED red | GPIO27 | DIYables common cathode RGB module R input, PWM |
+| RGB LED green | GPIO12 | DIYables common cathode RGB module G input, PWM |
+| RGB LED blue | GPIO4 | DIYables common cathode RGB module B input, PWM |
 
 ## BTS7960 Pins
 
@@ -31,7 +33,13 @@
 
 ## Limit Switches
 
-For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. The firmware uses `INPUT_PULLUP` and `LIMIT_ACTIVE_STATE = 0`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW. Do not hold the GPIO5/right-limit switch active while powering or resetting the ESP32.
+For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. GPIO34/GPIO35 are input-only ESP32 pins and require external pullups. The firmware uses `LIMIT_ACTIVE_STATE = 0`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW.
+
+## RGB Status LED
+
+The DIYables RGB LED module is common cathode with built-in resistors. Connect module `GND` to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4. Because common cathode colors turn on when driven HIGH, PWM values above 0 illuminate the color and PWM 0 turns it off.
+
+GPIO12 can affect boot mode on some ESP32 boards if externally pulled at reset. Keep GPIO12 for the current Alpha wiring unless it causes boot or upload issues; if it does, move the green channel to a non-strapping PWM-capable pin such as GPIO5 and update `RGB_GREEN_PIN`.
 
 ## Buttons
 
