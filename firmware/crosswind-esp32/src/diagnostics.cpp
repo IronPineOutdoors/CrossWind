@@ -92,5 +92,6 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";envStatus=" + String(environmentStatusToString(getEnvironmentStatus()));
   payload += ";tempF=" + String(environmentDataValid() ? getTemperatureF() : NAN, 1);
   payload += ";humidity=" + String(environmentDataValid() ? getHumidity() : NAN, 1);
+  payload += ";pressureHpa=" + String(environmentDataValid() ? getPressureHpa() : NAN, 1);
   return payload;
 }

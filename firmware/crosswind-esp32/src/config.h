@@ -16,6 +16,7 @@
     GPIO26 -> DHT11 data
     GPIO21 -> OLED SDA
     GPIO22 -> OLED SCL
+    BME280 -> optional environment sensor on shared I2C bus, 0x76 or 0x77
     GPIO34 -> left roller limit switch with external pullup
     GPIO35 -> right roller limit switch with external pullup
     GPIO27 -> DIYables RGB LED module R input, PWM
@@ -42,7 +43,7 @@
   move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.5-rgb";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.6-bme280";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
@@ -110,9 +111,9 @@ const float TEMP_WARNING_F = 120.0F;
 const float TEMP_FAULT_F = 150.0F;
 const bool ENABLE_TEMP_FAULTS = true;
 
-// BME280 Beta upgrade notes: use the existing I2C bus on GPIO21/GPIO22.
-// Most breakout boards use address 0x76 or 0x77. See environment.cpp for
-// the compile-time hook; the Alpha build stays on DHT11.
+// BME280 uses the existing I2C bus on GPIO21/GPIO22 and is selected by
+// changing ENV_SENSOR_TYPE to ENV_SENSOR_BME280. Most breakout boards use
+// address 0x76 or 0x77; firmware tries both.
 const uint8_t BME280_I2C_ADDRESS_PRIMARY = 0x76;
 const uint8_t BME280_I2C_ADDRESS_SECONDARY = 0x77;
 

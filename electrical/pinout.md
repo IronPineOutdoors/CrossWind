@@ -11,6 +11,8 @@
 | DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
 | OLED SDA | GPIO21 | Shared I2C bus |
 | OLED SCL | GPIO22 | Shared I2C bus |
+| BME280 SDA | GPIO21 | Optional environment sensor on shared I2C bus |
+| BME280 SCL | GPIO22 | Optional environment sensor on shared I2C bus |
 | Left limit | GPIO34 | YL-99 module signal output, active LOW, external pullup required |
 | Right limit | GPIO35 | YL-99 module signal output, active LOW, external pullup required |
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
@@ -57,11 +59,11 @@ The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never
 
 ## Environmental Sensor
 
-Crosswind Alpha uses a DHT11 because it is already available and good enough for early Apache case enclosure temperature and humidity checks. Wire DHT11 `VCC` to ESP32 `3V3`, `GND` to ESP32 `GND`, and `DATA` to GPIO26.
+Crosswind Alpha uses a DHT11 by default because it is already available and good enough for early Apache case enclosure temperature and humidity checks. Wire DHT11 `VCC` to ESP32 `3V3`, `GND` to ESP32 `GND`, and `DATA` to GPIO26.
 
 Mount the sensor inside the Apache case where air can circulate. Keep it away from the BTS7960 heat sink, motor driver body, and direct contact with the case wall so readings are not dominated by a local hot surface.
 
-Crosswind Beta should prefer a BME280 for better temperature, humidity, and pressure data. A future BME280 can share the OLED I2C bus on GPIO21/GPIO22 and usually appears at address `0x76` or `0x77`.
+A BME280 can share the OLED I2C bus on GPIO21/GPIO22 for better temperature, humidity, and pressure data. Wire BME280 `VCC` to ESP32 `3V3`, `GND` to common ground, `SDA` to GPIO21, and `SCL` to GPIO22, then set `ENV_SENSOR_TYPE` to `ENV_SENSOR_BME280` in firmware. The firmware tries BME280 address `0x76`, then `0x77`.
 
 ## Thrower Trigger Relay
 

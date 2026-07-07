@@ -16,6 +16,7 @@ void updateEnvironment();
 float getTemperatureF();
 float getTemperatureC();
 float getHumidity();
+float getPressureHpa();
 bool environmentDataValid();
 EnvironmentStatus getEnvironmentStatus();
 const char* environmentStatusToString(EnvironmentStatus status);

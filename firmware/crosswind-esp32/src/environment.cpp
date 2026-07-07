@@ -1,12 +1,17 @@
 #include "environment.h"
 
+#include <Adafruit_BME280.h>
 #include <DHT.h>
+#include <Wire.h>
 
 static DHT dht(DHT_PIN, DHT_TYPE);
+static Adafruit_BME280 bme;
 static float lastTemperatureC = NAN;
 static float lastHumidity = NAN;
+static float lastPressureHpa = NAN;
 static bool hasValidReading = false;
 static bool lastReadFailed = false;
+static bool bmeReady = false;
 static unsigned long lastReadAttempt = 0;
 
 static float cToF(float tempC) {
@@ -20,12 +25,18 @@ void initEnvironment() {
     return;
   }
 
-  // Future Beta hook:
-  // Replace this branch with an Adafruit_BME280 instance on Wire using
-  // BME280_I2C_ADDRESS_PRIMARY (0x76), then BME280_I2C_ADDRESS_SECONDARY
-  // (0x77) as fallback. Keep the public functions in this module unchanged
-  // so the rest of the controller does not care which sensor is installed.
-  Serial.println("Environment sensor: BME280 hook selected, driver not enabled in Alpha firmware");
+  Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
+  bmeReady = bme.begin(BME280_I2C_ADDRESS_PRIMARY, &Wire);
+  if (!bmeReady) {
+    bmeReady = bme.begin(BME280_I2C_ADDRESS_SECONDARY, &Wire);
+  }
+
+  if (bmeReady) {
+    Serial.println("Environment sensor: BME280 on I2C");
+  } else {
+    lastReadFailed = true;
+    Serial.println("WARNING: BME280 not found at 0x76 or 0x77");
+  }
 }
 
 void updateEnvironment() {
@@ -35,21 +46,42 @@ void updateEnvironment() {
   }
   lastReadAttempt = now;
 
-  if (ENV_SENSOR_TYPE != ENV_SENSOR_DHT11) {
+  if (ENV_SENSOR_TYPE == ENV_SENSOR_DHT11) {
+    float humidity = dht.readHumidity();
+    float temperatureC = dht.readTemperature();
+
+    if (isnan(humidity) || isnan(temperatureC)) {
+      lastReadFailed = true;
+      Serial.println("WARNING: DHT11 environment read failed; keeping last valid reading");
+      return;
+    }
+
+    lastHumidity = humidity;
+    lastTemperatureC = temperatureC;
+    lastPressureHpa = NAN;
+    hasValidReading = true;
+    lastReadFailed = false;
     return;
   }
 
-  float humidity = dht.readHumidity();
-  float temperatureC = dht.readTemperature();
-
-  if (isnan(humidity) || isnan(temperatureC)) {
+  if (!bmeReady) {
     lastReadFailed = true;
-    Serial.println("WARNING: DHT11 environment read failed; keeping last valid reading");
     return;
   }
 
-  lastHumidity = humidity;
+  float temperatureC = bme.readTemperature();
+  float humidity = bme.readHumidity();
+  float pressureHpa = bme.readPressure() / 100.0F;
+
+  if (isnan(temperatureC) || isnan(humidity) || isnan(pressureHpa)) {
+    lastReadFailed = true;
+    Serial.println("WARNING: BME280 environment read failed; keeping last valid reading");
+    return;
+  }
+
   lastTemperatureC = temperatureC;
+  lastHumidity = humidity;
+  lastPressureHpa = pressureHpa;
   hasValidReading = true;
   lastReadFailed = false;
 }
@@ -64,6 +96,10 @@ float getTemperatureC() {
 
 float getHumidity() {
   return hasValidReading ? lastHumidity : NAN;
+}
+
+float getPressureHpa() {
+  return hasValidReading ? lastPressureHpa : NAN;
 }
 
 bool environmentDataValid() {
