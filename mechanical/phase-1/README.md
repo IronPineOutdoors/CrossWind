@@ -9,3 +9,5 @@ Core dimensions:
 - 12" lazy susan bearing
 - One striker tab on the rotating plate
 - Left/right roller switches on adjustable stationary brackets
+
+See `limit-switch-layout.md` for the Phase 1 YL-99 safety switch layout.

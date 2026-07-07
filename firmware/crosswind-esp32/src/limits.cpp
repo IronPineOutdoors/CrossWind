@@ -90,3 +90,15 @@ int rightLimitRawLevel() {
   }
   return digitalRead(RIGHT_LIMIT_PIN);
 }
+
+void enterCalibrationMode() {
+  Serial.println("Calibration mode placeholder: Alpha limit switches are safety inputs only");
+}
+
+void setLeftLimitReference() {
+  Serial.println("Left limit reference placeholder: no Alpha position tracking yet");
+}
+
+void setRightLimitReference() {
+  Serial.println("Right limit reference placeholder: no Alpha position tracking yet");
+}

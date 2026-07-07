@@ -9,6 +9,7 @@ For ESP32 Phase 1:
 - Module `VCC` goes to ESP32 `3V3`.
 - Module `GND` goes to common ground.
 - GPIO34/GPIO35 are input-only pins and need external pullup resistors.
-- Firmware uses `LIMIT_ACTIVE_STATE = 0` for the current YL-99 behavior: triggered reads LOW/active.
+- Firmware uses `LIMIT_ACTIVE_STATE = LOW` for the current YL-99 behavior: triggered reads LOW/active.
+- Limit switches are safety/calibration inputs only. They are not normal travel controls and must not be used as physical hard stops.
 
 Check each switch in Serial diagnostics before connecting motor power.

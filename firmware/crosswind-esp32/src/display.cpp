@@ -36,6 +36,19 @@ static const char* displayStatusText(const ControllerState& state, bool systemAr
   return systemArmed ? "ARMED" : "SAFE";
 }
 
+static const char* limitStatusText(const ControllerState& state) {
+  if (state.faultActive && state.lastFault == FAULT_BOTH_LIMITS) {
+    return "FAULT: BOTH";
+  }
+  if (state.faultActive && state.lastFault == FAULT_LIMIT) {
+    return "FAULT: LIMIT";
+  }
+  if (leftLimitActive() || rightLimitActive()) {
+    return "ACTIVE";
+  }
+  return "OK";
+}
+
 void initDisplay() {
   Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
   displayReady = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
@@ -90,8 +103,8 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
     display.print(" raw:");
     display.println(rightLimitRawLevel());
   } else {
-    display.print("Menu: ");
-    display.println("MAIN");
+    display.print("Limit: ");
+    display.println(limitStatusText(state));
   }
   display.display();
 }

@@ -19,21 +19,15 @@ The code is split into beginner-readable modules:
 
 ## Phase 1 Behavior
 
-Default mode is `SWEEP`.
+Default mode is `SWEEP`. In Phase 1 the crank linkage creates the physical oscillation, so firmware runs the sweep motor continuously in the selected direction while the controller is running.
 
-1. Move right until the right limit switch opens/triggers.
-2. Stop.
-3. Dwell for `LIMIT_DWELL_MS`.
-4. Move left until the left limit switch opens/triggers.
-5. Stop.
-6. Dwell.
-7. Repeat.
+The Alpha limit switches are safety/calibration inputs, not normal travel controls. During powered motor operation, either active YL-99 limit switch immediately stops the BTS7960 output, disarms the system, blocks the FIRE relay, and latches `FAULT: LIMIT`. If both limits are active together, firmware latches `FAULT: BOTH LIMITS`. The fault can only be cleared after both limit switches are released.
 
 The Alpha bench controller uses the rotary encoder for speed, encoder press for the `MAIN`/`SETUP` display menu, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
 
-The OLED shows the current motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and the active menu page. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
+The OLED home screen shows the current motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and `Limit: OK`, `ACTIVE`, `FAULT: LIMIT`, or `FAULT: BOTH`. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
 
 ## Build
 
@@ -65,6 +59,8 @@ pio run --target upload
 - `LAUNCH`
 
 Trigger commands and the FIRE / TEST button pulse the thrower relay only when the system is armed. They are ignored while faulted. The relay pulse remains non-blocking and uses `TRIGGER_PULSE_MS`.
+
+Limit faults can be cleared from BLE with `CLEAR_FAULT`, or locally with the ARM/encoder button, only after both limit switches read clear.
 
 ## Current Alpha Pinout
 

@@ -43,7 +43,7 @@
   move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.6-bme280";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.7-limit-safety";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
@@ -52,6 +52,7 @@ const int L_EN_PIN = 13;
 const int LEFT_LIMIT_PIN = 34;
 const int RIGHT_LIMIT_PIN = 35;
 const bool ENABLE_LIMIT_SWITCHES = true;
+const bool ENABLE_LIMIT_FAULTS = true;
 const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
 const int START_STOP_BUTTON_PIN = -1;
 const int MODE_BUTTON_PIN = -1;
@@ -90,7 +91,7 @@ const uint8_t RAMP_STEP = 5;
 const uint16_t RAMP_INTERVAL_MS = 20;
 const uint16_t LIMIT_DWELL_MS = 1000;
 const uint32_t MAX_TRAVEL_TIME_MS = 30000UL;
-const int LIMIT_ACTIVE_STATE = 0;
+const int LIMIT_ACTIVE_STATE = LOW;
 
 const uint16_t DEBOUNCE_DELAY_MS = 50;
 const uint16_t LIMIT_DEBOUNCE_MS = 20;
@@ -142,6 +143,7 @@ enum FaultCode {
   FAULT_BUTTON_STUCK = 3,
   FAULT_STARTUP_BOTH_LIMITS = 4,
   FAULT_TEMP = 5,
+  FAULT_LIMIT = 6,
   FAULT_UNKNOWN = 255
 };
 

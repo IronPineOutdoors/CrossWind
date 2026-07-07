@@ -32,6 +32,7 @@ static void latchFault(FaultCode fault) {
   cancelThrowerTrigger();
   systemArmed = false;
   state.running = false;
+  state.speed = 0;
   if (state.faultActive) {
     return;
   }
@@ -49,8 +50,32 @@ static void clearFault() {
   state.running = false;
   state.faultActive = false;
   state.lastFault = FAULT_NONE;
+  state.speed = readSpeedPwm();
   resetModeState();
   saveSettings(state);
+}
+
+static bool limitsReleased() {
+  return !leftLimitActive() && !rightLimitActive();
+}
+
+static bool clearFaultIfSafe(const char* source) {
+  if (!state.faultActive) {
+    return false;
+  }
+
+  if (!limitsReleased()) {
+    Serial.print(source);
+    Serial.println(" fault clear blocked: release both limits first");
+    sendBleResponse("ERROR", "FAULT_CLEAR_BLOCKED_LIMIT_ACTIVE");
+    return true;
+  }
+
+  clearFault();
+  Serial.print(source);
+  Serial.println(" fault cleared");
+  sendBleResponse("OK", "FAULT_CLEARED");
+  return true;
 }
 
 static void setMode(Mode mode) {
@@ -114,8 +139,7 @@ static bool handleBleCommand(const String& command, const String& value) {
   }
 
   if (command == "CLEAR_FAULT") {
-    clearFault();
-    sendBleResponse("OK", "FAULT_CLEARED");
+    clearFaultIfSafe("BLE");
     return true;
   }
 
@@ -231,9 +255,13 @@ void loop() {
     latchFault(FAULT_TEMP);
   }
 
+  if (ENABLE_LIMIT_FAULTS && state.running && (leftLimitActive() || rightLimitActive())) {
+    latchFault(bothLimitsActive() ? FAULT_BOTH_LIMITS : FAULT_LIMIT);
+  }
+
   if (consumeStartPressed()) {
-    if (state.faultActive && !bothLimitsActive()) {
-      clearFault();
+    if (state.faultActive) {
+      clearFaultIfSafe("START");
     } else if (!state.faultActive) {
       state.running = !state.running;
       if (!state.running) {
@@ -243,36 +271,48 @@ void loop() {
     }
   }
 
-  if (consumeModePressed() && !state.running && !state.faultActive) {
-    state.mode = (Mode)((state.mode + 1) % 4);
-    resetModeState();
-    saveSettings(state);
+  if (consumeModePressed()) {
+    if (state.faultActive) {
+      clearFaultIfSafe("MODE");
+    } else if (!state.running) {
+      state.mode = (Mode)((state.mode + 1) % 4);
+      resetModeState();
+      saveSettings(state);
+    }
   }
 
   if (consumeMenuPressed()) {
-    setupDisplayMode = !setupDisplayMode;
-    Serial.println(setupDisplayMode ? "MENU SETUP" : "MENU MAIN");
+    if (state.faultActive) {
+      clearFaultIfSafe("ENCODER");
+    } else {
+      setupDisplayMode = !setupDisplayMode;
+      Serial.println(setupDisplayMode ? "MENU SETUP" : "MENU MAIN");
+    }
   }
 
   if (consumeArmPressed()) {
-    systemArmed = !systemArmed;
-    Serial.println(systemArmed ? "ARM ON" : "ARM OFF");
+    if (state.faultActive) {
+      clearFaultIfSafe("ARM");
+    } else {
+      systemArmed = !systemArmed;
+      Serial.println(systemArmed ? "ARM ON" : "ARM OFF");
+    }
   }
 
   if (consumeFirePressed()) {
     requestSafeTrigger();
   }
 
-  state.speed = readSpeedPwm();
-
-  if (state.running && bothLimitsActive()) {
-    latchFault(FAULT_BOTH_LIMITS);
+  if (!state.faultActive) {
+    state.speed = readSpeedPwm();
   }
 
   bool wasFaulted = state.faultActive;
   updateMode(state);
   if (!wasFaulted && state.faultActive) {
     cancelThrowerTrigger();
+    systemArmed = false;
+    state.speed = 0;
     saveSettings(state);
     Serial.print("FAULT: ");
     Serial.println(faultToString(state.lastFault));

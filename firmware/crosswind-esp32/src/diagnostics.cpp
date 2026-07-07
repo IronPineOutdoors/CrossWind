@@ -29,6 +29,7 @@ const char* faultToString(FaultCode fault) {
     case FAULT_BUTTON_STUCK: return "BUTTON_STUCK";
     case FAULT_STARTUP_BOTH_LIMITS: return "STARTUP_BOTH_LIMITS";
     case FAULT_TEMP: return "TEMP_FAULT";
+    case FAULT_LIMIT: return "LIMIT";
     default: return "UNKNOWN";
   }
 }
@@ -40,20 +41,24 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(FIRMWARE_VERSION);
   Serial.print("  Mode: ");
   Serial.println(modeToString(state.mode));
-  Serial.print("  Left limit active: ");
-  Serial.println(leftLimitActive() ? "YES" : "NO");
+  Serial.print("  Left limit: ");
+  Serial.println(leftLimitActive() ? "ACTIVE" : "clear");
   Serial.print("  Left limit raw: ");
   Serial.println(leftLimitRawLevel());
-  Serial.print("  Right limit active: ");
-  Serial.println(rightLimitActive() ? "YES" : "NO");
+  Serial.print("  Right limit: ");
+  Serial.println(rightLimitActive() ? "ACTIVE" : "clear");
   Serial.print("  Right limit raw: ");
   Serial.println(rightLimitRawLevel());
   Serial.print("  Pot raw: ");
   Serial.println(readSpeedRaw());
   Serial.print("  Current speed PWM: ");
   Serial.println(state.speed);
+  Serial.print("  Motor PWM: ");
+  Serial.println(motorAppliedPwm());
   Serial.print("  Last stored fault: ");
   Serial.println(faultToString(state.lastFault));
+  Serial.print("  Fault active: ");
+  Serial.println(state.faultActive ? "YES" : "NO");
   Serial.print("  Thrower trigger enabled: ");
   Serial.println(ENABLE_THROWER_TRIGGER ? "YES" : "NO");
   Serial.print("  Trigger active: ");

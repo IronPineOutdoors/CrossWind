@@ -19,10 +19,12 @@
 - FIRE / TEST button is wired between GPIO17 and GND.
 - Left YL-99 limit module signal is wired to GPIO34 with an external pullup and powered from ESP32 3V3.
 - Right YL-99 limit module signal is wired to GPIO35 with an external pullup and powered from ESP32 3V3.
+- Limit switches are confirmed as safety/calibration inputs only, with separate hard stops added if the mechanism needs physical travel limits.
 - Thrower trigger relay input is wired to GPIO14.
 - DIYables RGB LED module `GND` is wired to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4.
 - GPIO12 is checked for boot/upload issues after wiring the RGB green channel.
 - Limit switches read correctly in Serial diagnostics.
+- Limit faults stop the motor, disarm the system, block FIRE, and clear only after both switches are released.
 - Thrower pedal black/white wires are confirmed with a continuity test before relay wiring.
 - Trigger relay COM and NO are wired in parallel with the factory pedal, not in series.
 - Trigger relay contacts are dry contact only; no ESP32 voltage is sent into the pedal circuit.

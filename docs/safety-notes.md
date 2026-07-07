@@ -15,3 +15,6 @@
 - Crosswind Alpha uses a DHT11 only as an enclosure temperature/humidity indicator. Treat it as low-precision telemetry, not a certified safety instrument.
 - Keep the DHT11 away from the BTS7960 heat sink and motor driver. Do not mount it directly against the case wall, where sun or surface heating can distort readings.
 - Temperature faults stop the motor only at `TEMP_FAULT_F`; investigate enclosure airflow, motor driver heating, and wiring before clearing a temperature fault.
+- YL-99 limit switches are safety/calibration inputs only. Do not use the switch roller arms as mechanical hard stops.
+- Mount separate rubber or metal hard stops if the rotating plate needs physical travel limits independent of firmware.
+- A limit fault must stop motor output, disarm the system, block relay firing, and remain latched until both switches are released.

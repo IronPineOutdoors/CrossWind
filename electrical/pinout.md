@@ -35,7 +35,7 @@
 
 ## Limit Switches
 
-For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. GPIO34/GPIO35 are input-only ESP32 pins and require external pullups. The firmware uses `LIMIT_ACTIVE_STATE = 0`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW.
+For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. GPIO34/GPIO35 are input-only ESP32 pins and require external pullups. The firmware uses `LIMIT_ACTIVE_STATE = LOW`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW. These switches are safety/calibration inputs only, not normal travel controls or physical hard stops.
 
 ## RGB Status LED
 
