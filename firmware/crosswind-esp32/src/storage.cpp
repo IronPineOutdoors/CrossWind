@@ -5,6 +5,21 @@
 static Preferences prefs;
 static const char* NAMESPACE = "crosswind";
 
+static bool knownFaultCode(FaultCode fault) {
+  switch (fault) {
+    case FAULT_NONE:
+    case FAULT_TRAVEL_TIMEOUT:
+    case FAULT_BOTH_LIMITS:
+    case FAULT_BUTTON_STUCK:
+    case FAULT_STARTUP_BOTH_LIMITS:
+    case FAULT_TEMP:
+    case FAULT_LIMIT:
+      return true;
+    default:
+      return false;
+  }
+}
+
 void beginStorage() {
   prefs.begin(NAMESPACE, false);
 }
@@ -17,6 +32,9 @@ StoredSettings loadSettings() {
 
   if (settings.mode > CENTERING) {
     settings.mode = SWEEP;
+  }
+  if (!knownFaultCode(settings.lastFault)) {
+    settings.lastFault = FAULT_UNKNOWN;
   }
   if (settings.lastSpeed > MAX_PWM) {
     settings.lastSpeed = DEFAULT_PWM;

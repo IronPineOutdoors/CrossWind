@@ -59,6 +59,10 @@ static bool limitsReleased() {
   return !leftLimitActive() && !rightLimitActive();
 }
 
+static bool movementSafeToStart() {
+  return !ENABLE_LIMIT_FAULTS || limitsReleased();
+}
+
 static bool clearFaultIfSafe(const char* source) {
   if (!state.faultActive) {
     return false;
@@ -78,6 +82,27 @@ static bool clearFaultIfSafe(const char* source) {
   return true;
 }
 
+static bool parseByteValue(const String& value, uint8_t& parsedValue) {
+  if (value.length() == 0) {
+    return false;
+  }
+
+  uint16_t result = 0;
+  for (uint16_t i = 0; i < value.length(); i++) {
+    char c = value.charAt(i);
+    if (c < '0' || c > '9') {
+      return false;
+    }
+    result = result * 10 + (uint16_t)(c - '0');
+    if (result > 255) {
+      return false;
+    }
+  }
+
+  parsedValue = (uint8_t)result;
+  return true;
+}
+
 static void setMode(Mode mode) {
   state.mode = mode;
   state.running = false;
@@ -90,6 +115,12 @@ static bool triggerAllowed() {
   if (state.faultActive) {
     Serial.println("Trigger ignored: fault active");
     sendBleResponse("ERROR", "TRIGGER_BLOCKED_FAULT");
+    return false;
+  }
+
+  if (!movementSafeToStart()) {
+    Serial.println("Trigger ignored: limit active");
+    sendBleResponse("ERROR", "TRIGGER_BLOCKED_LIMIT_ACTIVE");
     return false;
   }
 
@@ -122,6 +153,8 @@ static bool handleBleCommand(const String& command, const String& value) {
   if (command == "START") {
     if (state.faultActive) {
       sendBleResponse("ERROR", "FAULT_ACTIVE_CLEAR_REQUIRED");
+    } else if (!movementSafeToStart()) {
+      sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else {
       state.running = true;
       sendBleResponse("OK", "STARTED");
@@ -155,11 +188,15 @@ static bool handleBleCommand(const String& command, const String& value) {
   }
 
   if (command == "SPEED") {
-    int requestedSpeed = value.toInt();
-    if (requestedSpeed < 0 || requestedSpeed > 255) {
+    uint8_t requestedSpeed = 0;
+    if (!parseByteValue(value, requestedSpeed)) {
       return false;
     }
-    state.speed = (uint8_t)requestedSpeed;
+    if (state.faultActive) {
+      sendBleResponse("ERROR", "SPEED_BLOCKED_FAULT");
+      return true;
+    }
+    state.speed = requestedSpeed;
     saveSettings(state);
     sendBleResponse("OK", "SPEED_SET");
     return true;
@@ -224,8 +261,19 @@ void setup() {
   updateInputs();
   updateLimits();
   if (bothLimitsActive()) {
+    state.faultActive = ENABLE_LIMIT_FAULTS;
     state.lastFault = FAULT_STARTUP_BOTH_LIMITS;
-    Serial.println("WARNING: both limits active at startup; controller will fault if started with both active");
+    state.running = false;
+    state.speed = 0;
+    Serial.println("FAULT: both limits active at startup");
+    saveSettings(state);
+  } else if (ENABLE_LIMIT_FAULTS && !limitsReleased()) {
+    state.faultActive = true;
+    state.lastFault = FAULT_LIMIT;
+    state.running = false;
+    state.speed = 0;
+    Serial.println("FAULT: limit active at startup");
+    saveSettings(state);
   }
 
   printStartupDiagnostics(state);
@@ -259,9 +307,18 @@ void loop() {
     latchFault(bothLimitsActive() ? FAULT_BOTH_LIMITS : FAULT_LIMIT);
   }
 
+  if (systemArmed && !movementSafeToStart()) {
+    systemArmed = false;
+    cancelThrowerTrigger();
+    Serial.println("ARM OFF: limit active");
+  }
+
   if (consumeStartPressed()) {
     if (state.faultActive) {
       clearFaultIfSafe("START");
+    } else if (!movementSafeToStart()) {
+      Serial.println("START blocked: limit active");
+      sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else if (!state.faultActive) {
       state.running = !state.running;
       if (!state.running) {
@@ -293,6 +350,10 @@ void loop() {
   if (consumeArmPressed()) {
     if (state.faultActive) {
       clearFaultIfSafe("ARM");
+    } else if (!movementSafeToStart()) {
+      systemArmed = false;
+      Serial.println("ARM blocked: limit active");
+      sendBleResponse("ERROR", "ARM_BLOCKED_LIMIT_ACTIVE");
     } else {
       systemArmed = !systemArmed;
       Serial.println(systemArmed ? "ARM ON" : "ARM OFF");

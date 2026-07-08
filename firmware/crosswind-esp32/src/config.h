@@ -43,7 +43,7 @@
   move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.7-limit-safety";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.8-hardening";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;

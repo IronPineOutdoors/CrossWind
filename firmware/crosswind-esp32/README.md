@@ -23,6 +23,8 @@ Default mode is `SWEEP`. In Phase 1 the crank linkage creates the physical oscil
 
 The Alpha limit switches are safety/calibration inputs, not normal travel controls. During powered motor operation, either active YL-99 limit switch immediately stops the BTS7960 output, disarms the system, blocks the FIRE relay, and latches `FAULT: LIMIT`. If both limits are active together, firmware latches `FAULT: BOTH LIMITS`. The fault can only be cleared after both limit switches are released.
 
+The controller also refuses START, ARM, and FIRE requests while a limit switch is already active, even before a run has begun. If a limit becomes active while armed, the controller automatically returns to SAFE. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.
+
 The Alpha bench controller uses the rotary encoder for speed, encoder press for the `MAIN`/`SETUP` display menu, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
