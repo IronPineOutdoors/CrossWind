@@ -1,8 +1,11 @@
 # Wiring Checklist
 
-- Battery positive has a main fuse near the battery.
-- BTS7960 motor power branch is fused.
-- Buck converter branch is fused.
+- 20V/24V tool battery positive has a main fuse near the battery.
+- High-current buck converter steps the tool battery down to the 12V bus.
+- 12V bus feeds BTS7960 motor power and thrower power output through fused branches.
+- 12V bus feeds a fused 5V buck for controller/support electronics.
+- Motor power is never taken from the 5V buck.
+- ESP32 3V3 feeds OLED, BME280, DHT11, and small logic sensors.
 - ESP32/Arduino ground and BTS7960 ground are common.
 - ESP32 analog input never sees more than 3.3V.
 - BTS7960 `RPWM` is wired to GPIO18.

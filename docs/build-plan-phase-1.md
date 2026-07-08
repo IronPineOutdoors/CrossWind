@@ -22,15 +22,15 @@ Mount the Mitsubishi Outlander rear wiper motor to the fixed base. The motor sho
 
 ## Linkage
 
-Use a simple crank/linkage from the motor output to the rotating plate. Start with conservative travel and low PWM before widening the sweep angle.
+Use a simple crank/linkage from the motor output to a rear corner or tab on the rotating plate. Start with conservative travel and low PWM before widening the sweep angle.
 
 ## Roller Switch Placement
 
-Mount left and right roller switches on adjustable stationary brackets. A single striker tab on the rotating plate should actuate the switches near each travel end.
+Mount left and right YL-99 roller switch modules on adjustable stationary brackets. Adjustable flags or tabs on the rotating plate should actuate the rollers lightly. These switches are safety/calibration inputs only, not travel reversal controls or hard stops.
 
 ## Controller Box
 
-Mount the ESP32, BTS7960, buck converter, fuse block, and wiring terminals in a waterproof electronics box. Add strain relief for motor, battery, switch, and control wiring.
+Mount the ESP32, BTS7960, high-current 12V buck, 5V buck, fuse block, and wiring terminals in a waterproof electronics box. Keep the BTS7960 heat sink exposed to airflow and add strain relief for motor, battery, switch, and control wiring.
 
 Add an opto-isolated trigger relay if thrower launch control is being tested. Keep the factory VEVOR NH113 pedal connected and wire the relay contacts in parallel with the pedal switch.
 

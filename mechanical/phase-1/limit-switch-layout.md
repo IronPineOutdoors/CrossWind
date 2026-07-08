@@ -4,6 +4,7 @@ Crosswind Alpha uses two YL-99 roller limit switch modules as safety and calibra
 
 - Mount the YL-99 modules on adjustable brackets attached to the stationary 28" x 28" base plate.
 - Mount adjustable flags or tabs on the rotating top plate.
+- Place flags near the rotating plate edge or a rear tab where they can be adjusted without disturbing the crank linkage.
 - The flags should contact the YL-99 roller arms lightly and repeatably.
 - The switch roller arms should not carry mechanism loads.
 - The switches are not physical hard stops and are not normal travel controls.

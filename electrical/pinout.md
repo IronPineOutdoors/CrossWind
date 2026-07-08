@@ -28,7 +28,7 @@
 
 ## BTS7960 Pins
 
-- `B+` and `B-` connect to the 12V battery branch through the correct fuse.
+- `B+` and `B-` connect to the fused 12V bus from the high-current buck converter.
 - `M+` and `M-` connect to the wiper motor.
 - `RPWM`, `LPWM`, `R_EN`, and `L_EN` connect to the ESP32 pins above.
 - ESP32 ground, BTS7960 logic ground, buck ground, and battery negative must be common.
@@ -75,5 +75,5 @@ The ESP32 must never send voltage into the thrower pedal circuit. Use the relay 
 
 Reserved placeholders exist in firmware for:
 
-- Battery voltage divider input
+- Battery voltage divider input, currently disabled with `BATTERY_VOLTAGE_PIN = -1`
 - Pitch actuator output

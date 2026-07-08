@@ -2,7 +2,7 @@
 
 Crosswind is an Iron Pine Outdoors prototype for programmable target presentation: a universal wobbler base that can add controlled yaw, and later pitch, to automatic clay throwers.
 
-Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating top plate on a lazy susan bearing, a wiper motor, a BTS7960 / IBT-2 motor driver, and two roller limit switches to sweep a thrower left and right.
+Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating top plate on a lazy susan bearing, a crank-driven wiper motor, a BTS7960 / IBT-2 motor driver, and two YL-99 roller limit switch modules used as safety/calibration inputs.
 
 Phase 2 is planned as a dual-axis yaw + pitch system with programmable presentation modes.
 
@@ -22,11 +22,12 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - Rotary encoder speed control with menu/select button
 - Dedicated ARM and FIRE / TEST buttons
 - SSD1306 OLED status display
-- DHT11 enclosure temperature/humidity sensor
+- DHT11 enclosure temperature/humidity sensor by default, with optional BME280 support on I2C
 - Dry-contact thrower trigger relay
-- Status LED
-- 12V battery
-- 12V-to-5V buck converter
+- DIYables common-cathode RGB status LED
+- 20V/24V tool battery input
+- High-current buck converter for 12V bus
+- Fused 5V buck converter for controller/support electronics
 - Waterproof electronics box
 - 28" x 28" 3/4" plywood base
 - 20" x 20" rotating top plate
@@ -34,7 +35,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 
 ## Folder Structure
 
-- `firmware/crosswind-esp32/` - PlatformIO-style ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, environment, display, trigger, and diagnostics modules.
+- `firmware/crosswind-esp32/` - PlatformIO ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, environment, display, RGB status LED, trigger, and diagnostics modules.
 - `firmware/crosswind-arduino/` - Arduino Uno/Nano fallback firmware.
 - `mechanical/` - Phase 1 and Phase 2 mechanical notes, dimensions, fitment, and cut lists.
 - `electrical/` - Pinout, power system, fusing, limit switch wiring, and wiring checklist.
@@ -59,7 +60,7 @@ Crosswind moves heavy equipment with a 12V motor. Keep hands clear of linkages, 
 ## Next Milestones
 
 - Finish Phase 1 wiring and enclosure layout.
-- Validate switch placement with the striker tab.
+- Validate YL-99 safety switch placement with rotating flags/tabs.
 - Record no-load motor current and loaded sweep current.
 - Fit the VEVOR NH113 on adjustable rails.
 - Add Phase 2 pitch-axis mechanical sketches.
