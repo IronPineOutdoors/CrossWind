@@ -1,5 +1,7 @@
 #include "diagnostics.h"
 
+#include <esp_system.h>
+
 #include "environment.h"
 #include "inputs.h"
 #include "limits.h"
@@ -34,13 +36,71 @@ const char* faultToString(FaultCode fault) {
   }
 }
 
+static const char* resetReasonToString(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_POWERON: return "POWERON";
+    case ESP_RST_EXT: return "EXTERNAL";
+    case ESP_RST_SW: return "SOFTWARE";
+    case ESP_RST_PANIC: return "PANIC";
+    case ESP_RST_INT_WDT: return "INT_WDT";
+    case ESP_RST_TASK_WDT: return "TASK_WDT";
+    case ESP_RST_WDT: return "WDT";
+    case ESP_RST_DEEPSLEEP: return "DEEPSLEEP";
+    case ESP_RST_BROWNOUT: return "BROWNOUT";
+    case ESP_RST_SDIO: return "SDIO";
+    default: return "UNKNOWN";
+  }
+}
+
+static const char* speedInputToString() {
+  switch (SPEED_INPUT_TYPE) {
+    case SPEED_INPUT_ROTARY_ENCODER: return "ROTARY_ENCODER";
+    case SPEED_INPUT_POTENTIOMETER: return "POTENTIOMETER";
+    default: return "UNKNOWN";
+  }
+}
+
+static const char* environmentSensorToString() {
+  switch (ENV_SENSOR_TYPE) {
+    case ENV_SENSOR_DHT11: return "DHT11";
+    case ENV_SENSOR_BME280: return "BME280";
+    default: return "UNKNOWN";
+  }
+}
+
 void printStartupDiagnostics(const ControllerState& state) {
   Serial.println();
   Serial.println("Crosswind ESP32 startup diagnostics");
   Serial.print("  Firmware: ");
   Serial.println(FIRMWARE_VERSION);
+  Serial.print("  Reset reason: ");
+  Serial.println(resetReasonToString(esp_reset_reason()));
   Serial.print("  Mode: ");
   Serial.println(modeToString(state.mode));
+  Serial.print("  Speed input: ");
+  Serial.println(speedInputToString());
+  Serial.print("  Environment sensor: ");
+  Serial.println(environmentSensorToString());
+  Serial.print("  BLE device: ");
+  Serial.println(BLE_DEVICE_NAME);
+  Serial.print("  Trigger pulse ms: ");
+  Serial.println(TRIGGER_PULSE_MS);
+  Serial.print("  Trigger min interval ms: ");
+  Serial.println(MIN_TRIGGER_INTERVAL_MS);
+  Serial.print("  Limit active state: ");
+  Serial.println(LIMIT_ACTIVE_STATE == LOW ? "LOW" : "HIGH");
+  Serial.print("  Limit faults enabled: ");
+  Serial.println(ENABLE_LIMIT_FAULTS ? "YES" : "NO");
+  Serial.print("  Limit pins L/R: ");
+  Serial.print(LEFT_LIMIT_PIN);
+  Serial.print("/");
+  Serial.println(RIGHT_LIMIT_PIN);
+  Serial.print("  RGB pins R/G/B: ");
+  Serial.print(RGB_RED_PIN);
+  Serial.print("/");
+  Serial.print(RGB_GREEN_PIN);
+  Serial.print("/");
+  Serial.println(RGB_BLUE_PIN);
   Serial.print("  Left limit: ");
   Serial.println(leftLimitActive() ? "ACTIVE" : "clear");
   Serial.print("  Left limit raw: ");

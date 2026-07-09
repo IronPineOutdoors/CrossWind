@@ -63,6 +63,10 @@ static bool movementSafeToStart() {
   return !ENABLE_LIMIT_FAULTS || limitsReleased();
 }
 
+static bool motorAllowed() {
+  return state.running && !state.faultActive && movementSafeToStart();
+}
+
 static bool clearFaultIfSafe(const char* source) {
   if (!state.faultActive) {
     return false;
@@ -203,6 +207,11 @@ static bool handleBleCommand(const String& command, const String& value) {
   }
 
   if (command == "MODE") {
+    if (state.running) {
+      sendBleResponse("ERROR", "MODE_BLOCKED_STOP_REQUIRED");
+      return true;
+    }
+
     String modeValue = value;
     modeValue.trim();
     modeValue.toUpperCase();
@@ -369,7 +378,11 @@ void loop() {
   }
 
   bool wasFaulted = state.faultActive;
-  updateMode(state);
+  if (motorAllowed()) {
+    updateMode(state);
+  } else {
+    resetModeState();
+  }
   if (!wasFaulted && state.faultActive) {
     cancelThrowerTrigger();
     systemArmed = false;

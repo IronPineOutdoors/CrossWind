@@ -110,6 +110,8 @@ To use a BME280 instead, wire it to the existing OLED I2C bus on GPIO21/GPIO22 a
 
 ## Quick Test Checklist
 
+See `firmware-test-checklist.md` for a fuller bench checklist and `fault-matrix.md` for fault behavior.
+
 1. Upload firmware with PlatformIO.
 2. Confirm the OLED boots and shows the home screen.
 3. Confirm encoder rotation changes motor speed.
