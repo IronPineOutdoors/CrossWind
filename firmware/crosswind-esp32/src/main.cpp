@@ -60,7 +60,7 @@ static bool limitsReleased() {
 }
 
 static bool movementSafeToStart() {
-  return !ENABLE_LIMIT_FAULTS || limitsReleased();
+  return (!ENABLE_LIMIT_FAULTS || limitsReleased()) && !emergencyStopActive();
 }
 
 static bool motorAllowed() {
@@ -72,10 +72,10 @@ static bool clearFaultIfSafe(const char* source) {
     return false;
   }
 
-  if (!limitsReleased()) {
+  if (!limitsReleased() || emergencyStopActive()) {
     Serial.print(source);
-    Serial.println(" fault clear blocked: release both limits first");
-    sendBleResponse("ERROR", "FAULT_CLEAR_BLOCKED_LIMIT_ACTIVE");
+    Serial.println(" fault clear blocked: release safety inputs first");
+    sendBleResponse("ERROR", "FAULT_CLEAR_BLOCKED_SAFETY_INPUT_ACTIVE");
     return true;
   }
 
@@ -250,12 +250,12 @@ void setup() {
 #endif
   esp_task_wdt_add(NULL);
 
+  initTrigger();
   initStatusLed();
   systemArmed = false;
   setupDisplayMode = false;
 
   beginMotor();
-  initTrigger();
   beginLimits();
   beginInputs();
   initEnvironment();
@@ -307,6 +307,10 @@ void loop() {
   updateInputs();
   updateLimits();
   updateEnvironment();
+
+  if (emergencyStopActive()) {
+    latchFault(FAULT_ESTOP);
+  }
 
   if (ENABLE_TEMP_FAULTS && environmentTempFaultActive()) {
     latchFault(FAULT_TEMP);

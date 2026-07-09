@@ -33,6 +33,8 @@ The Alpha limit switches are safety/calibration inputs, not normal travel contro
 
 The controller also refuses START, ARM, and FIRE requests while a limit switch is already active, even before a run has begun. If a limit becomes active while armed, the controller automatically returns to SAFE. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.
 
+An E-stop input path exists as a disabled placeholder with `ESTOP_PIN = -1`. Assigning that pin in `config.h` enables a pulled-to-ground emergency stop input that latches `FAULT: ESTOP`. BLE command writes are rate-limited by `BLE_COMMAND_MIN_INTERVAL_MS`.
+
 The Alpha bench controller uses the rotary encoder for speed, encoder press for the `MAIN`/`SETUP` display menu, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
@@ -99,6 +101,7 @@ Modes currently accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`.
 | RGB LED green | 12 |
 | RGB LED blue | 4 |
 | Potentiometer placeholder | 39 |
+| E-stop placeholder | disabled |
 
 The DIYables RGB LED module is common cathode with built-in resistors: connect module `GND` to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4. GPIO12 is a boot strapping pin on many ESP32 boards; keep it for the Alpha wiring above, but if boot or upload problems appear, move green to another PWM-capable non-strapping pin such as GPIO5 and update `RGB_GREEN_PIN`.
 

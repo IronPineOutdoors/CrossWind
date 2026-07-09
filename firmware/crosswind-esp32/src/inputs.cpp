@@ -10,6 +10,7 @@ struct DebouncedButton {
 
 static DebouncedButton startButton = { START_STOP_BUTTON_PIN, false, false, false, 0 };
 static DebouncedButton modeButton = { MODE_BUTTON_PIN, false, false, false, 0 };
+static DebouncedButton estopButton = { ESTOP_PIN, false, false, false, 0 };
 static DebouncedButton encoderButton = { ROTARY_ENCODER_SW_PIN, false, false, false, 0 };
 static DebouncedButton armButton = { ARM_BUTTON_PIN, false, false, false, 0 };
 static DebouncedButton fireButton = { FIRE_BUTTON_PIN, false, false, false, 0 };
@@ -71,6 +72,9 @@ void beginInputs() {
   if (MODE_BUTTON_PIN >= 0) {
     pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
   }
+  if (ESTOP_PIN >= 0) {
+    pinMode(ESTOP_PIN, INPUT_PULLUP);
+  }
   pinMode(ARM_BUTTON_PIN, INPUT_PULLUP);
   pinMode(FIRE_BUTTON_PIN, INPUT_PULLUP);
   if (SPEED_INPUT_TYPE == SPEED_INPUT_ROTARY_ENCODER) {
@@ -87,6 +91,7 @@ void beginInputs() {
   }
   startButton.rawPressed = startButton.stablePressed = readPressed(START_STOP_BUTTON_PIN);
   modeButton.rawPressed = modeButton.stablePressed = readPressed(MODE_BUTTON_PIN);
+  estopButton.rawPressed = estopButton.stablePressed = readPressed(ESTOP_PIN);
   encoderButton.rawPressed = encoderButton.stablePressed = readPressed(ROTARY_ENCODER_SW_PIN);
   armButton.rawPressed = armButton.stablePressed = readPressed(ARM_BUTTON_PIN);
   fireButton.rawPressed = fireButton.stablePressed = readPressed(FIRE_BUTTON_PIN);
@@ -95,6 +100,7 @@ void beginInputs() {
 void updateInputs() {
   updateButton(startButton);
   updateButton(modeButton);
+  updateButton(estopButton);
   updateButton(armButton);
   updateButton(fireButton);
   if (SPEED_INPUT_TYPE == SPEED_INPUT_ROTARY_ENCODER) {
@@ -139,6 +145,10 @@ bool consumeMenuPressed() {
   bool event = encoderButton.pressEvent;
   encoderButton.pressEvent = false;
   return event;
+}
+
+bool emergencyStopActive() {
+  return estopButton.stablePressed;
 }
 
 uint8_t readSpeedPwm() {

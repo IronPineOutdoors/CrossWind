@@ -43,7 +43,7 @@
   move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.9-hardening";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.10-hardening";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
@@ -56,6 +56,7 @@ const bool ENABLE_LIMIT_FAULTS = true;
 const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
 const int START_STOP_BUTTON_PIN = -1;
 const int MODE_BUTTON_PIN = -1;
+const int ESTOP_PIN = -1;
 const int ARM_BUTTON_PIN = 16;
 const int FIRE_BUTTON_PIN = 17;
 const int SPEED_POT_PIN = 39;
@@ -64,6 +65,7 @@ const int ROTARY_ENCODER_DT_PIN = 33;
 const int ROTARY_ENCODER_SW_PIN = 25;
 const int THROWER_TRIGGER_PIN = 14;
 const int RGB_RED_PIN = 27;
+// GPIO12 is an ESP32 strapping pin; use GPIO5 for green if boot/upload becomes unreliable.
 const int RGB_GREEN_PIN = 12;
 const int RGB_BLUE_PIN = 4;
 const int OLED_SDA_PIN = 21;
@@ -98,6 +100,7 @@ const uint16_t LIMIT_DEBOUNCE_MS = 20;
 const uint16_t DIRECTION_CHANGE_DEADTIME_MS = 50;
 const uint8_t WATCHDOG_TIMEOUT_SECONDS = 5;
 const uint16_t BLE_STATUS_INTERVAL_MS = 1000;
+const uint16_t BLE_COMMAND_MIN_INTERVAL_MS = 100;
 const uint16_t SERIAL_STATUS_INTERVAL_MS = 1000;
 
 enum SpeedInputType { SPEED_INPUT_POTENTIOMETER, SPEED_INPUT_ROTARY_ENCODER };
@@ -144,6 +147,7 @@ enum FaultCode {
   FAULT_STARTUP_BOTH_LIMITS = 4,
   FAULT_TEMP = 5,
   FAULT_LIMIT = 6,
+  FAULT_ESTOP = 7,
   FAULT_UNKNOWN = 255
 };
 

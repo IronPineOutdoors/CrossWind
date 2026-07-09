@@ -14,6 +14,7 @@ static bool knownFaultCode(FaultCode fault) {
     case FAULT_STARTUP_BOTH_LIMITS:
     case FAULT_TEMP:
     case FAULT_LIMIT:
+    case FAULT_ESTOP:
       return true;
     default:
       return false;

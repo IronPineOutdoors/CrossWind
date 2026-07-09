@@ -11,6 +11,7 @@ static BLECharacteristic* statusCharacteristic = nullptr;
 static BLECharacteristic* responseCharacteristic = nullptr;
 static BleCommandHandler commandHandler = nullptr;
 static bool clientConnected = false;
+static unsigned long lastCommandAt = 0;
 
 static String normalizeToken(String token) {
   token.trim();
@@ -25,6 +26,13 @@ class CommandCallback : public BLECharacteristicCallbacks {
     if (payload.length() == 0) {
       return;
     }
+
+    unsigned long now = millis();
+    if (lastCommandAt > 0 && now - lastCommandAt < BLE_COMMAND_MIN_INTERVAL_MS) {
+      sendBleResponse("ERROR", "COMMAND_RATE_LIMITED");
+      return;
+    }
+    lastCommandAt = now;
 
     int separator = payload.indexOf('=');
     if (separator < 0) {

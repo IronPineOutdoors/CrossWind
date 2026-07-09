@@ -24,6 +24,7 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 - Confirm ESP32 GPIO14 drives only the relay input side.
 - While `ARMED`, press FIRE and confirm the relay pulse is non-blocking.
 - Confirm repeated FIRE requests inside `MIN_TRIGGER_INTERVAL_MS` are blocked.
+- Confirm rapid BLE command writes are rate-limited by `BLE_COMMAND_MIN_INTERVAL_MS`.
 
 ## Limits And Faults
 
@@ -33,6 +34,7 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 - While motor is running on the bench, trigger one limit and confirm motor output stops, the system disarms, RGB shows fault, and firing is blocked.
 - Trigger both limits together and confirm `BOTH_LIMITS` fault.
 - Confirm limit faults cannot clear until both switches are released.
+- If `ESTOP_PIN` is configured, trigger it and confirm motor output stops, the system disarms, relay firing is blocked, and the fault cannot clear until released.
 
 ## Motor
 

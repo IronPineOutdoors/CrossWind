@@ -32,6 +32,7 @@ const char* faultToString(FaultCode fault) {
     case FAULT_STARTUP_BOTH_LIMITS: return "STARTUP_BOTH_LIMITS";
     case FAULT_TEMP: return "TEMP_FAULT";
     case FAULT_LIMIT: return "LIMIT";
+    case FAULT_ESTOP: return "ESTOP";
     default: return "UNKNOWN";
   }
 }
@@ -87,6 +88,10 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(TRIGGER_PULSE_MS);
   Serial.print("  Trigger min interval ms: ");
   Serial.println(MIN_TRIGGER_INTERVAL_MS);
+  Serial.print("  BLE command min interval ms: ");
+  Serial.println(BLE_COMMAND_MIN_INTERVAL_MS);
+  Serial.print("  E-stop pin: ");
+  Serial.println(ESTOP_PIN);
   Serial.print("  Limit active state: ");
   Serial.println(LIMIT_ACTIVE_STATE == LOW ? "LOW" : "HIGH");
   Serial.print("  Limit faults enabled: ");
@@ -119,6 +124,8 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(faultToString(state.lastFault));
   Serial.print("  Fault active: ");
   Serial.println(state.faultActive ? "YES" : "NO");
+  Serial.print("  E-stop active: ");
+  Serial.println(emergencyStopActive() ? "YES" : "NO");
   Serial.print("  Thrower trigger enabled: ");
   Serial.println(ENABLE_THROWER_TRIGGER ? "YES" : "NO");
   Serial.print("  Trigger active: ");
@@ -151,6 +158,7 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";leftLimitRaw=" + String(leftLimitRawLevel());
   payload += ";rightLimitRaw=" + String(rightLimitRawLevel());
   payload += ";potRaw=" + String(readSpeedRaw());
+  payload += ";estop=" + String(emergencyStopActive() ? "1" : "0");
   payload += ";triggerEnabled=" + String(ENABLE_THROWER_TRIGGER ? "1" : "0");
   payload += ";triggerActive=" + String(isTriggerActive() ? "1" : "0");
   payload += ";lastTriggerMs=" + String(getLastTriggerTime());
