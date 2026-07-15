@@ -33,6 +33,8 @@ const char* faultToString(FaultCode fault) {
     case FAULT_TEMP: return "TEMP_FAULT";
     case FAULT_LIMIT: return "LIMIT";
     case FAULT_ESTOP: return "ESTOP";
+    case FAULT_RUN_TIMEOUT: return "RUN_TIMEOUT";
+    case FAULT_OVERCURRENT: return "OVERCURRENT";
     default: return "UNKNOWN";
   }
 }
@@ -90,6 +92,14 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(MIN_TRIGGER_INTERVAL_MS);
   Serial.print("  BLE command min interval ms: ");
   Serial.println(BLE_COMMAND_MIN_INTERVAL_MS);
+  Serial.print("  Motor session timeout enabled: ");
+  Serial.println(ENABLE_MOTOR_SESSION_TIMEOUT ? "YES" : "NO");
+  Serial.print("  Motor session timeout ms: ");
+  Serial.println(MOTOR_SESSION_TIMEOUT_MS);
+  Serial.print("  Motor current sense pin: ");
+  Serial.println(MOTOR_CURRENT_SENSE_PIN);
+  Serial.print("  Motor overcurrent fault enabled: ");
+  Serial.println(ENABLE_MOTOR_OVERCURRENT_FAULT ? "YES" : "NO");
   Serial.print("  E-stop pin: ");
   Serial.println(ESTOP_PIN);
   Serial.print("  Limit active state: ");

@@ -24,6 +24,7 @@ static ControllerState state = {
 };
 
 static unsigned long lastBleStatus = 0;
+static unsigned long runStartedAt = 0;
 static bool systemArmed = false;
 static bool setupDisplayMode = false;
 
@@ -31,7 +32,7 @@ static void latchFault(FaultCode fault) {
   stopMotor();
   cancelThrowerTrigger();
   systemArmed = false;
-  state.running = false;
+  setRunning(false);
   state.speed = 0;
   if (state.faultActive) {
     return;
@@ -47,7 +48,7 @@ static void latchFault(FaultCode fault) {
 static void clearFault() {
   stopMotor();
   cancelThrowerTrigger();
-  state.running = false;
+  setRunning(false);
   state.faultActive = false;
   state.lastFault = FAULT_NONE;
   state.speed = readSpeedPwm();
@@ -65,6 +66,21 @@ static bool movementSafeToStart() {
 
 static bool motorAllowed() {
   return state.running && !state.faultActive && movementSafeToStart();
+}
+
+static void setRunning(bool running) {
+  if (state.running == running) {
+    return;
+  }
+  state.running = running;
+  runStartedAt = running ? millis() : 0;
+}
+
+static int readMotorCurrentRaw() {
+  if (MOTOR_CURRENT_SENSE_PIN < 0) {
+    return -1;
+  }
+  return analogRead(MOTOR_CURRENT_SENSE_PIN);
 }
 
 static bool clearFaultIfSafe(const char* source) {
@@ -109,7 +125,7 @@ static bool parseByteValue(const String& value, uint8_t& parsedValue) {
 
 static void setMode(Mode mode) {
   state.mode = mode;
-  state.running = false;
+  setRunning(false);
   cancelThrowerTrigger();
   resetModeState();
   saveSettings(state);
@@ -160,14 +176,14 @@ static bool handleBleCommand(const String& command, const String& value) {
     } else if (!movementSafeToStart()) {
       sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else {
-      state.running = true;
+      setRunning(true);
       sendBleResponse("OK", "STARTED");
     }
     return true;
   }
 
   if (command == "STOP") {
-    state.running = false;
+    setRunning(false);
     stopMotor();
     cancelThrowerTrigger();
     resetModeState();
@@ -258,6 +274,9 @@ void setup() {
   beginMotor();
   beginLimits();
   beginInputs();
+  if (MOTOR_CURRENT_SENSE_PIN >= 0) {
+    pinMode(MOTOR_CURRENT_SENSE_PIN, INPUT);
+  }
   initEnvironment();
   initDisplay();
   beginStorage();
@@ -272,14 +291,14 @@ void setup() {
   if (bothLimitsActive()) {
     state.faultActive = ENABLE_LIMIT_FAULTS;
     state.lastFault = FAULT_STARTUP_BOTH_LIMITS;
-    state.running = false;
+    setRunning(false);
     state.speed = 0;
     Serial.println("FAULT: both limits active at startup");
     saveSettings(state);
   } else if (ENABLE_LIMIT_FAULTS && !limitsReleased()) {
     state.faultActive = true;
     state.lastFault = FAULT_LIMIT;
-    state.running = false;
+    setRunning(false);
     state.speed = 0;
     Serial.println("FAULT: limit active at startup");
     saveSettings(state);
@@ -320,6 +339,14 @@ void loop() {
     latchFault(bothLimitsActive() ? FAULT_BOTH_LIMITS : FAULT_LIMIT);
   }
 
+  if (ENABLE_MOTOR_SESSION_TIMEOUT && state.running && runStartedAt > 0 && millis() - runStartedAt >= MOTOR_SESSION_TIMEOUT_MS) {
+    latchFault(FAULT_RUN_TIMEOUT);
+  }
+
+  if (ENABLE_MOTOR_OVERCURRENT_FAULT && readMotorCurrentRaw() >= MOTOR_OVERCURRENT_THRESHOLD_RAW) {
+    latchFault(FAULT_OVERCURRENT);
+  }
+
   if (systemArmed && !movementSafeToStart()) {
     systemArmed = false;
     cancelThrowerTrigger();
@@ -333,7 +360,7 @@ void loop() {
       Serial.println("START blocked: limit active");
       sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else if (!state.faultActive) {
-      state.running = !state.running;
+      setRunning(!state.running);
       if (!state.running) {
         cancelThrowerTrigger();
         resetModeState();

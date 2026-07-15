@@ -43,7 +43,7 @@
   move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.10-hardening";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.11-hardening";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
@@ -71,6 +71,7 @@ const int RGB_BLUE_PIN = 4;
 const int OLED_SDA_PIN = 21;
 const int OLED_SCL_PIN = 22;
 const int DHT_PIN = 26;
+const int MOTOR_CURRENT_SENSE_PIN = -1;
 
 // Future expansion placeholders for Phase 2 and production hardware.
 const int PITCH_ACTUATOR_PIN = -1;
@@ -130,6 +131,10 @@ const bool ENABLE_AUTOMATIC_TRIGGER = false;
 const uint16_t TRIGGER_PULSE_MS = 500;
 const uint32_t MIN_TRIGGER_INTERVAL_MS = 3000UL;
 const int TRIGGER_ACTIVE_STATE = HIGH;
+const bool ENABLE_MOTOR_SESSION_TIMEOUT = false;
+const uint32_t MOTOR_SESSION_TIMEOUT_MS = 0;
+const bool ENABLE_MOTOR_OVERCURRENT_FAULT = false;
+const int MOTOR_OVERCURRENT_THRESHOLD_RAW = 4095;
 
 const char BLE_DEVICE_NAME[] = "Crosswind-ESP32";
 const char BLE_SERVICE_UUID[] = "12345678-1234-1234-1234-1234567890ab";
@@ -148,6 +153,8 @@ enum FaultCode {
   FAULT_TEMP = 5,
   FAULT_LIMIT = 6,
   FAULT_ESTOP = 7,
+  FAULT_RUN_TIMEOUT = 8,
+  FAULT_OVERCURRENT = 9,
   FAULT_UNKNOWN = 255
 };
 

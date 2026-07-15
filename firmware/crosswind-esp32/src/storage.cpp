@@ -15,6 +15,8 @@ static bool knownFaultCode(FaultCode fault) {
     case FAULT_TEMP:
     case FAULT_LIMIT:
     case FAULT_ESTOP:
+    case FAULT_RUN_TIMEOUT:
+    case FAULT_OVERCURRENT:
       return true;
     default:
       return false;

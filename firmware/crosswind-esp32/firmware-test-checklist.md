@@ -41,6 +41,8 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 - Confirm BTS7960 `RPWM`, `LPWM`, `R_EN`, and `L_EN` wiring before motor power.
 - Confirm motor PWM changes speed on the bench before connecting linkage.
 - Confirm STOP or any fault sets BTS7960 outputs off.
+- If motor session timeout is enabled, confirm it faults after `MOTOR_SESSION_TIMEOUT_MS`.
+- If motor current sensing is installed and enabled, confirm raw readings are plausible before setting an overcurrent threshold.
 
 ## Environment
 

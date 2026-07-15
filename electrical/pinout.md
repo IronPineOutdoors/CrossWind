@@ -76,4 +76,5 @@ The ESP32 must never send voltage into the thrower pedal circuit. Use the relay 
 Reserved placeholders exist in firmware for:
 
 - Battery voltage divider input, currently disabled with `BATTERY_VOLTAGE_PIN = -1`
+- Motor current sense input, currently disabled with `MOTOR_CURRENT_SENSE_PIN = -1`
 - Pitch actuator output
