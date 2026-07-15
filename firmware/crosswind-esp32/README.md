@@ -57,6 +57,8 @@ Upload with:
 pio run --target upload
 ```
 
+GitHub Actions also builds this PlatformIO project on pushes and pull requests that touch `firmware/crosswind-esp32/`.
+
 ## BLE Commands
 
 - `START`
