@@ -4,7 +4,7 @@
 
 static Preferences prefs;
 static const char* NAMESPACE = "crosswind";
-static const uint16_t STORAGE_VERSION = 2;
+static const uint16_t STORAGE_VERSION = 3;
 
 static bool knownFaultCode(FaultCode fault) {
   switch (fault) {
@@ -44,6 +44,8 @@ StoredSettings loadSettings() {
   settings.batteryProfile = (BatteryProfile)prefs.getUChar("batProfile", (uint8_t)BATTERY_DEFAULT_PROFILE);
   settings.batteryCalibrationMultiplier = prefs.getFloat("batCalMul", BATTERY_DEFAULT_CALIBRATION_MULTIPLIER);
   settings.batteryCalibrationOffsetV = prefs.getFloat("batCalOff", BATTERY_DEFAULT_CALIBRATION_OFFSET_V);
+  settings.displayContrast = prefs.getUChar("uiContrast", UI_DEFAULT_CONTRAST);
+  settings.displayStatusTimeoutSeconds = prefs.getUShort("uiStatusSec", UI_DEFAULT_STATUS_TIMEOUT_SECONDS);
 
   if (settings.mode > CENTERING) {
     settings.mode = SWEEP;
@@ -64,8 +66,18 @@ StoredSettings loadSettings() {
   if (!isfinite(settings.batteryCalibrationOffsetV) || settings.batteryCalibrationOffsetV < -3.0F || settings.batteryCalibrationOffsetV > 3.0F) {
     settings.batteryCalibrationOffsetV = BATTERY_DEFAULT_CALIBRATION_OFFSET_V;
   }
+  if (settings.displayContrast < UI_MIN_CONTRAST) settings.displayContrast = UI_DEFAULT_CONTRAST;
+  if (settings.displayStatusTimeoutSeconds < UI_MIN_STATUS_TIMEOUT_SECONDS || settings.displayStatusTimeoutSeconds > UI_MAX_STATUS_TIMEOUT_SECONDS) {
+    settings.displayStatusTimeoutSeconds = UI_DEFAULT_STATUS_TIMEOUT_SECONDS;
+  }
 
   return settings;
+}
+
+void saveUiSettings(uint8_t contrast, uint16_t statusTimeoutSeconds) {
+  prefs.putUShort("version", STORAGE_VERSION);
+  prefs.putUChar("uiContrast", constrain(contrast, UI_MIN_CONTRAST, UI_MAX_CONTRAST));
+  prefs.putUShort("uiStatusSec", constrain(statusTimeoutSeconds, UI_MIN_STATUS_TIMEOUT_SECONDS, UI_MAX_STATUS_TIMEOUT_SECONDS));
 }
 
 void saveBatterySettings(bool enabled, BatteryProfile profile, float calibrationMultiplier, float calibrationOffsetV) {

@@ -11,8 +11,11 @@
 - Trigger the left roller switch and confirm Serial status changes.
 - Trigger the right roller switch and confirm Serial status changes.
 - Trigger both and confirm a fault is reported.
-- Turn the rotary encoder and confirm OLED motor percentage and Serial speed output change.
-- Press the encoder switch and confirm OLED menu toggles between `MAIN` and `SETUP`.
+- Turn the rotary encoder on Status and confirm speed changes in bounded steps.
+- Short-press the encoder and confirm menu entry/selection.
+- Hold the encoder for at least `UI_LONG_PRESS_MS` and confirm cancel/back without saving.
+- Confirm ARM and FIRE remain responsive from every menu page.
+- Confirm an active fault immediately replaces the current page and unsafe clear remains blocked.
 - Press FIRE while OLED shows `SAFE` and confirm Serial prints `FIRE BLOCKED - NOT ARMED`.
 - Press ARM and confirm OLED shows `ARMED` and Serial prints `ARM ON`.
 - Press FIRE while armed and confirm the relay pulses briefly.

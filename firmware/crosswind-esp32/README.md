@@ -15,14 +15,15 @@ The code is split into beginner-readable modules:
 - `config.h` - pin assignments, constants, shared enums, and the main controller state.
 - `motor.*` - BTS7960 / IBT-2 motor control, safe reversal, soft-start ramping, and stop behavior.
 - `limits.*` - left/right roller switch reads and debounce.
-- `inputs.*` - ARM/FIRE buttons, rotary encoder speed/menu input, and optional speed potentiometer reads.
+- `inputs.*` - ARM/FIRE buttons, rotary encoder delta/short/long-press events, and optional speed potentiometer reads.
 - `motion.*` - non-blocking state machine for endpoints, modes, centering, calibration, and motion diagnostics.
 - `modes.*` - compatibility adapter between the controller loop and motion engine.
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - BME280 temperature, humidity, and pressure support.
 - `battery_monitor.*` - non-blocking divided-voltage sampling, filtering, status, calibration, and events.
-- `display.*` - SSD1306 OLED status display.
+- `menu.*` - non-blocking UI state, navigation, working-copy edits, confirmations, notifications, and application intents.
+- `display.*` - SSD1306 boot, status, menu, service, calibration, and priority fault rendering.
 - `status_led.*` - non-blocking DIYables RGB status LED control.
 - `trigger.*` - non-blocking thrower relay pulse control.
 - `diagnostics.*` - Serial startup diagnostics and runtime status payloads.
@@ -39,11 +40,11 @@ An E-stop input path exists as a disabled placeholder with `ESTOP_PIN = -1`. Ass
 
 Motor session timeout and motor overcurrent fault hooks exist but are disabled by default. They require configuring `ENABLE_MOTOR_SESSION_TIMEOUT` or `ENABLE_MOTOR_OVERCURRENT_FAULT` plus the related timeout/current-sense constants in `config.h`.
 
-The Alpha bench controller uses the rotary encoder for speed, encoder press for the `MAIN`/`SETUP` display menu, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
+The Alpha bench controller uses rotary movement for status-screen speed or menu navigation, short encoder press for select/confirm, and long press for cancel/back. ARM on GPIO16 and FIRE / TEST on GPIO17 remain dedicated safety controls. The encoder button never triggers the relay.
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
 
-The OLED home screen shows the current motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and `Limit: OK`, `ACTIVE`, `FAULT: LIMIT`, or `FAULT: BOTH`. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
+The OLED provides non-blocking boot/status screens, a shallow local menu, working-copy settings, service data, calibration confirmations/progress, notifications, timeout/dim/off behavior, and a priority fault screen. See `display-menu.md`.
 
 ## Build
 
@@ -97,6 +98,10 @@ Build `esp32dev_motion_sim` to disable motor GPIO output and emulate virtual end
 ## Battery Monitoring
 
 Battery monitoring defaults disabled until its external divider is installed and verified. The default design measures the raw tool-battery input through a configurable 100 kOhm/12 kOhm divider into ADC1 GPIO36. Low voltage warns; sustained critical voltage is reported to the application fault handler. See `battery-monitor.md` and `battery-monitor-test.md`. Build `esp32dev_battery_sim` for deterministic voltage input with motor GPIO disabled.
+
+## Display/Menu Simulation
+
+Build `esp32dev_ui_sim` and use `SIM_UI=NEXT|PREV|PRESS|HOLD` for deterministic navigation with motor outputs disabled. See `display-menu.md` and `display-menu-test.md`.
 
 ## Current Alpha Pinout
 

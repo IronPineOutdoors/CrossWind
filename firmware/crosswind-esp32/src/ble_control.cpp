@@ -125,3 +125,7 @@ void sendBleResponse(const String& status, const String& message) {
   }
   Serial.println(payload);
 }
+
+bool bleClientConnected() {
+  return clientConnected;
+}

@@ -9,6 +9,7 @@
 #include "environment.h"
 #include "inputs.h"
 #include "limits.h"
+#include "menu.h"
 #include "modes.h"
 #include "motor.h"
 #include "motion.h"
@@ -26,9 +27,10 @@ static ControllerState state = {
 };
 
 static unsigned long lastBleStatus = 0;
+static EnvironmentStatus lastUiEnvironmentStatus = ENV_STATUS_ERROR;
+static bool lastUiBleConnected = false;
 static unsigned long runStartedAt = 0;
 static bool systemArmed = false;
-static bool setupDisplayMode = false;
 
 static void setRunning(bool running);
 
@@ -135,6 +137,78 @@ static void setMode(Mode mode) {
   saveSettings(state);
 }
 
+static void processUiIntent(const UiIntent& intent) {
+  switch (intent.type) {
+    case UI_INTENT_SET_MODE:
+      if (state.running) showUiNotification("STOP TO CHANGE MODE");
+      else { setMode((Mode)constrain(intent.value, (int)SWEEP, (int)CENTERING)); showUiNotification("MODE SAVED"); }
+      break;
+    case UI_INTENT_SET_SPEED:
+      if (state.faultActive) showUiNotification("SPEED BLOCKED");
+      else {
+        setSpeedPwm((uint8_t)constrain(intent.value, 0, (int)MAX_PWM));
+        state.speed = readSpeedPwm();
+        if (intent.secondaryValue != 0) { saveSettings(state); showUiNotification("SPEED SAVED"); }
+      }
+      break;
+    case UI_INTENT_START:
+      if (state.faultActive) showUiNotification("FAULT ACTIVE");
+      else if (!movementSafeToStart()) showUiNotification("START BLOCKED");
+      else { setRunning(true); startMotion(state); showUiNotification("MOTION STARTED"); }
+      break;
+    case UI_INTENT_STOP:
+      setRunning(false); stopMotor(); cancelThrowerTrigger(); resetModeState(); showUiNotification("MOTION STOPPED");
+      break;
+    case UI_INTENT_CENTER:
+      if (requestCentering(state)) { runStartedAt = millis(); showUiNotification("CENTER STARTED"); }
+      else showUiNotification("CENTER BLOCKED");
+      break;
+    case UI_INTENT_MOTION_CALIBRATE:
+      if (requestCalibration(state)) { runStartedAt = millis(); showUiNotification("CAL STARTED"); }
+      else showUiNotification("CAL BLOCKED");
+      break;
+    case UI_INTENT_CLEAR_FAULT:
+      if (!clearFaultIfSafe("MENU")) showUiNotification("NO ACTIVE FAULT");
+      else if (state.faultActive) showUiNotification("CLEAR BLOCKED");
+      else showUiNotification("FAULT CLEARED");
+      break;
+    case UI_INTENT_BATTERY_CALIBRATE:
+      if (state.running) showUiNotification("STOP REQUIRED");
+      else if (calibrateBatteryToKnownVoltage((float)intent.value / 10.0F)) {
+        saveBatterySettings(batteryMonitoringEnabled(), selectedBatteryProfile(), batteryCalibrationMultiplier(), batteryCalibrationOffsetV());
+        showUiNotification("BATTERY CAL SAVED");
+      } else showUiNotification("BAT CAL REJECTED");
+      break;
+    case UI_INTENT_RESET_BATTERY_CALIBRATION:
+      if (state.running) showUiNotification("STOP REQUIRED");
+      else {
+        resetBatteryCalibration();
+        saveBatterySettings(batteryMonitoringEnabled(), selectedBatteryProfile(), batteryCalibrationMultiplier(), batteryCalibrationOffsetV());
+        showUiNotification("BAT CAL RESET");
+      }
+      break;
+    case UI_INTENT_SAVE_SETTINGS:
+      saveUiSettings((uint8_t)intent.value, (uint16_t)intent.secondaryValue);
+      showUiNotification("SETTINGS SAVED");
+      break;
+    case UI_INTENT_RESTORE_DEFAULTS:
+      if (state.running) showUiNotification("STOP REQUIRED");
+      else {
+        saveUiSettings(UI_DEFAULT_CONTRAST, UI_DEFAULT_STATUS_TIMEOUT_SECONDS);
+        initMenu(UI_DEFAULT_CONTRAST, UI_DEFAULT_STATUS_TIMEOUT_SECONDS);
+        setSpeedPwm(DEFAULT_PWM);
+        state.speed = DEFAULT_PWM;
+        setMode(SWEEP);
+        saveSettings(state);
+        showUiNotification("DEFAULTS RESTORED");
+      }
+      break;
+    case UI_INTENT_NONE:
+    default:
+      break;
+  }
+}
+
 static bool triggerAllowed() {
   if (state.faultActive) {
     Serial.println("Trigger ignored: fault active");
@@ -183,6 +257,7 @@ static bool handleBleCommand(const String& command, const String& value) {
       setRunning(true);
       startMotion(state);
       sendBleResponse("OK", "STARTED");
+      showUiNotification("BLE STARTED");
     }
     return true;
   }
@@ -193,6 +268,7 @@ static bool handleBleCommand(const String& command, const String& value) {
     cancelThrowerTrigger();
     resetModeState();
     sendBleResponse("OK", "STOPPED");
+    showUiNotification("BLE STOPPED");
     return true;
   }
 
@@ -313,6 +389,19 @@ static bool handleBleCommand(const String& command, const String& value) {
     return true;
   }
 
+  if (command == "SIM_UI" && uiSimulationEnabled()) {
+    String uiValue = value;
+    uiValue.trim();
+    uiValue.toUpperCase();
+    if (uiValue == "NEXT") handleUiEncoder(1, state);
+    else if (uiValue == "PREV") handleUiEncoder(-1, state);
+    else if (uiValue == "PRESS") handleUiShortPress(state);
+    else if (uiValue == "HOLD") handleUiLongPress(state);
+    else return false;
+    sendBleResponse("OK", "SIM_UI_EVENT");
+    return true;
+  }
+
   if (command == "SIM_LIMITS" && motionSimulationEnabled()) {
     String limitValue = value;
     limitValue.trim();
@@ -337,8 +426,10 @@ static bool handleBleCommand(const String& command, const String& value) {
       return true;
     }
     state.speed = requestedSpeed;
+    setSpeedPwm(requestedSpeed);
     saveSettings(state);
     sendBleResponse("OK", "SPEED_SET");
+    showUiNotification("BLE SPEED UPDATED");
     return true;
   }
 
@@ -364,6 +455,7 @@ static bool handleBleCommand(const String& command, const String& value) {
       return false;
     }
     sendBleResponse("OK", "MODE_SET");
+    showUiNotification("BLE MODE UPDATED");
     return true;
   }
 
@@ -389,7 +481,6 @@ void setup() {
   initTrigger();
   initStatusLed();
   systemArmed = false;
-  setupDisplayMode = false;
 
   beginMotor();
   beginLimits();
@@ -405,8 +496,10 @@ void setup() {
   state.mode = settings.mode;
   state.lastFault = settings.lastFault;
   state.speed = settings.lastSpeed;
+  setSpeedPwm(settings.lastSpeed);
   initMotion(settings.fullTravelTimeMs);
   initBatteryMonitor(settings.batteryMonitorEnabled, settings.batteryProfile, settings.batteryCalibrationMultiplier, settings.batteryCalibrationOffsetV);
+  initMenu(settings.displayContrast, settings.displayStatusTimeoutSeconds);
 
   updateInputs();
   updateLimits();
@@ -444,6 +537,11 @@ static void selectStatusLedMode() {
 
 void loop() {
   updateInputs();
+  int encoderDelta = consumeEncoderDelta();
+  if (encoderDelta != 0) handleUiEncoder(encoderDelta, state);
+  if (consumeMenuPressed()) handleUiShortPress(state);
+  if (consumeMenuLongPressed()) handleUiLongPress(state);
+  processUiIntent(consumeUiIntent());
   updateLimits();
   updateEnvironment();
   updateBatteryMonitor(state.running);
@@ -474,6 +572,7 @@ void loop() {
 
   if (consumeBatteryLowEvent()) {
     Serial.println("WARNING: battery voltage low");
+    showUiNotification("BATTERY LOW");
   }
 
   if (ENABLE_LIMIT_FAULTS && bothLimitsActive()) {
@@ -522,30 +621,25 @@ void loop() {
     }
   }
 
-  if (consumeMenuPressed()) {
-    if (state.faultActive) {
-      clearFaultIfSafe("ENCODER");
-    } else {
-      setupDisplayMode = !setupDisplayMode;
-      Serial.println(setupDisplayMode ? "MENU SETUP" : "MENU MAIN");
-    }
-  }
-
   if (consumeArmPressed()) {
+    notifyUiActivity();
     if (state.faultActive) {
       clearFaultIfSafe("ARM");
     } else if (!movementSafeToStart()) {
       systemArmed = false;
       Serial.println("ARM blocked: limit active");
       sendBleResponse("ERROR", "ARM_BLOCKED_LIMIT_ACTIVE");
+      showUiNotification("ARM BLOCKED");
     } else {
       systemArmed = !systemArmed;
       Serial.println(systemArmed ? "ARM ON" : "ARM OFF");
+      showUiNotification(systemArmed ? "SYSTEM ARMED" : "SYSTEM SAFE");
     }
   }
 
   if (consumeFirePressed()) {
-    requestSafeTrigger();
+    notifyUiActivity();
+    showUiNotification(requestSafeTrigger() ? "TRIGGER REQUESTED" : "TRIGGER BLOCKED");
   }
 
   if (!state.faultActive) {
@@ -578,6 +672,7 @@ void loop() {
   } else if (motionEvent == MOTION_EVENT_CENTERED || motionEvent == MOTION_EVENT_CALIBRATED) {
     setRunning(false);
     stopMotor();
+    showUiNotification(motionEvent == MOTION_EVENT_CENTERED ? "CENTER COMPLETE" : "CAL COMPLETE");
   }
 
   if (motionCalibrationNeedsSave()) {
@@ -587,9 +682,21 @@ void loop() {
 
   updateMotorRamp();
   updateTrigger();
+  EnvironmentStatus currentEnvironmentStatus = getEnvironmentStatus();
+  if (currentEnvironmentStatus != lastUiEnvironmentStatus) {
+    if (currentEnvironmentStatus == ENV_STATUS_HOT) showUiNotification("TEMP WARNING");
+    else if (currentEnvironmentStatus == ENV_STATUS_ERROR) showUiNotification("ENV SENSOR ERROR");
+    lastUiEnvironmentStatus = currentEnvironmentStatus;
+  }
+  bool currentBleConnected = bleClientConnected();
+  if (currentBleConnected != lastUiBleConnected) {
+    showUiNotification(currentBleConnected ? "BLE CONNECTED" : "BLE DISCONNECTED");
+    lastUiBleConnected = currentBleConnected;
+  }
+  updateMenu(state);
   selectStatusLedMode();
   updateStatusLed();
-  updateDisplay(state, systemArmed, setupDisplayMode);
+  updateDisplay(state, systemArmed);
   printRuntimeStatus(state);
 
   unsigned long now = millis();

@@ -6,6 +6,7 @@
 #include "environment.h"
 #include "inputs.h"
 #include "limits.h"
+#include "menu.h"
 #include "modes.h"
 #include "motor.h"
 #include "motion.h"
@@ -212,6 +213,11 @@ String buildStatusPayload(const ControllerState& state) {
   bool batteryCalibrated = fabsf(batteryCalibrationMultiplier() - BATTERY_DEFAULT_CALIBRATION_MULTIPLIER) > 0.0001F
     || fabsf(batteryCalibrationOffsetV() - BATTERY_DEFAULT_CALIBRATION_OFFSET_V) > 0.0001F;
   payload += ";batteryCalibrated=" + String(batteryCalibrated ? "1" : "0");
+  payload += ";uiState=" + String(uiStateToString());
+  payload += ";uiPage=" + String(uiPageToString());
+  payload += ";uiContrast=" + String(uiDisplayContrast());
+  payload += ";uiStatusTimeout=" + String(uiStatusTimeoutSeconds());
+  payload += ";uiDirty=" + String(uiSettingsDirty() ? "1" : "0");
   const MotionDiagnostics& motion = motionDiagnostics();
   payload += ";sweeps=" + String(motion.completedSweeps);
   payload += ";reversals=" + String(motion.directionReversals);

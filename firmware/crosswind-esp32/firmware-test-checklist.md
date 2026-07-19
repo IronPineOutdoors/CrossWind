@@ -12,9 +12,11 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 ## Display And Inputs
 
 - Confirm SSD1306 OLED boots at I2C address `0x3C`.
-- Confirm OLED home screen shows motor percent, safety state, relay state, and limit status.
-- Rotate encoder and confirm speed changes.
-- Press encoder switch and confirm `MAIN`/`SETUP` display toggle when not faulted.
+- Confirm OLED boot screen is brief and does not delay safety processing.
+- Confirm Status shows ARM/run/mode/motion/speed/battery/warning/BLE state.
+- Rotate on Status and confirm speed changes without flash writes per detent.
+- Short press to enter/select; long press to cancel/back.
+- Follow `display-menu-test.md` for hierarchy, editing, timeouts, BLE sync, calibration confirmation, and fault priority.
 - Press ARM and confirm `SAFE`/`ARMED` toggles when no fault or active limit exists.
 - Press FIRE while `SAFE` and confirm relay is blocked.
 

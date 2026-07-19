@@ -17,6 +17,11 @@ static DebouncedButton fireButton = { FIRE_BUTTON_PIN, false, false, false, 0 };
 static int lastSpeedRaw = 0;
 static uint8_t lastSpeedPwm = DEFAULT_PWM;
 static bool lastEncoderClk = HIGH;
+static int encoderDelta = 0;
+static bool encoderShortEvent = false;
+static bool encoderLongEvent = false;
+static bool encoderLongReported = false;
+static unsigned long encoderPressedAt = 0;
 
 static bool readPressed(int pin) {
   if (pin < 0) {
@@ -52,16 +57,28 @@ static void updateRotaryEncoder() {
   if (clk == LOW) {
     bool dt = digitalRead(ROTARY_ENCODER_DT_PIN);
     if (dt == HIGH) {
-      lastSpeedPwm = lastSpeedPwm > ROTARY_ENCODER_SPEED_STEP ? lastSpeedPwm - ROTARY_ENCODER_SPEED_STEP : 0;
-      Serial.print("Encoder speed: ");
-      Serial.println(lastSpeedPwm);
+      encoderDelta--;
       return;
     }
+    encoderDelta++;
+  }
+}
 
-    uint16_t nextSpeed = lastSpeedPwm + ROTARY_ENCODER_SPEED_STEP;
-    lastSpeedPwm = nextSpeed > MAX_PWM ? MAX_PWM : nextSpeed;
-    Serial.print("Encoder speed: ");
-    Serial.println(lastSpeedPwm);
+static void updateEncoderButton() {
+  bool wasPressed = encoderButton.stablePressed;
+  updateButton(encoderButton);
+  unsigned long now = millis();
+  if (!wasPressed && encoderButton.stablePressed) {
+    encoderPressedAt = now;
+    encoderLongReported = false;
+    encoderButton.pressEvent = false;
+  }
+  if (encoderButton.stablePressed && !encoderLongReported && now - encoderPressedAt >= UI_LONG_PRESS_MS) {
+    encoderLongEvent = true;
+    encoderLongReported = true;
+  }
+  if (wasPressed && !encoderButton.stablePressed && !encoderLongReported) {
+    encoderShortEvent = true;
   }
 }
 
@@ -104,7 +121,7 @@ void updateInputs() {
   updateButton(armButton);
   updateButton(fireButton);
   if (SPEED_INPUT_TYPE == SPEED_INPUT_ROTARY_ENCODER) {
-    updateButton(encoderButton);
+    updateEncoderButton();
     updateRotaryEncoder();
     lastSpeedRaw = map(lastSpeedPwm, 0, MAX_PWM, 0, 4095);
   } else {
@@ -142,9 +159,21 @@ bool consumeArmPressed() {
 }
 
 bool consumeMenuPressed() {
-  bool event = encoderButton.pressEvent;
-  encoderButton.pressEvent = false;
+  bool event = encoderShortEvent;
+  encoderShortEvent = false;
   return event;
+}
+
+bool consumeMenuLongPressed() {
+  bool event = encoderLongEvent;
+  encoderLongEvent = false;
+  return event;
+}
+
+int consumeEncoderDelta() {
+  int delta = encoderDelta;
+  encoderDelta = 0;
+  return delta;
 }
 
 bool emergencyStopActive() {
@@ -157,4 +186,9 @@ uint8_t readSpeedPwm() {
 
 int readSpeedRaw() {
   return lastSpeedRaw;
+}
+
+void setSpeedPwm(uint8_t pwm) {
+  lastSpeedPwm = constrain(pwm, 0, MAX_PWM);
+  lastSpeedRaw = map(lastSpeedPwm, 0, MAX_PWM, 0, 4095);
 }

@@ -56,7 +56,7 @@ Use a potentiometer wired between 3.3V and GND, with the wiper to GPIO39. Do not
 
 Wire encoder `CLK` to GPIO32, `DT` to GPIO33, `SW` to GPIO25, `+`/`VCC` to ESP32 `3V3`, and `GND` to common ground. The firmware uses internal pullups, so the encoder outputs and switch should pull the pins to ground when active.
 
-The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never triggers the relay.
+The encoder switch uses short press for enter/select/confirm and long press for cancel/back. It never replaces ARM or FIRE and never directly triggers the relay.
 
 ## Environmental Sensor
 
