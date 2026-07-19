@@ -41,7 +41,11 @@
   move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.11-hardening";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.12-motion";
+
+#ifndef CROSSWIND_MOTION_SIMULATION
+#define CROSSWIND_MOTION_SIMULATION 0
+#endif
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
@@ -91,6 +95,25 @@ const uint8_t RAMP_STEP = 5;
 const uint16_t RAMP_INTERVAL_MS = 20;
 const uint16_t LIMIT_DWELL_MS = 1000;
 const uint32_t MAX_TRAVEL_TIME_MS = 30000UL;
+const uint16_t ENDPOINT_DWELL_MIN_MS = 750;
+const uint16_t ENDPOINT_DWELL_MAX_MS = 1500;
+const uint32_t RANDOM_MOVE_MIN_MS = 1000UL;
+const uint32_t RANDOM_MOVE_MAX_MS = 5000UL;
+const uint8_t RANDOM_SPEED_MIN_PWM = 60;
+const uint8_t RANDOM_SPEED_MAX_PWM = 180;
+const uint8_t RANDOM_FULL_SWEEP_PERCENT = 40;
+const uint32_t LIMIT_RELEASE_TIMEOUT_MS = 1500UL;
+const uint8_t CENTERING_SPEED_PWM = 70;
+const uint8_t CALIBRATION_SPEED_PWM = 70;
+const uint32_t DEFAULT_FULL_TRAVEL_TIME_MS = 10000UL;
+const uint32_t MIN_VALID_CALIBRATION_TIME_MS = 1000UL;
+const uint32_t MAX_VALID_CALIBRATION_TIME_MS = 30000UL;
+const uint8_t CENTERING_PERCENT = 50;
+const uint32_t FLUSH_MOVE_TIME_MS = 2500UL;
+const uint32_t FLUSH_READY_TIME_MS = 1000UL;
+const uint32_t FLUSH_PAUSE_TIME_MS = 1500UL;
+const uint32_t MOTION_FIXED_RANDOM_SEED = 0UL;
+const uint32_t MOTION_SIMULATED_FULL_TRAVEL_MS = 4000UL;
 const int LIMIT_ACTIVE_STATE = LOW;
 
 const uint16_t DEBOUNCE_DELAY_MS = 50;
@@ -148,6 +171,9 @@ enum FaultCode {
   FAULT_ESTOP = 7,
   FAULT_RUN_TIMEOUT = 8,
   FAULT_OVERCURRENT = 9,
+  FAULT_LIMIT_STUCK = 10,
+  FAULT_UNEXPECTED_LIMIT = 11,
+  FAULT_CALIBRATION_FAILED = 12,
   FAULT_UNKNOWN = 255
 };
 

@@ -22,7 +22,9 @@ static uint8_t normalizeRunPwm(uint8_t pwm) {
 }
 
 static void writeRightPwm(uint8_t pwm) {
-#if ESP_ARDUINO_VERSION_MAJOR >= 3
+#if CROSSWIND_MOTION_SIMULATION
+  (void)pwm;
+#elif ESP_ARDUINO_VERSION_MAJOR >= 3
   ledcWrite(RPWM_PIN, pwm);
 #else
   ledcWrite(PWM_CHANNEL_RIGHT, pwm);
@@ -30,7 +32,9 @@ static void writeRightPwm(uint8_t pwm) {
 }
 
 static void writeLeftPwm(uint8_t pwm) {
-#if ESP_ARDUINO_VERSION_MAJOR >= 3
+#if CROSSWIND_MOTION_SIMULATION
+  (void)pwm;
+#elif ESP_ARDUINO_VERSION_MAJOR >= 3
   ledcWrite(LPWM_PIN, pwm);
 #else
   ledcWrite(PWM_CHANNEL_LEFT, pwm);
@@ -38,9 +42,14 @@ static void writeLeftPwm(uint8_t pwm) {
 }
 
 static void writeOptionalPin(int pin, uint8_t value) {
+#if CROSSWIND_MOTION_SIMULATION
+  (void)pin;
+  (void)value;
+#else
   if (pin >= 0) {
     digitalWrite(pin, value);
   }
+#endif
 }
 
 static void writeOutputs(Direction dir, uint8_t pwm) {
@@ -58,6 +67,7 @@ static void writeOutputs(Direction dir, uint8_t pwm) {
 }
 
 void beginMotor() {
+#if !CROSSWIND_MOTION_SIMULATION
   pinMode(RPWM_PIN, OUTPUT);
   pinMode(LPWM_PIN, OUTPUT);
   if (R_EN_PIN >= 0) {
@@ -76,8 +86,12 @@ void beginMotor() {
   ledcAttachPin(RPWM_PIN, PWM_CHANNEL_RIGHT);
   ledcAttachPin(LPWM_PIN, PWM_CHANNEL_LEFT);
 #endif
+#endif
 
   stopMotor();
+#if CROSSWIND_MOTION_SIMULATION
+  Serial.println("Motion simulation: motor GPIO outputs disabled");
+#endif
 }
 
 void stopMotor() {

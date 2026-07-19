@@ -15,9 +15,8 @@ bool rightLimitActive();
 bool bothLimitsActive();
 int leftLimitRawLevel();
 int rightLimitRawLevel();
-void enterCalibrationMode();
-void setLeftLimitReference();
-void setRightLimitReference();
+bool motionSimulationEnabled();
+void setSimulatedLimitMask(int mask);
 
 #ifdef __cplusplus
 }

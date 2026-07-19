@@ -16,7 +16,8 @@ The code is split into beginner-readable modules:
 - `motor.*` - BTS7960 / IBT-2 motor control, safe reversal, soft-start ramping, and stop behavior.
 - `limits.*` - left/right roller switch reads and debounce.
 - `inputs.*` - ARM/FIRE buttons, rotary encoder speed/menu input, and optional speed potentiometer reads.
-- `modes.*` - Phase 1 sweep motor command plus future hooks for RANDOM, FLUSH, and CENTERING.
+- `motion.*` - non-blocking state machine for endpoints, modes, centering, calibration, and motion diagnostics.
+- `modes.*` - compatibility adapter between the controller loop and motion engine.
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - BME280 temperature, humidity, and pressure support.
@@ -27,11 +28,11 @@ The code is split into beginner-readable modules:
 
 ## Phase 1 Behavior
 
-Default mode is `SWEEP`. In Phase 1 the crank linkage creates the physical oscillation, so firmware runs the sweep motor continuously in the selected direction while the controller is running.
+Default mode is `SWEEP`. The motion engine uses debounced endpoints, `millis()` timing, the existing motor ramp, and the existing direction-change dead time. See `motion-engine.md` for mode and safety details.
 
-The Alpha limit switches are safety/calibration inputs, not normal travel controls. During powered motor operation, either active YL-99 limit switch immediately stops the BTS7960 output, disarms the system, blocks the FIRE relay, and latches `FAULT: LIMIT`. If both limits are active together, firmware latches `FAULT: BOTH LIMITS`. The fault can only be cleared after both limit switches are released.
+The expected single YL-99 is a normal endpoint: motion stops, dwells, and reverses away. Both active, an unexpected limit, a stuck departure limit, driving into an active endpoint, and travel timeout remain latched faults handled by the application safety layer.
 
-The controller also refuses START, ARM, and FIRE requests while a limit switch is already active, even before a run has begun. If a limit becomes active while armed, the controller automatically returns to SAFE. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.
+The controller refuses START and ARM when both limits are active. With exactly one endpoint active, motion may start only away from it. FIRE remains blocked while either limit is active, and endpoint activation returns an armed controller to SAFE. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.
 
 An E-stop input path exists as a disabled placeholder with `ESTOP_PIN = -1`. Assigning that pin in `config.h` enables a pulled-to-ground emergency stop input that latches `FAULT: ESTOP`. BLE command writes are rate-limited by `BLE_COMMAND_MIN_INTERVAL_MS`.
 
@@ -69,6 +70,9 @@ GitHub Actions also builds this PlatformIO project on pushes and pull requests t
 - `MODE=CENTERING`
 - `SPEED=0-255`
 - `STATUS`
+- `MOTION_STATUS`
+- `CENTER`
+- `CALIBRATE`
 - `CLEAR_FAULT`
 - `TRIGGER`
 - `FIRE`
@@ -78,7 +82,11 @@ Trigger commands and the FIRE / TEST button pulse the thrower relay only when th
 
 Limit faults can be cleared from BLE with `CLEAR_FAULT`, or locally with the ARM/encoder button, only after both limit switches read clear.
 
-Modes currently accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`. In the current Phase 1 firmware these modes share the same safe sweep motor behavior; automatic triggering remains disabled unless `ENABLE_AUTOMATIC_TRIGGER` is intentionally enabled and safety-tested.
+Modes accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`. Automatic FLUSH trigger events remain disabled unless `ENABLE_AUTOMATIC_TRIGGER` is explicitly enabled and the normal armed/trigger interlocks accept them.
+
+## Motion Simulation
+
+Build `esp32dev_motion_sim` to disable motor GPIO output and emulate virtual endpoints. See `motion-engine-test.md` for the deterministic procedure. Simulation is not physical validation.
 
 ## Current Alpha Pinout
 

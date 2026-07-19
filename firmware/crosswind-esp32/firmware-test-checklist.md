@@ -30,8 +30,10 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 
 - Confirm left YL-99 on GPIO34 reads clear/inactive, then active when triggered.
 - Confirm right YL-99 on GPIO35 reads clear/inactive, then active when triggered.
-- Confirm START, ARM, and FIRE are blocked while either limit is active.
-- While motor is running on the bench, trigger one limit and confirm motor output stops, the system disarms, RGB shows fault, and firing is blocked.
+- Confirm FIRE is blocked while either limit is active and START is blocked only for both active limits.
+- Confirm a run starting at one endpoint commands motion only away from that endpoint.
+- While sweeping on the bench, trigger the expected endpoint and confirm output stops, the system disarms, dwell occurs, and motion reverses without a latched fault.
+- Hold the departure switch active and confirm `LIMIT_STUCK`; activate the opposite switch for commanded travel and confirm `UNEXPECTED_LIMIT`.
 - Trigger both limits together and confirm `BOTH_LIMITS` fault.
 - Confirm limit faults cannot clear until both switches are released.
 - If `ESTOP_PIN` is configured, trigger it and confirm motor output stops, the system disarms, relay firing is blocked, and the fault cannot clear until released.
@@ -41,6 +43,9 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 - Confirm BTS7960 `RPWM`, `LPWM`, `R_EN`, and `L_EN` wiring before motor power.
 - Confirm motor PWM changes speed on the bench before connecting linkage.
 - Confirm STOP or any fault sets BTS7960 outputs off.
+- Run RANDOM and confirm speed/time/dwell remain inside configured bounds.
+- Run CENTERING and confirm it never requests the relay.
+- Run CALIBRATE and confirm only a valid completed measurement updates stored travel time.
 - If motor session timeout is enabled, confirm it faults after `MOTOR_SESSION_TIMEOUT_MS`.
 - If motor current sensing is installed and enabled, confirm raw readings are plausible before setting an overcurrent threshold.
 

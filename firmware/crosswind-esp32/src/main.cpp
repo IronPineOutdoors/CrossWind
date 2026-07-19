@@ -10,6 +10,7 @@
 #include "limits.h"
 #include "modes.h"
 #include "motor.h"
+#include "motion.h"
 #include "storage.h"
 #include "status_led.h"
 #include "trigger.h"
@@ -63,11 +64,11 @@ static bool limitsReleased() {
 }
 
 static bool movementSafeToStart() {
-  return (!ENABLE_LIMIT_FAULTS || limitsReleased()) && !emergencyStopActive();
+  return !bothLimitsActive() && !emergencyStopActive();
 }
 
 static bool motorAllowed() {
-  return state.running && !state.faultActive && movementSafeToStart();
+  return state.running && !state.faultActive && !emergencyStopActive();
 }
 
 static void setRunning(bool running) {
@@ -140,7 +141,7 @@ static bool triggerAllowed() {
     return false;
   }
 
-  if (!movementSafeToStart()) {
+  if (!limitsReleased() || emergencyStopActive()) {
     Serial.println("Trigger ignored: limit active");
     sendBleResponse("ERROR", "TRIGGER_BLOCKED_LIMIT_ACTIVE");
     return false;
@@ -179,6 +180,7 @@ static bool handleBleCommand(const String& command, const String& value) {
       sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else {
       setRunning(true);
+      startMotion(state);
       sendBleResponse("OK", "STARTED");
     }
     return true;
@@ -206,6 +208,39 @@ static bool handleBleCommand(const String& command, const String& value) {
 
   if (command == "TRIGGER" || command == "FIRE" || command == "LAUNCH") {
     requestSafeTrigger();
+    return true;
+  }
+
+  if (command == "MOTION_STATUS") {
+    sendBleResponse("OK", buildStatusPayload(state));
+    return true;
+  }
+
+  if (command == "CENTER") {
+    bool accepted = requestCentering(state);
+    if (accepted) runStartedAt = millis();
+    sendBleResponse(accepted ? "OK" : "ERROR", accepted ? "CENTERING_STARTED" : "CENTERING_BLOCKED");
+    return true;
+  }
+
+  if (command == "CALIBRATE") {
+    bool accepted = requestCalibration(state);
+    if (accepted) runStartedAt = millis();
+    sendBleResponse(accepted ? "OK" : "ERROR", accepted ? "CALIBRATION_STARTED" : "CALIBRATION_BLOCKED");
+    return true;
+  }
+
+  if (command == "SIM_LIMITS" && motionSimulationEnabled()) {
+    String limitValue = value;
+    limitValue.trim();
+    limitValue.toUpperCase();
+    if (limitValue == "AUTO") setSimulatedLimitMask(-1);
+    else if (limitValue == "NONE") setSimulatedLimitMask(0);
+    else if (limitValue == "LEFT") setSimulatedLimitMask(1);
+    else if (limitValue == "RIGHT") setSimulatedLimitMask(2);
+    else if (limitValue == "BOTH") setSimulatedLimitMask(3);
+    else return false;
+    sendBleResponse("OK", "SIM_LIMITS_SET");
     return true;
   }
 
@@ -287,6 +322,7 @@ void setup() {
   state.mode = settings.mode;
   state.lastFault = settings.lastFault;
   state.speed = settings.lastSpeed;
+  initMotion(settings.fullTravelTimeMs);
 
   updateInputs();
   updateLimits();
@@ -296,13 +332,6 @@ void setup() {
     setRunning(false);
     state.speed = 0;
     Serial.println("FAULT: both limits active at startup");
-    saveSettings(state);
-  } else if (ENABLE_LIMIT_FAULTS && !limitsReleased()) {
-    state.faultActive = true;
-    state.lastFault = FAULT_LIMIT;
-    setRunning(false);
-    state.speed = 0;
-    Serial.println("FAULT: limit active at startup");
     saveSettings(state);
   }
 
@@ -337,8 +366,8 @@ void loop() {
     latchFault(FAULT_TEMP);
   }
 
-  if (ENABLE_LIMIT_FAULTS && state.running && (leftLimitActive() || rightLimitActive())) {
-    latchFault(bothLimitsActive() ? FAULT_BOTH_LIMITS : FAULT_LIMIT);
+  if (ENABLE_LIMIT_FAULTS && bothLimitsActive()) {
+    latchFault(FAULT_BOTH_LIMITS);
   }
 
   if (ENABLE_MOTOR_SESSION_TIMEOUT && state.running && runStartedAt > 0 && millis() - runStartedAt >= MOTOR_SESSION_TIMEOUT_MS) {
@@ -349,7 +378,7 @@ void loop() {
     latchFault(FAULT_OVERCURRENT);
   }
 
-  if (systemArmed && !movementSafeToStart()) {
+  if (systemArmed && (leftLimitActive() || rightLimitActive() || emergencyStopActive())) {
     systemArmed = false;
     cancelThrowerTrigger();
     Serial.println("ARM OFF: limit active");
@@ -363,6 +392,9 @@ void loop() {
       sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else if (!state.faultActive) {
       setRunning(!state.running);
+      if (state.running) {
+        startMotion(state);
+      }
       if (!state.running) {
         cancelThrowerTrigger();
         resetModeState();
@@ -423,6 +455,24 @@ void loop() {
     saveSettings(state);
     Serial.print("FAULT: ");
     Serial.println(faultToString(state.lastFault));
+  }
+
+  FaultCode motionFault = consumeMotionFault();
+  if (motionFault != FAULT_NONE) {
+    latchFault(motionFault);
+  }
+
+  MotionEvent motionEvent = consumeMotionEvent();
+  if (motionEvent == MOTION_EVENT_TRIGGER_REQUESTED) {
+    if (ENABLE_AUTOMATIC_TRIGGER) requestSafeTrigger();
+  } else if (motionEvent == MOTION_EVENT_CENTERED || motionEvent == MOTION_EVENT_CALIBRATED) {
+    setRunning(false);
+    stopMotor();
+  }
+
+  if (motionCalibrationNeedsSave()) {
+    saveCalibration(calibratedFullTravelTimeMs());
+    markMotionCalibrationSaved();
   }
 
   updateMotorRamp();

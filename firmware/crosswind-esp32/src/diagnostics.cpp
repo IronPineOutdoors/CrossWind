@@ -7,6 +7,7 @@
 #include "limits.h"
 #include "modes.h"
 #include "motor.h"
+#include "motion.h"
 #include "trigger.h"
 
 const char* modeToString(Mode mode) {
@@ -35,6 +36,9 @@ const char* faultToString(FaultCode fault) {
     case FAULT_ESTOP: return "ESTOP";
     case FAULT_RUN_TIMEOUT: return "RUN_TIMEOUT";
     case FAULT_OVERCURRENT: return "OVERCURRENT";
+    case FAULT_LIMIT_STUCK: return "LIMIT_STUCK";
+    case FAULT_UNEXPECTED_LIMIT: return "UNEXPECTED_LIMIT";
+    case FAULT_CALIBRATION_FAILED: return "CALIBRATION_FAILED";
     default: return "UNKNOWN";
   }
 }
@@ -157,6 +161,9 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";fault=" + String(state.faultActive ? faultToString(state.lastFault) : "NONE");
   payload += ";dir=" + String(directionToString(state.direction));
   payload += ";sweepState=" + String(sweepStateToString());
+  payload += ";motionState=" + String(motionPhaseToString());
+  payload += ";centered=" + String(motionIsApproximatelyCentered() ? "1" : "0");
+  payload += ";travelMs=" + String(calibratedFullTravelTimeMs());
   payload += ";speed=" + String(state.speed);
   payload += ";motorPwm=" + String(motorAppliedPwm());
   payload += ";leftLimit=" + String(leftLimitActive() ? "1" : "0");
@@ -172,5 +179,16 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";tempF=" + String(environmentDataValid() ? getTemperatureF() : NAN, 1);
   payload += ";humidity=" + String(environmentDataValid() ? getHumidity() : NAN, 1);
   payload += ";pressureHpa=" + String(environmentDataValid() ? getPressureHpa() : NAN, 1);
+  const MotionDiagnostics& motion = motionDiagnostics();
+  payload += ";sweeps=" + String(motion.completedSweeps);
+  payload += ";reversals=" + String(motion.directionReversals);
+  payload += ";randomMoves=" + String(motion.randomMovements);
+  payload += ";centerAttempts=" + String(motion.centeringAttempts);
+  payload += ";centerSuccess=" + String(motion.centeringSuccesses);
+  payload += ";calAttempts=" + String(motion.calibrationAttempts);
+  payload += ";calSuccess=" + String(motion.calibrationSuccesses);
+  payload += ";calFailures=" + String(motion.calibrationFailures);
+  payload += ";motionTimeouts=" + String(motion.motionTimeouts);
+  payload += ";stuckLimits=" + String(motion.stuckLimitFaults);
   return payload;
 }

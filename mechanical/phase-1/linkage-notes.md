@@ -1,6 +1,6 @@
 # Linkage Notes
 
-Start with a conservative crank radius and linkage length. The first goal is smooth crank-driven oscillation with the YL-99 switches acting only as safety/calibration inputs, not as reversal controls.
+Start with a conservative crank radius and linkage length. The YL-99 switches command firmware endpoint reversal and also provide safety/calibration input; separate mechanical hard stops remain required.
 
 Mount the wiper motor on the stationary base plate, off-center from the lazy susan bearing. Attach the linkage to a rear corner bracket or tab on the rotating top plate unless testing shows a better leverage point. The linkage does not need to attach at the rotation center.
 

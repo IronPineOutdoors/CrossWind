@@ -6,6 +6,8 @@
 
 #include "environment.h"
 #include "limits.h"
+#include "motion.h"
+#include "motor.h"
 #include "trigger.h"
 
 static constexpr int SCREEN_WIDTH = 128;
@@ -19,7 +21,8 @@ static bool displayReady = false;
 static unsigned long lastDisplayUpdate = 0;
 
 static int motorPercent(const ControllerState& state) {
-  return map(state.speed, 0, 255, 0, 100);
+  (void)state;
+  return map(motorAppliedPwm(), 0, 255, 0, 100);
 }
 
 static const char* displayStatusText(const ControllerState& state, bool systemArmed) {
@@ -87,7 +90,7 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
   display.println("%");
 
   display.print("Status: ");
-  display.println(displayStatusText(state, systemArmed));
+  display.println(state.running ? motionPhaseToString() : displayStatusText(state, systemArmed));
 
   display.print("Relay: ");
   display.println(isTriggerActive() ? "ON" : "OFF");

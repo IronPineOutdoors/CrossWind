@@ -2,6 +2,10 @@
 
 #include "config.h"
 
+#if CROSSWIND_MOTION_SIMULATION
+#include "motor.h"
+#endif
+
 struct DebouncedLimit {
   int pin;
   bool rawActive;
@@ -11,6 +15,12 @@ struct DebouncedLimit {
 
 static DebouncedLimit leftLimit = { LEFT_LIMIT_PIN, false, false, 0 };
 static DebouncedLimit rightLimit = { RIGHT_LIMIT_PIN, false, false, 0 };
+
+#if CROSSWIND_MOTION_SIMULATION
+static float virtualPosition = 0.5F;
+static unsigned long lastSimulationUpdate = 0;
+static int simulatedLimitMask = -1;
+#endif
 
 static bool readActive(int pin) {
   if (!ENABLE_LIMIT_SWITCHES) {
@@ -37,6 +47,14 @@ static void updateOne(DebouncedLimit& input) {
 }
 
 void beginLimits() {
+#if CROSSWIND_MOTION_SIMULATION
+  virtualPosition = 0.5F;
+  lastSimulationUpdate = millis();
+  leftLimit.rawActive = leftLimit.stableActive = false;
+  rightLimit.rawActive = rightLimit.stableActive = false;
+  Serial.println("Motion simulation: virtual limits enabled");
+  return;
+#endif
   if (!ENABLE_LIMIT_SWITCHES) {
     leftLimit.rawActive = leftLimit.stableActive = false;
     rightLimit.rawActive = rightLimit.stableActive = false;
@@ -55,6 +73,24 @@ void beginLimits() {
 }
 
 void updateLimits() {
+#if CROSSWIND_MOTION_SIMULATION
+  unsigned long now = millis();
+  unsigned long elapsed = now - lastSimulationUpdate;
+  lastSimulationUpdate = now;
+  uint8_t pwm = motorAppliedPwm();
+  if (pwm > 0) {
+    float delta = ((float)elapsed / (float)MOTION_SIMULATED_FULL_TRAVEL_MS) * ((float)pwm / (float)MAX_PWM);
+    virtualPosition += motorDirection() == DIR_RIGHT ? delta : -delta;
+    virtualPosition = constrain(virtualPosition, 0.0F, 1.0F);
+  }
+  leftLimit.rawActive = leftLimit.stableActive = virtualPosition <= 0.0F;
+  rightLimit.rawActive = rightLimit.stableActive = virtualPosition >= 1.0F;
+  if (simulatedLimitMask >= 0) {
+    leftLimit.rawActive = leftLimit.stableActive = (simulatedLimitMask & 1) != 0;
+    rightLimit.rawActive = rightLimit.stableActive = (simulatedLimitMask & 2) != 0;
+  }
+  return;
+#endif
   if (!ENABLE_LIMIT_SWITCHES) {
     leftLimit.rawActive = leftLimit.stableActive = false;
     rightLimit.rawActive = rightLimit.stableActive = false;
@@ -78,6 +114,9 @@ bool bothLimitsActive() {
 }
 
 int leftLimitRawLevel() {
+#if CROSSWIND_MOTION_SIMULATION
+  return leftLimitActive() ? LIMIT_ACTIVE_STATE : (LIMIT_ACTIVE_STATE == LOW ? HIGH : LOW);
+#endif
   if (!ENABLE_LIMIT_SWITCHES || LEFT_LIMIT_PIN < 0) {
     return -1;
   }
@@ -85,20 +124,23 @@ int leftLimitRawLevel() {
 }
 
 int rightLimitRawLevel() {
+#if CROSSWIND_MOTION_SIMULATION
+  return rightLimitActive() ? LIMIT_ACTIVE_STATE : (LIMIT_ACTIVE_STATE == LOW ? HIGH : LOW);
+#endif
   if (!ENABLE_LIMIT_SWITCHES || RIGHT_LIMIT_PIN < 0) {
     return -1;
   }
   return digitalRead(RIGHT_LIMIT_PIN);
 }
 
-void enterCalibrationMode() {
-  Serial.println("Calibration mode placeholder: Alpha limit switches are safety inputs only");
+bool motionSimulationEnabled() {
+  return CROSSWIND_MOTION_SIMULATION != 0;
 }
 
-void setLeftLimitReference() {
-  Serial.println("Left limit reference placeholder: no Alpha position tracking yet");
-}
-
-void setRightLimitReference() {
-  Serial.println("Right limit reference placeholder: no Alpha position tracking yet");
+void setSimulatedLimitMask(int mask) {
+#if CROSSWIND_MOTION_SIMULATION
+  simulatedLimitMask = constrain(mask, -1, 3);
+#else
+  (void)mask;
+#endif
 }
