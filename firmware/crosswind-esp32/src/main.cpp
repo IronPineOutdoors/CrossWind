@@ -28,6 +28,8 @@ static unsigned long runStartedAt = 0;
 static bool systemArmed = false;
 static bool setupDisplayMode = false;
 
+static void setRunning(bool running);
+
 static void latchFault(FaultCode fault) {
   stopMotor();
   cancelThrowerTrigger();

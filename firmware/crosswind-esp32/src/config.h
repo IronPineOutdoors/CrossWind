@@ -2,7 +2,6 @@
 #define CROSSWIND_CONFIG_H
 
 #include <Arduino.h>
-#include <DHT.h>
 
 /*
   Crosswind ESP32 Phase 1 configuration
@@ -13,10 +12,9 @@
     GPIO23 -> BTS7960 R_EN
     GPIO13 -> BTS7960 L_EN
     GPIO14 -> opto-isolated relay input for thrower pedal dry contact
-    GPIO26 -> DHT11 data
     GPIO21 -> OLED SDA
     GPIO22 -> OLED SCL
-    BME280 -> optional environment sensor on shared I2C bus, 0x76 or 0x77
+    BME280 -> environment sensor on shared I2C bus, 0x76 or 0x77
     GPIO34 -> left roller limit switch with external pullup
     GPIO35 -> right roller limit switch with external pullup
     GPIO27 -> DIYables RGB LED module R input, PWM
@@ -70,7 +68,6 @@ const int RGB_GREEN_PIN = 12;
 const int RGB_BLUE_PIN = 4;
 const int OLED_SDA_PIN = 21;
 const int OLED_SCL_PIN = 22;
-const int DHT_PIN = 26;
 const int MOTOR_CURRENT_SENSE_PIN = -1;
 
 // Future expansion placeholders for Phase 2 and production hardware.
@@ -108,17 +105,13 @@ enum SpeedInputType { SPEED_INPUT_POTENTIOMETER, SPEED_INPUT_ROTARY_ENCODER };
 const SpeedInputType SPEED_INPUT_TYPE = SPEED_INPUT_ROTARY_ENCODER;
 const uint8_t ROTARY_ENCODER_SPEED_STEP = 5;
 
-enum EnvSensorType { ENV_SENSOR_DHT11, ENV_SENSOR_BME280 };
-const EnvSensorType ENV_SENSOR_TYPE = ENV_SENSOR_DHT11;
-const uint8_t DHT_TYPE = DHT11;
 const uint16_t ENV_UPDATE_INTERVAL_MS = 2000;
 const float TEMP_WARNING_F = 120.0F;
 const float TEMP_FAULT_F = 150.0F;
 const bool ENABLE_TEMP_FAULTS = true;
 
-// BME280 uses the existing I2C bus on GPIO21/GPIO22 and is selected by
-// changing ENV_SENSOR_TYPE to ENV_SENSOR_BME280. Most breakout boards use
-// address 0x76 or 0x77; firmware tries both.
+// BME280 uses the existing I2C bus on GPIO21/GPIO22. Most breakout boards
+// use address 0x76 or 0x77; firmware tries both.
 const uint8_t BME280_I2C_ADDRESS_PRIMARY = 0x76;
 const uint8_t BME280_I2C_ADDRESS_SECONDARY = 0x77;
 

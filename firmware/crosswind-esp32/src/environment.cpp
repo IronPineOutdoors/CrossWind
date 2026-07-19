@@ -1,10 +1,8 @@
 #include "environment.h"
 
 #include <Adafruit_BME280.h>
-#include <DHT.h>
 #include <Wire.h>
 
-static DHT dht(DHT_PIN, DHT_TYPE);
 static Adafruit_BME280 bme;
 static float lastTemperatureC = NAN;
 static float lastHumidity = NAN;
@@ -19,12 +17,6 @@ static float cToF(float tempC) {
 }
 
 void initEnvironment() {
-  if (ENV_SENSOR_TYPE == ENV_SENSOR_DHT11) {
-    dht.begin();
-    Serial.println("Environment sensor: DHT11 on GPIO26");
-    return;
-  }
-
   Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
   bmeReady = bme.begin(BME280_I2C_ADDRESS_PRIMARY, &Wire);
   if (!bmeReady) {
@@ -45,24 +37,6 @@ void updateEnvironment() {
     return;
   }
   lastReadAttempt = now;
-
-  if (ENV_SENSOR_TYPE == ENV_SENSOR_DHT11) {
-    float humidity = dht.readHumidity();
-    float temperatureC = dht.readTemperature();
-
-    if (isnan(humidity) || isnan(temperatureC)) {
-      lastReadFailed = true;
-      Serial.println("WARNING: DHT11 environment read failed; keeping last valid reading");
-      return;
-    }
-
-    lastHumidity = humidity;
-    lastTemperatureC = temperatureC;
-    lastPressureHpa = NAN;
-    hasValidReading = true;
-    lastReadFailed = false;
-    return;
-  }
 
   if (!bmeReady) {
     lastReadFailed = true;

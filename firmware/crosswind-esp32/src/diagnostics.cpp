@@ -64,11 +64,7 @@ static const char* speedInputToString() {
 }
 
 static const char* environmentSensorToString() {
-  switch (ENV_SENSOR_TYPE) {
-    case ENV_SENSOR_DHT11: return "DHT11";
-    case ENV_SENSOR_BME280: return "BME280";
-    default: return "UNKNOWN";
-  }
+  return "BME280";
 }
 
 void printStartupDiagnostics(const ControllerState& state) {

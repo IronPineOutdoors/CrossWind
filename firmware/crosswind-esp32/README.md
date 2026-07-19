@@ -19,7 +19,7 @@ The code is split into beginner-readable modules:
 - `modes.*` - Phase 1 sweep motor command plus future hooks for RANDOM, FLUSH, and CENTERING.
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
-- `environment.*` - DHT11 Alpha sensor support and optional BME280 I2C support.
+- `environment.*` - BME280 temperature, humidity, and pressure support.
 - `display.*` - SSD1306 OLED status display.
 - `status_led.*` - non-blocking DIYables RGB status LED control.
 - `trigger.*` - non-blocking thrower relay pulse control.
@@ -98,7 +98,6 @@ Modes currently accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`.
 | Right limit | 35 |
 | OLED SDA | 21 |
 | OLED SCL | 22 |
-| DHT11 data | 26 |
 | BME280 SDA | 21 |
 | BME280 SCL | 22 |
 | RGB LED red | 27 |
@@ -112,9 +111,7 @@ The DIYables RGB LED module is common cathode with built-in resistors: connect m
 
 ## Environmental Sensor
 
-Alpha firmware reads a DHT11 on GPIO26 no faster than once every 2 seconds by default, stores the last valid reading, and reports `ENV ERR` if a read fails. `HOT` appears at `TEMP_WARNING_F`; `TEMP FAULT` stops the motor when `ENABLE_TEMP_FAULTS` is true and temperature reaches `TEMP_FAULT_F`.
-
-To use a BME280 instead, wire it to the existing OLED I2C bus on GPIO21/GPIO22 and set `ENV_SENSOR_TYPE` to `ENV_SENSOR_BME280` in `config.h`. Firmware tries address `0x76` first, then `0x77`, and adds `pressureHpa` to the Serial/BLE status payload.
+Alpha firmware reads a BME280 on the existing OLED I2C bus at GPIO21/GPIO22 no faster than once every 2 seconds by default. It tries address `0x76` first and then `0x77`, stores the last valid temperature, humidity, and pressure reading, and reports `ENV ERR` if a read fails. `HOT` appears at `TEMP_WARNING_F`; `TEMP FAULT` stops the motor when `ENABLE_TEMP_FAULTS` is true and temperature reaches `TEMP_FAULT_F`. The Serial/BLE status payload includes `pressureHpa`.
 
 ## Quick Test Checklist
 

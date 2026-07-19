@@ -46,6 +46,5 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 
 ## Environment
 
-- With `ENV_SENSOR_TYPE = ENV_SENSOR_DHT11`, confirm DHT11 status and temperature/humidity payloads.
-- With `ENV_SENSOR_TYPE = ENV_SENSOR_BME280`, confirm address `0x76` or `0x77` and `pressureHpa` status payload.
+- Confirm the BME280 is detected at address `0x76` or `0x77` and temperature, humidity, and `pressureHpa` appear in the status payload.
 - Confirm temperature fault behavior only after verifying sensor readings are plausible.
