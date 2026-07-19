@@ -3,6 +3,7 @@
 #include <esp_task_wdt.h>
 
 #include "ble_control.h"
+#include "battery_monitor.h"
 #include "diagnostics.h"
 #include "display.h"
 #include "environment.h"
@@ -64,11 +65,11 @@ static bool limitsReleased() {
 }
 
 static bool movementSafeToStart() {
-  return !bothLimitsActive() && !emergencyStopActive();
+  return !bothLimitsActive() && !emergencyStopActive() && batteryAllowsOperation();
 }
 
 static bool motorAllowed() {
-  return state.running && !state.faultActive && !emergencyStopActive();
+  return state.running && !state.faultActive && !emergencyStopActive() && batteryAllowsOperation();
 }
 
 static void setRunning(bool running) {
@@ -91,7 +92,7 @@ static bool clearFaultIfSafe(const char* source) {
     return false;
   }
 
-  if (!limitsReleased() || emergencyStopActive()) {
+  if (!limitsReleased() || emergencyStopActive() || !batteryAllowsOperation()) {
     Serial.print(source);
     Serial.println(" fault clear blocked: release safety inputs first");
     sendBleResponse("ERROR", "FAULT_CLEAR_BLOCKED_SAFETY_INPUT_ACTIVE");
@@ -141,7 +142,7 @@ static bool triggerAllowed() {
     return false;
   }
 
-  if (!limitsReleased() || emergencyStopActive()) {
+  if (!limitsReleased() || emergencyStopActive() || !batteryAllowsOperation()) {
     Serial.println("Trigger ignored: limit active");
     sendBleResponse("ERROR", "TRIGGER_BLOCKED_LIMIT_ACTIVE");
     return false;
@@ -227,6 +228,88 @@ static bool handleBleCommand(const String& command, const String& value) {
     bool accepted = requestCalibration(state);
     if (accepted) runStartedAt = millis();
     sendBleResponse(accepted ? "OK" : "ERROR", accepted ? "CALIBRATION_STARTED" : "CALIBRATION_BLOCKED");
+    return true;
+  }
+
+  if (command == "BATTERY_STATUS") {
+    sendBleResponse("OK", buildStatusPayload(state));
+    return true;
+  }
+
+  if (command == "BATTERY_MONITOR") {
+    if (state.running) {
+      sendBleResponse("ERROR", "BATTERY_SETTING_BLOCKED_STOP_REQUIRED");
+      return true;
+    }
+    String monitorValue = value;
+    monitorValue.trim();
+    monitorValue.toUpperCase();
+    if (monitorValue == "ON" || monitorValue == "ENABLE") setBatteryMonitoringEnabled(true);
+    else if (monitorValue == "OFF" || monitorValue == "DISABLE") setBatteryMonitoringEnabled(false);
+    else return false;
+    saveBatterySettings(batteryMonitoringEnabled(), selectedBatteryProfile(), batteryCalibrationMultiplier(), batteryCalibrationOffsetV());
+    sendBleResponse("OK", batteryMonitoringEnabled() ? "BATTERY_MONITOR_ENABLED" : "BATTERY_MONITOR_DISABLED");
+    return true;
+  }
+
+  if (command == "BATTERY_PROFILE") {
+    if (state.running) {
+      sendBleResponse("ERROR", "BATTERY_SETTING_BLOCKED_STOP_REQUIRED");
+      return true;
+    }
+    String profileValue = value;
+    profileValue.trim();
+    profileValue.toUpperCase();
+    BatteryProfile requestedProfile;
+    if (profileValue == "TOOL_20V") requestedProfile = BATTERY_PROFILE_TOOL_20V;
+    else if (profileValue == "BUS_12V") requestedProfile = BATTERY_PROFILE_12V_BUS;
+    else if (profileValue == "CUSTOM") requestedProfile = BATTERY_PROFILE_CUSTOM;
+    else return false;
+    setBatteryProfile(requestedProfile);
+    saveBatterySettings(batteryMonitoringEnabled(), selectedBatteryProfile(), batteryCalibrationMultiplier(), batteryCalibrationOffsetV());
+    sendBleResponse("OK", "BATTERY_PROFILE_SET");
+    return true;
+  }
+
+  if (command == "BATTERY_CALIBRATE") {
+    if (state.running) {
+      sendBleResponse("ERROR", "BATTERY_CALIBRATION_BLOCKED_STOP_REQUIRED");
+      return true;
+    }
+    String calibrationValue = value;
+    calibrationValue.trim();
+    float knownVoltage = calibrationValue.toFloat();
+    if (calibrationValue.length() == 0 || !calibrateBatteryToKnownVoltage(knownVoltage)) {
+      sendBleResponse("ERROR", "BATTERY_CALIBRATION_REJECTED");
+      return true;
+    }
+    saveBatterySettings(batteryMonitoringEnabled(), selectedBatteryProfile(), batteryCalibrationMultiplier(), batteryCalibrationOffsetV());
+    sendBleResponse("OK", "BATTERY_CALIBRATED");
+    return true;
+  }
+
+  if (command == "BATTERY_CALIBRATION_RESET") {
+    if (state.running) {
+      sendBleResponse("ERROR", "BATTERY_SETTING_BLOCKED_STOP_REQUIRED");
+      return true;
+    }
+    resetBatteryCalibration();
+    saveBatterySettings(batteryMonitoringEnabled(), selectedBatteryProfile(), batteryCalibrationMultiplier(), batteryCalibrationOffsetV());
+    sendBleResponse("OK", "BATTERY_CALIBRATION_RESET");
+    return true;
+  }
+
+  if (command == "SIM_BATTERY" && batterySimulationEnabled()) {
+    String simulationValue = value;
+    simulationValue.trim();
+    simulationValue.toUpperCase();
+    if (simulationValue == "INVALID") setSimulatedBatteryInvalid(true);
+    else {
+      float simulatedVoltage = simulationValue.toFloat();
+      if (simulatedVoltage < 0.0F || simulatedVoltage > 35.0F) return false;
+      setSimulatedBatteryVoltage(simulatedVoltage);
+    }
+    sendBleResponse("OK", "SIM_BATTERY_SET");
     return true;
   }
 
@@ -323,6 +406,7 @@ void setup() {
   state.lastFault = settings.lastFault;
   state.speed = settings.lastSpeed;
   initMotion(settings.fullTravelTimeMs);
+  initBatteryMonitor(settings.batteryMonitorEnabled, settings.batteryProfile, settings.batteryCalibrationMultiplier, settings.batteryCalibrationOffsetV);
 
   updateInputs();
   updateLimits();
@@ -342,9 +426,14 @@ void setup() {
 
 static void selectStatusLedMode() {
   EnvironmentStatus environmentStatus = getEnvironmentStatus();
+  BatteryStatus battery = batteryStatus();
   if (state.faultActive) {
     showFaultStatus();
+  } else if (battery == BATTERY_CRITICAL || battery == BATTERY_SENSOR_ERROR || battery == BATTERY_RECOVERING) {
+    showWarningStatus();
   } else if (environmentStatus == ENV_STATUS_HOT || environmentStatus == ENV_STATUS_TEMP_FAULT || environmentStatus == ENV_STATUS_ERROR) {
+    showWarningStatus();
+  } else if (battery == BATTERY_LOW) {
     showWarningStatus();
   } else if (systemArmed) {
     showArmedStatus();
@@ -357,6 +446,7 @@ void loop() {
   updateInputs();
   updateLimits();
   updateEnvironment();
+  updateBatteryMonitor(state.running);
 
   if (emergencyStopActive()) {
     latchFault(FAULT_ESTOP);
@@ -364,6 +454,26 @@ void loop() {
 
   if (ENABLE_TEMP_FAULTS && environmentTempFaultActive()) {
     latchFault(FAULT_TEMP);
+  }
+
+  if (consumeBatteryCriticalEvent() && ENABLE_BATTERY_CRITICAL_FAULT) {
+    latchFault(FAULT_BATTERY_CRITICAL);
+  }
+
+  if (consumeBatterySensorErrorEvent()) {
+    if (ENABLE_BATTERY_SENSOR_FAULT) {
+      latchFault(FAULT_BATTERY_SENSOR);
+    } else {
+      setRunning(false);
+      stopMotor();
+      cancelThrowerTrigger();
+      systemArmed = false;
+      Serial.println("Battery sensor error: motion stopped");
+    }
+  }
+
+  if (consumeBatteryLowEvent()) {
+    Serial.println("WARNING: battery voltage low");
   }
 
   if (ENABLE_LIMIT_FAULTS && bothLimitsActive()) {

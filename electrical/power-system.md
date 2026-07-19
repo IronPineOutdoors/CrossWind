@@ -34,6 +34,10 @@ Reserve a fused branch for the future pitch actuator. Expect startup and stall c
 
 A fused 5V buck converter is fed from the 12V bus. The 5V bus feeds ESP32 `VIN`/`5V`, the relay module, BTS7960 logic, and support modules as appropriate. ESP32 `3V3` feeds OLED, BME280, DHT11, and small logic sensors. All grounds must be common.
 
+## Voltage Monitoring
+
+Battery/supply monitoring uses a separately fused source measurement through the configured resistor divider to GPIO36. The divider bottom and ESP32 must share common ground. Never connect the raw tool battery or 12 V bus directly to an ESP32 input. See the firmware battery-monitor document for divider math, calibration, and safe bring-up.
+
 ## Trigger Relay Circuit
 
 The ESP32 powers only the relay module input side. The relay contact side is isolated and connects to the VEVOR NH113 pedal circuit as `COM` and `NO`. Keep this circuit dry-contact only; never inject ESP32 or bus voltage into the thrower foot-pedal trigger circuit.

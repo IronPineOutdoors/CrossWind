@@ -53,3 +53,10 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 
 - Confirm the BME280 is detected at address `0x76` or `0x77` and temperature, humidity, and `pressureHpa` appear in the status payload.
 - Confirm temperature fault behavior only after verifying sensor readings are plausible.
+
+## Battery Monitor
+
+- Run `scripts/test-battery-monitor.ps1` and build `esp32dev_battery_sim`.
+- Confirm disabled monitoring displays and reports `DISABLED` without affecting motion.
+- Follow `battery-monitor-test.md` for settling, filtering, low, critical, recovery, invalid input, calibration, BLE, and OLED cases.
+- Before physical testing, verify divider output below 3.3 V with a multimeter and never connect source voltage directly to GPIO36.

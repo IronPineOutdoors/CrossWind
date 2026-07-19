@@ -21,6 +21,7 @@ The code is split into beginner-readable modules:
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - BME280 temperature, humidity, and pressure support.
+- `battery_monitor.*` - non-blocking divided-voltage sampling, filtering, status, calibration, and events.
 - `display.*` - SSD1306 OLED status display.
 - `status_led.*` - non-blocking DIYables RGB status LED control.
 - `trigger.*` - non-blocking thrower relay pulse control.
@@ -73,6 +74,11 @@ GitHub Actions also builds this PlatformIO project on pushes and pull requests t
 - `MOTION_STATUS`
 - `CENTER`
 - `CALIBRATE`
+- `BATTERY_STATUS`
+- `BATTERY_MONITOR=ON|OFF`
+- `BATTERY_PROFILE=TOOL_20V|BUS_12V|CUSTOM`
+- `BATTERY_CALIBRATE=<known volts>`
+- `BATTERY_CALIBRATION_RESET`
 - `CLEAR_FAULT`
 - `TRIGGER`
 - `FIRE`
@@ -87,6 +93,10 @@ Modes accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`. Automatic
 ## Motion Simulation
 
 Build `esp32dev_motion_sim` to disable motor GPIO output and emulate virtual endpoints. See `motion-engine-test.md` for the deterministic procedure. Simulation is not physical validation.
+
+## Battery Monitoring
+
+Battery monitoring defaults disabled until its external divider is installed and verified. The default design measures the raw tool-battery input through a configurable 100 kOhm/12 kOhm divider into ADC1 GPIO36. Low voltage warns; sustained critical voltage is reported to the application fault handler. See `battery-monitor.md` and `battery-monitor-test.md`. Build `esp32dev_battery_sim` for deterministic voltage input with motor GPIO disabled.
 
 ## Current Alpha Pinout
 

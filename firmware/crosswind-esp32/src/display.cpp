@@ -4,6 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
+#include "battery_monitor.h"
 #include "environment.h"
 #include "limits.h"
 #include "motion.h"
@@ -33,6 +34,10 @@ static const char* displayStatusText(const ControllerState& state, bool systemAr
   if (state.faultActive) {
     return "FAULT";
   }
+  BatteryStatus battery = batteryStatus();
+  if (battery == BATTERY_CRITICAL) return "BAT CRITICAL";
+  if (battery == BATTERY_SENSOR_ERROR) return "BAT ERROR";
+  if (battery == BATTERY_LOW || battery == BATTERY_RECOVERING) return "BAT LOW";
   if (environmentStatus == ENV_STATUS_HOT || environmentStatus == ENV_STATUS_TEMP_FAULT || environmentStatus == ENV_STATUS_ERROR) {
     return "WARNING";
   }
@@ -94,6 +99,22 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
 
   display.print("Relay: ");
   display.println(isTriggerActive() ? "ON" : "OFF");
+
+  display.print("Batt: ");
+  if (!batteryMonitoringEnabled()) {
+    display.println("OFF");
+  } else if (batterySensorValid()) {
+    display.print(batteryVoltage(), 1);
+    display.print("V ");
+    if (batteryPercentageValid()) {
+      display.print(batteryApproximatePercent());
+      display.println("%~");
+    } else {
+      display.println(batteryStatusToString(batteryStatus()));
+    }
+  } else {
+    display.println(batteryStatusToString(batteryStatus()));
+  }
 
   if (setupDisplayMode) {
     display.print("L:");

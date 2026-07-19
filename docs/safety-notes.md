@@ -6,6 +6,7 @@
 - Use branch fuses for the thrower, wobbler motor, actuator, and 5V electronics supply.
 - Verify the ESP32 and motor driver share ground.
 - Do not feed more than 3.3V into ESP32 analog or GPIO pins.
+- Measure battery or bus voltage only through the verified external divider; never connect either source directly to GPIO36.
 - Do not power the wiper motor from the 5V buck converter.
 - Do not inject voltage into the thrower foot-pedal trigger circuit; relay contacts must be dry contact only.
 - Add a reachable power disconnect before field testing.

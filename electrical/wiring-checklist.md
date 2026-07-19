@@ -8,6 +8,9 @@
 - ESP32 3V3 feeds OLED, BME280, DHT11, and small logic sensors.
 - ESP32/Arduino ground and BTS7960 ground are common.
 - ESP32 analog input never sees more than 3.3V.
+- Battery divider upper resistor connects to the configured measurement point, lower resistor to common ground, and midpoint to GPIO36.
+- Divider midpoint is verified with a multimeter below 3.3 V at maximum source voltage before connecting GPIO36.
+- Raw tool-battery and 12 V bus voltage are never connected directly to the ESP32.
 - BTS7960 `RPWM` is wired to GPIO18.
 - BTS7960 `LPWM` is wired to GPIO19.
 - BTS7960 `R_EN` is wired to GPIO23.

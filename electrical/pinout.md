@@ -18,6 +18,7 @@
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
+| Battery divider midpoint | GPIO36 | ADC1_CH0 input only; monitoring disabled until divider is installed |
 | Rotary encoder CLK | GPIO32 | Active speed input in current ESP32 build |
 | Rotary encoder DT | GPIO33 | Active speed input in current ESP32 build |
 | Rotary encoder SW | GPIO25 | Menu/select button |
@@ -71,10 +72,11 @@ Use an opto-isolated relay module or equivalent dry-contact relay output. ESP32 
 
 The ESP32 must never send voltage into the thrower pedal circuit. Use the relay contacts as a switch only.
 
-## Future Battery Sense
+## Battery Sense
 
-Reserved placeholders exist in firmware for:
+The configured default measures the raw tool-battery input through an external 100 kOhm upper / 12 kOhm lower divider, with the midpoint connected to GPIO36 and the lower resistor connected to common ground. Never connect battery or 12 V bus voltage directly to GPIO36. Verify the midpoint stays below 3.3 V at maximum source voltage before connecting the ESP32. Divider values, measurement point, profile, calibration, and enable state remain configurable.
 
-- Battery voltage divider input, currently disabled with `BATTERY_VOLTAGE_PIN = -1`
+Remaining placeholders exist for:
+
 - Motor current sense input, currently disabled with `MOTOR_CURRENT_SENSE_PIN = -1`
 - Pitch actuator output

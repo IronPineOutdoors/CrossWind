@@ -24,6 +24,15 @@
 - Verify BTS7960 logic ground and ESP32 ground are common.
 - Power the motor branch through a fuse.
 
+## Battery Monitor Test
+
+- Keep monitoring disabled until the external divider is installed and verified.
+- With GPIO36 disconnected, verify the monitor does not report a safe valid voltage.
+- Verify divider midpoint voltage with a multimeter before connecting the ESP32; it must remain below 3.3 V.
+- Calibrate at a stable source voltage with motor power off.
+- With the thrower removed, record idle voltage, motor-start sag, minimum running voltage, and recovery.
+- Confirm a brief sag is filtered/debounced while sustained critical voltage stops motion and latches the configured battery fault.
+
 ## Low PWM Motor Test
 
 - Set speed low.

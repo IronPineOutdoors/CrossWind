@@ -2,6 +2,7 @@
 
 #include <esp_system.h>
 
+#include "battery_monitor.h"
 #include "environment.h"
 #include "inputs.h"
 #include "limits.h"
@@ -39,6 +40,8 @@ const char* faultToString(FaultCode fault) {
     case FAULT_LIMIT_STUCK: return "LIMIT_STUCK";
     case FAULT_UNEXPECTED_LIMIT: return "UNEXPECTED_LIMIT";
     case FAULT_CALIBRATION_FAILED: return "CALIBRATION_FAILED";
+    case FAULT_BATTERY_CRITICAL: return "BATTERY_CRITICAL";
+    case FAULT_BATTERY_SENSOR: return "BATTERY_SENSOR";
     default: return "UNKNOWN";
   }
 }
@@ -98,6 +101,16 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(MOTOR_SESSION_TIMEOUT_MS);
   Serial.print("  Motor current sense pin: ");
   Serial.println(MOTOR_CURRENT_SENSE_PIN);
+  Serial.print("  Battery monitor: ");
+  Serial.println(batteryMonitoringEnabled() ? "ENABLED" : "DISABLED");
+  Serial.print("  Battery ADC pin: ");
+  Serial.println(BATTERY_VOLTAGE_PIN);
+  Serial.print("  Battery measurement point: ");
+  Serial.println(batteryMeasurementPointToString());
+  Serial.print("  Battery profile: ");
+  Serial.println(batteryProfileToString(selectedBatteryProfile()));
+  Serial.print("  Battery calibration multiplier: ");
+  Serial.println(batteryCalibrationMultiplier(), 4);
   Serial.print("  Motor overcurrent fault enabled: ");
   Serial.println(ENABLE_MOTOR_OVERCURRENT_FAULT ? "YES" : "NO");
   Serial.print("  E-stop pin: ");
@@ -179,6 +192,26 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";tempF=" + String(environmentDataValid() ? getTemperatureF() : NAN, 1);
   payload += ";humidity=" + String(environmentDataValid() ? getHumidity() : NAN, 1);
   payload += ";pressureHpa=" + String(environmentDataValid() ? getPressureHpa() : NAN, 1);
+  const BatteryDiagnostics& battery = batteryDiagnostics();
+  payload += ";batteryEnabled=" + String(batteryMonitoringEnabled() ? "1" : "0");
+  payload += ";batteryPoint=" + String(batteryMeasurementPointToString());
+  payload += ";batteryProfile=" + String(batteryProfileToString(selectedBatteryProfile()));
+  payload += ";batteryStatus=" + String(batteryStatusToString(batteryStatus()));
+  payload += ";batteryValid=" + String(batterySensorValid() ? "1" : "0");
+  payload += ";batteryV=" + String(batterySensorValid() ? batteryVoltage() : NAN, 2);
+  payload += ";batteryPct=" + String(batteryPercentageValid() ? batteryApproximatePercent() : -1);
+  payload += ";batteryRaw=" + String(battery.latestRawAdc);
+  payload += ";batteryFiltered=" + String(battery.filteredAdc, 1);
+  payload += ";batteryMinV=" + String(battery.minimumVoltage, 2);
+  payload += ";batteryMaxV=" + String(battery.maximumVoltage, 2);
+  payload += ";batteryMotorMinV=" + String(battery.lowestMotorRunningVoltage, 2);
+  payload += ";batteryLowCount=" + String(battery.lowWarningCount);
+  payload += ";batteryCriticalCount=" + String(battery.criticalEventCount);
+  payload += ";batteryErrorCount=" + String(battery.sensorErrorCount);
+  payload += ";batteryCal=" + String(batteryCalibrationMultiplier(), 4);
+  bool batteryCalibrated = fabsf(batteryCalibrationMultiplier() - BATTERY_DEFAULT_CALIBRATION_MULTIPLIER) > 0.0001F
+    || fabsf(batteryCalibrationOffsetV() - BATTERY_DEFAULT_CALIBRATION_OFFSET_V) > 0.0001F;
+  payload += ";batteryCalibrated=" + String(batteryCalibrated ? "1" : "0");
   const MotionDiagnostics& motion = motionDiagnostics();
   payload += ";sweeps=" + String(motion.completedSweeps);
   payload += ";reversals=" + String(motion.directionReversals);
