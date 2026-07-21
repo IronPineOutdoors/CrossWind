@@ -18,6 +18,11 @@ static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 static bool displayReady = false;
 static unsigned long lastDisplayUpdate = 0;
 
+static bool displayResponding() {
+  Wire.beginTransmission(OLED_ADDRESS);
+  return Wire.endTransmission() == 0;
+}
+
 static int motorPercent(const ControllerState& state) {
   return map(state.speed, 0, 255, 0, 100);
 }
@@ -50,9 +55,14 @@ static const char* limitStatusText(const ControllerState& state) {
 }
 
 void initDisplay() {
+  if (!displayResponding()) {
+    Serial.println("WARNING: SSD1306 OLED not found at 0x3C");
+    return;
+  }
+
   // The environment module owns initialization of the shared I2C bus. Passing
   // false here prevents Adafruit_SSD1306 from restarting Wire after the BME280
-  // probe, which can block startup when a device is absent or the bus is noisy.
+  // probe.
   displayReady = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, true, false);
   if (!displayReady) {
     Serial.println("WARNING: SSD1306 OLED not found at 0x3C");
