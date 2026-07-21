@@ -50,8 +50,10 @@ static const char* limitStatusText(const ControllerState& state) {
 }
 
 void initDisplay() {
-  Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
-  displayReady = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
+  // The environment module owns initialization of the shared I2C bus. Passing
+  // false here prevents Adafruit_SSD1306 from restarting Wire after the BME280
+  // probe, which can block startup when a device is absent or the bus is noisy.
+  displayReady = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, true, false);
   if (!displayReady) {
     Serial.println("WARNING: SSD1306 OLED not found at 0x3C");
     return;

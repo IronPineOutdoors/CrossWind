@@ -18,6 +18,7 @@ static float cToF(float tempC) {
 
 void initEnvironment() {
   Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
+  Wire.setTimeOut(50);
   bmeReady = bme.begin(BME280_I2C_ADDRESS_PRIMARY, &Wire);
   if (!bmeReady) {
     bmeReady = bme.begin(BME280_I2C_ADDRESS_SECONDARY, &Wire);
