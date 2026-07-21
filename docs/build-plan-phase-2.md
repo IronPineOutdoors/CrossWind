@@ -10,7 +10,7 @@ Use a 12V linear actuator or geared mechanism to change thrower pitch. The actua
 
 ## Pitch Limit Switches
 
-Add upper and lower pitch limits or a position feedback sensor. The pitch axis should fault independently from yaw if limits disagree or travel timeout occurs.
+Add upper and lower pitch limits or a position feedback sensor. The finalized harness already reserves White / Deutsch pin 3 for Lower (Axis 2 Down), Yellow / pin 4 for Upper (Axis 2 Up), and Black / pin 5 as shared ground. Use NC contacts so normal is LOW and either actuation or an open wire is HIGH. The pitch axis should fault independently from yaw if limits disagree or travel timeout occurs.
 
 ## ESP32 Control Expansion
 

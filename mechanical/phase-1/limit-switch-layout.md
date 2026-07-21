@@ -10,5 +10,7 @@ Crosswind Alpha uses two YL-99 roller limit switch modules as safety and calibra
 - The switches are not physical hard stops and are not normal travel controls.
 - Add separate rubber or metal hard stops if the top plate needs mechanical end-of-travel protection.
 - Route switch wiring so it cannot touch the lazy susan bearing, linkage, crank arm, or rotating plate.
+- Use Green for Left, Blue for Right, and Black for the shared ground in accordance with the [Deutsch DT 6-pin harness standard](../../electrical/limit-switch-harness.md).
+- Keep the terminated White, Yellow, and Red conductors insulated and secured during Alpha.
 
 Firmware treats either active switch during motor operation as a latched limit fault. Both switches active together latch a separate both-limits fault.

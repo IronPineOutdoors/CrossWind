@@ -38,7 +38,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - `firmware/crosswind-esp32/` - PlatformIO ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, environment, display, RGB status LED, trigger, and diagnostics modules.
 - `firmware/crosswind-arduino/` - Arduino Uno/Nano fallback firmware.
 - `mechanical/` - Phase 1 and Phase 2 mechanical notes, dimensions, fitment, and cut lists.
-- `electrical/` - Pinout, power system, fusing, limit switch wiring, and wiring checklist.
+- `electrical/` - Pinout, power system, fusing, the [Deutsch DT 6-pin limit-switch harness standard](electrical/limit-switch-harness.md), and wiring checklist.
 - `cad/` - CAD export/drop folders for Phase 1 and Phase 2.
 - `testing/` - Bench, motor, sweep, runtime, and field test records.
 - `branding/` - Iron Pine Outdoors and Crosswind product identity notes.

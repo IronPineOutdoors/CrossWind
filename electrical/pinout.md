@@ -13,8 +13,8 @@
 | OLED SCL | GPIO22 | Shared I2C bus |
 | BME280 SDA | GPIO21 | Optional environment sensor on shared I2C bus |
 | BME280 SCL | GPIO22 | Optional environment sensor on shared I2C bus |
-| Left limit | GPIO34 | YL-99 module signal output, active LOW, external pullup required |
-| Right limit | GPIO35 | YL-99 module signal output, active LOW, external pullup required |
+| Left limit | GPIO34 | Green, DT pin 1; NC contact; external 3.3 V pull-up required |
+| Right limit | GPIO35 | Blue, DT pin 2; NC contact; external 3.3 V pull-up required |
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
@@ -35,7 +35,9 @@
 
 ## Limit Switches
 
-For YL-99 limit switch modules, power each module from ESP32 `3V3`, connect module `GND` to common ground, and connect module signal/output to the limit GPIO. GPIO34/GPIO35 are input-only ESP32 pins and require external pullups. The firmware uses `LIMIT_ACTIVE_STATE = LOW`, matching the current YL-99 behavior where a triggered switch pulls the signal LOW. These switches are safety/calibration inputs only, not normal travel controls or physical hard stops.
+Use the [finalized limit-switch harness standard](limit-switch-harness.md): Green / DT pin 1 is Left, Blue / pin 2 is Right, White / pin 3 is Lower, Yellow / pin 4 is Upper, Black / pin 5 is shared ground, and Red / pin 6 is reserved. All switches use NC contacts to Black ground. Normal is LOW; actuation or an open wire is HIGH through a pull-up.
+
+During Alpha, only Green, Blue, and Black are connected. White, Yellow, and Red remain terminated but unused. GPIO34/GPIO35 do not support internal pull-ups, so the retained Alpha assignments require external 3.3 V pull-ups. These switches are safety/calibration inputs only, not normal travel controls or physical hard stops.
 
 ## RGB Status LED
 
