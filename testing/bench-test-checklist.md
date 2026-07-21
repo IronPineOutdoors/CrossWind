@@ -8,10 +8,9 @@
 
 ## Switch Test
 
-- With power disconnected, confirm each unactuated NC switch has continuity from Green (Left) or Blue (Right) to Black ground.
-- Confirm each switch actuation opens its signal-to-Black circuit.
-- With controller power only, confirm Left and Right each read LOW normally and HIGH when actuated.
-- Disconnect Green, then Blue, and confirm each open wire reads HIGH and produces the same safety response as switch actuation.
+- Confirm Red-to-Black measures approximately 3.3 V with controller power on.
+- Confirm Green (Left OUT) and Blue (Right OUT) each read HIGH normally and LOW when pressed.
+- Disconnect Green, then Blue, and confirm each input returns HIGH/clear; record that this active-LOW module arrangement does not automatically detect an open OUT wire.
 - Trigger the left roller switch and confirm Serial status changes.
 - Trigger the right roller switch and confirm Serial status changes.
 - Trigger both and confirm a fault is reported.

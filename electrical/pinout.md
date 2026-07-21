@@ -13,8 +13,8 @@
 | OLED SCL | GPIO22 | Shared I2C bus |
 | BME280 SDA | GPIO21 | Optional environment sensor on shared I2C bus |
 | BME280 SCL | GPIO22 | Optional environment sensor on shared I2C bus |
-| Left limit | GPIO34 | Green, DT pin 1; NC contact; external 3.3 V pull-up required |
-| Right limit | GPIO35 | Blue, DT pin 2; NC contact; external 3.3 V pull-up required |
+| Left limit | GPIO34 | Green, DT pin 1; powered module OUT, active LOW; external pull-up |
+| Right limit | GPIO35 | Blue, DT pin 2; powered module OUT, active LOW; external pull-up |
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
@@ -35,9 +35,9 @@
 
 ## Limit Switches
 
-Use the [finalized limit-switch harness standard](limit-switch-harness.md): Green / DT pin 1 is Left, Blue / pin 2 is Right, White / pin 3 is Lower, Yellow / pin 4 is Upper, Black / pin 5 is shared ground, and Red / pin 6 is reserved. All switches use NC contacts to Black ground. Normal is LOW; actuation or an open wire is HIGH through a pull-up.
+Use the [finalized limit-switch harness standard](limit-switch-harness.md): Green / DT pin 1 is Left OUT, Blue / pin 2 is Right OUT, White / pin 3 is Lower OUT, Yellow / pin 4 is Upper OUT, Black / pin 5 is shared ground, and Red / pin 6 is regulated 3.3 V. The powered modules output HIGH normally and short OUT to ground when pressed, so active is LOW.
 
-During Alpha, only Green, Blue, and Black are connected. White, Yellow, and Red remain terminated but unused. GPIO34/GPIO35 do not support internal pull-ups, so the retained Alpha assignments require external 3.3 V pull-ups. These switches are safety/calibration inputs only, not normal travel controls or physical hard stops.
+During Alpha, Green, Blue, Black, and Red are connected. White and Yellow remain terminated but unused. GPIO34/GPIO35 do not support internal pull-ups, so the retained Alpha assignments require external 3.3 V pull-ups. A broken OUT wire will commonly read HIGH/clear and is not automatically detected. These switches are safety/calibration inputs only, not normal travel controls or physical hard stops.
 
 ## RGB Status LED
 

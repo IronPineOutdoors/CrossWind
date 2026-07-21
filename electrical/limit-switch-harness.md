@@ -6,11 +6,10 @@ This document is the source of truth for the Crosswind limit switch cable, conne
 
 - Cable: 6-conductor
 - Connector: Deutsch DT 6-pin
-- Switch contacts: normally closed (NC)
-- Common return: Black shared ground
-- Signal bias: pull-up to 3.3 V
-- Normal, intact circuit: LOW
-- Actuated switch or open/broken wire: HIGH
+- Switch type: powered YL-99 limit switch module
+- Module supply: Red 3.3 V and Black shared ground
+- Normal, unactuated OUT: HIGH
+- Actuated OUT: LOW (module shorts OUT to ground)
 
 ## Pinout
 
@@ -20,10 +19,10 @@ This document is the source of truth for the Crosswind limit switch cable, conne
 | 2 | Blue | Right limit switch | Connected |
 | 3 | White | Lower / Axis 2 Down limit switch | Terminated, unused |
 | 4 | Yellow | Upper / Axis 2 Up limit switch | Terminated, unused |
-| 5 | Black | Shared ground for all limit switches | Connected |
-| 6 | Red | Spare / future expansion | Terminated, reserved, unused |
+| 5 | Black | Shared ground for all limit switch modules | Connected |
+| 6 | Red | Shared 3.3 V supply for all limit switch modules | Connected |
 
-Do not use the Red conductor as power or ground. Keep it isolated at both ends until a future design formally assigns it.
+Red is dedicated to the regulated ESP32 3.3 V rail for the limit switch modules. Do not connect it to 5 V, battery voltage, or another supply.
 
 ## Connector Diagram
 
@@ -38,44 +37,45 @@ The following is the mating-face view with the latch at the top. Always confirm 
               |                 |
               |  4     5     6  |
               | YEL   BLK   RED  |
-              | Upper GND  Spare |
+              | Upper GND  3V3   |
               +-----------------+
                  MATING FACE
 ```
 
 ## Switch Wiring Diagram
 
-Each NC switch connects its colored signal conductor to the shared Black ground conductor when the switch is not actuated.
+Each powered limit module receives 3.3 V on Red and ground on Black. Its OUT pin drives the assigned colored signal HIGH while clear and shorts that signal to Black ground when pressed.
 
 ```text
 ESP32/input side                         Limit-switch side
 
-3.3 V -- pull-up -- Green  (pin 1) -----o---o-----+
-3.3 V -- pull-up -- Blue   (pin 2) -----o---o-----+
-3.3 V -- pull-up -- White  (pin 3) -----o---o-----+-- Black (pin 5) -- GND
-3.3 V -- pull-up -- Yellow (pin 4) -----o---o-----+
+ESP32 GPIO34 <--- Green  (pin 1) <--- Left module OUT
+ESP32 GPIO35 <--- Blue   (pin 2) <--- Right module OUT
+Future input <--- White  (pin 3) <--- Lower module OUT
+Future input <--- Yellow (pin 4) <--- Upper module OUT
 
-Red (pin 6) ---------------- terminated and isolated; no connection
+ESP32 GND ----> Black (pin 5) ----+---- module GND (all modules)
+ESP32 3.3 V --> Red   (pin 6) ----+---- module VCC (all modules)
 
-o---o = normally closed contact shown in its normal, unactuated state
+Each GPIO signal retains a 3.3 V pull-up. A pressed module shorts OUT to GND.
 ```
 
 | Condition | Contact/cable state | ESP32 input |
 | --- | --- | --- |
-| Normal, switch not actuated | Closed to Black ground | LOW |
-| Limit switch actuated | Open | HIGH |
-| Signal conductor broken or disconnected | Open | HIGH |
-| Shared Black ground broken | Open for affected/all switches | HIGH |
+| Normal, switch not actuated | Module OUT powered HIGH | HIGH / clear |
+| Limit switch actuated | Module shorts OUT to Black ground | LOW / active |
+| Signal conductor broken or disconnected | Controller pull-up holds input HIGH | HIGH / clear |
+| Red 3.3 V or Black ground broken | Module state is not trustworthy; input will commonly remain HIGH | Treat as a wiring fault during inspection |
 
-This fail-safe arrangement intentionally makes an actuated switch and an open wire equivalent. Either condition must stop or inhibit motion according to the firmware safety rules.
+This powered active-LOW module arrangement does **not** provide open-wire fault detection: a broken OUT wire commonly reads HIGH/clear. Inspect and continuity-test the harness before operation. Additional end-of-line monitoring or different hardware would be required for automatic broken-wire detection.
 
 ## ESP32 Pull-up Compatibility
 
-The harness standard assumes each limit input is pulled up to 3.3 V. Use an ESP32 internal pull-up when the assigned GPIO supports one.
+The harness standard retains a pull-up on each OUT input so a disconnected input cannot float. Use an ESP32 internal pull-up when the assigned GPIO supports one.
 
 The current Alpha GPIO assignments remain GPIO34 for Left and GPIO35 for Right. On the classic ESP32, GPIO34 and GPIO35 do not have internal pull-up resistors, so the Alpha controller must retain external 3.3 V pull-up resistors on those two inputs. Moving to internal pull-ups would require different GPIO assignments and is outside this wiring-document update.
 
-Before powered motion, confirm the installed firmware reports LOW for each intact, unactuated NC circuit and HIGH for both switch actuation and a disconnected conductor. A configuration that treats LOW as the activated state is not compatible with this finalized NC harness behavior.
+Before powered motion, confirm the installed firmware reports HIGH/clear for each unactuated module and LOW/active when pressed. The firmware must use `LIMIT_ACTIVE_STATE = LOW`.
 
 ## Alpha Assembly
 
@@ -84,18 +84,19 @@ During Alpha, connect only:
 - Green, pin 1: Left limit
 - Blue, pin 2: Right limit
 - Black, pin 5: shared ground
+- Red, pin 6: shared regulated 3.3 V
 
-Crimp, seal, and terminate White, Yellow, and Red in their assigned connector cavities, but leave them electrically unused. Insulate and secure their equipment-side ends separately so they cannot contact ground, power, or one another.
+Crimp, seal, and terminate White and Yellow in their assigned connector cavities, but leave them electrically unused. Insulate and secure their equipment-side ends separately so they cannot contact ground, power, or one another.
 
 ## Harness Assembly Procedure
 
 1. Label both cable ends and orient each Deutsch DT housing by its molded cavity numbers.
 2. Crimp the six conductors to the correct contacts and install the connector seals and wedge locks.
-3. Connect one terminal of every NC limit switch to its assigned colored conductor.
-4. Join the other terminal of every limit switch to the Black shared-ground conductor.
-5. Leave the Red spare isolated. During Alpha, also isolate the equipment-side White and Yellow conductors.
+3. Connect every module `OUT` to its assigned Green, Blue, White, or Yellow conductor.
+4. Connect every module `GND` to Black and every module `VCC` to Red.
+5. Connect Red only to regulated ESP32 3.3 V. During Alpha, isolate the equipment-side White and Yellow conductors.
 6. Add strain relief and route the cable clear of bearings, linkages, crank arms, rotating plates, and pinch points.
 7. With power disconnected, verify pin-to-pin continuity and confirm there are no shorts between adjacent conductors.
-8. Confirm each installed switch is closed to Black when unactuated and opens when actuated.
-9. With controller power only, confirm each input is LOW normally and HIGH when its switch is actuated or its signal conductor is disconnected.
+8. With controller power only, confirm Red-to-Black measures approximately 3.3 V at the harness and each module powers normally.
+9. Confirm each OUT input is HIGH normally and LOW when its switch is pressed. Disconnect each OUT in turn and verify the input returns HIGH; note that this is a clear state, not automatic open-wire detection.
 10. Do not enable motor power until all continuity and input-state checks pass.

@@ -28,7 +28,7 @@ Use a simple crank/linkage from the motor output to a rear corner or tab on the 
 
 Mount left and right YL-99 roller switch modules on adjustable stationary brackets. Adjustable flags or tabs on the rotating plate should actuate the rollers lightly. These switches are safety/calibration inputs only, not travel reversal controls or hard stops.
 
-Assemble the limit cable to the [Deutsch DT 6-pin harness standard](../electrical/limit-switch-harness.md). For Alpha, connect Green to Left, Blue to Right, and Black as the shared ground. Terminate White, Yellow, and Red in their assigned connector cavities but isolate their equipment-side ends for future use. Verify each NC circuit is closed normally and opens when actuated before applying motor power.
+Assemble the limit cable to the [Deutsch DT 6-pin harness standard](../electrical/limit-switch-harness.md). For Alpha, connect Green to Left OUT, Blue to Right OUT, Black to shared ground, and Red to the modules' regulated 3.3 V supply. Terminate White and Yellow in their assigned connector cavities but isolate their equipment-side ends for future use. Verify each OUT reads HIGH normally and LOW when pressed before applying motor power.
 
 ## Controller Box
 

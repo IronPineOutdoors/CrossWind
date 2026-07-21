@@ -15,8 +15,8 @@
     GPIO21 -> OLED SDA
     GPIO22 -> OLED SCL
     BME280 -> environment sensor on shared I2C bus, 0x76 or 0x77
-    GPIO34 -> left roller limit switch with external pullup
-    GPIO35 -> right roller limit switch with external pullup
+    GPIO34 -> left powered limit module OUT (HIGH clear, LOW pressed)
+    GPIO35 -> right powered limit module OUT (HIGH clear, LOW pressed)
     GPIO27 -> DIYables RGB LED module R input, PWM
     GPIO12 -> DIYables RGB LED module G input, PWM
     GPIO4  -> DIYables RGB LED module B input, PWM
@@ -27,9 +27,10 @@
     GPIO17 -> FIRE / TEST button to GND, INPUT_PULLUP
     GPIO39 -> speed potentiometer wiper, 0-3.3V only
 
-  YL-99 limit modules are currently active LOW. GPIO34/GPIO35 require
-  external pullup resistors because ESP32 input-only pins do not have internal
-  pullups.
+  The powered YL-99 limit modules drive OUT HIGH when clear and short OUT to
+  GND when pressed, so LIMIT_ACTIVE_STATE must remain LOW. Red in the limit
+  harness supplies 3.3 V and Black is common ground. GPIO34/GPIO35 have no
+  internal pullups; retain external 3.3 V pullups so the inputs never float.
 
   DIYables common cathode RGB LED module wiring:
     GND -> common ground
