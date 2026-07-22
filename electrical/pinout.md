@@ -59,6 +59,8 @@ Wire encoder `CLK` to GPIO32, `DT` to GPIO33, `SW` to GPIO25, `+`/`VCC` to ESP32
 
 The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never triggers the relay.
 
+The SSD1306 OLED shares the I2C bus on GPIO21/GPIO22. Firmware probes both common OLED addresses, `0x3C` and `0x3D`.
+
 ## Environmental Sensor
 
 Crosswind Alpha uses a DHT11 by default because it is already available and good enough for early Apache case enclosure temperature and humidity checks. Wire DHT11 `VCC` to ESP32 `3V3`, `GND` to ESP32 `GND`, and `DATA` to GPIO26.

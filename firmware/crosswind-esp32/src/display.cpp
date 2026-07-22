@@ -11,15 +11,16 @@
 static constexpr int SCREEN_WIDTH = 128;
 static constexpr int SCREEN_HEIGHT = 64;
 static constexpr int OLED_RESET = -1;
-static constexpr uint8_t OLED_ADDRESS = 0x3C;
+static constexpr uint8_t OLED_ADDRESS_PRIMARY = 0x3C;
+static constexpr uint8_t OLED_ADDRESS_SECONDARY = 0x3D;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;
 
 static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 static bool displayReady = false;
 static unsigned long lastDisplayUpdate = 0;
 
-static bool displayResponding() {
-  Wire.beginTransmission(OLED_ADDRESS);
+static bool displayResponding(uint8_t address) {
+  Wire.beginTransmission(address);
   return Wire.endTransmission() == 0;
 }
 
@@ -55,19 +56,26 @@ static const char* limitStatusText(const ControllerState& state) {
 }
 
 void initDisplay() {
-  if (!displayResponding()) {
-    Serial.println("WARNING: SSD1306 OLED not found at 0x3C");
+  uint8_t displayAddress = OLED_ADDRESS_PRIMARY;
+  if (!displayResponding(displayAddress)) {
+    displayAddress = OLED_ADDRESS_SECONDARY;
+  }
+  if (!displayResponding(displayAddress)) {
+    Serial.println("WARNING: SSD1306 OLED not found at 0x3C or 0x3D");
     return;
   }
 
   // The environment module owns initialization of the shared I2C bus. Passing
   // false here prevents Adafruit_SSD1306 from restarting Wire after the BME280
   // probe.
-  displayReady = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, true, false);
+  displayReady = display.begin(SSD1306_SWITCHCAPVCC, displayAddress, true, false);
   if (!displayReady) {
-    Serial.println("WARNING: SSD1306 OLED not found at 0x3C");
+    Serial.println("WARNING: SSD1306 OLED initialization failed");
     return;
   }
+
+  Serial.print("Display ready at 0x");
+  Serial.println(displayAddress, HEX);
 
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
