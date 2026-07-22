@@ -11,16 +11,24 @@ static bool hasValidReading = false;
 static bool lastReadFailed = false;
 static bool bmeReady = false;
 static unsigned long lastReadAttempt = 0;
+static unsigned long lastInitAttempt = 0;
+static constexpr uint16_t ENV_INIT_RETRY_INTERVAL_MS = 2000;
 
 static float cToF(float tempC) {
   return tempC * 9.0F / 5.0F + 32.0F;
 }
 
-void initEnvironment() {
+static bool beginBme280() {
   bmeReady = bme.begin(BME280_I2C_ADDRESS_PRIMARY, &Wire);
   if (!bmeReady) {
     bmeReady = bme.begin(BME280_I2C_ADDRESS_SECONDARY, &Wire);
   }
+  return bmeReady;
+}
+
+void initEnvironment() {
+  lastInitAttempt = millis();
+  beginBme280();
 
   if (bmeReady) {
     Serial.println("Environment sensor: BME280 on I2C");
@@ -32,15 +40,25 @@ void initEnvironment() {
 
 void updateEnvironment() {
   unsigned long now = millis();
+
+  if (!bmeReady) {
+    if (now - lastInitAttempt < ENV_INIT_RETRY_INTERVAL_MS) {
+      return;
+    }
+    lastInitAttempt = now;
+    if (beginBme280()) {
+      lastReadFailed = false;
+      Serial.println("Environment sensor: BME280 recovered on I2C");
+    } else {
+      lastReadFailed = true;
+    }
+    return;
+  }
+
   if (now - lastReadAttempt < ENV_UPDATE_INTERVAL_MS) {
     return;
   }
   lastReadAttempt = now;
-
-  if (!bmeReady) {
-    lastReadFailed = true;
-    return;
-  }
 
   float temperatureC = bme.readTemperature();
   float humidity = bme.readHumidity();
@@ -48,7 +66,9 @@ void updateEnvironment() {
 
   if (isnan(temperatureC) || isnan(humidity) || isnan(pressureHpa)) {
     lastReadFailed = true;
-    Serial.println("WARNING: BME280 environment read failed; keeping last valid reading");
+    bmeReady = false;
+    lastInitAttempt = now;
+    Serial.println("WARNING: BME280 environment read failed; retrying initialization");
     return;
   }
 
