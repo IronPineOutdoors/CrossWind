@@ -14,10 +14,13 @@ static constexpr int OLED_RESET = -1;
 static constexpr uint8_t OLED_ADDRESS_PRIMARY = 0x3C;
 static constexpr uint8_t OLED_ADDRESS_SECONDARY = 0x3D;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;
+static constexpr uint16_t DISPLAY_RETRY_INTERVAL_MS = 2000;
 
 static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 static bool displayReady = false;
+static bool displayWarningPrinted = false;
 static unsigned long lastDisplayUpdate = 0;
+static unsigned long lastDisplayInitAttempt = 0;
 
 static bool displayResponding(uint8_t address) {
   Wire.beginTransmission(address);
@@ -55,14 +58,18 @@ static const char* limitStatusText(const ControllerState& state) {
   return "OK";
 }
 
-void initDisplay() {
+static bool tryInitDisplay() {
+  lastDisplayInitAttempt = millis();
   uint8_t displayAddress = OLED_ADDRESS_PRIMARY;
   if (!displayResponding(displayAddress)) {
     displayAddress = OLED_ADDRESS_SECONDARY;
-  }
-  if (!displayResponding(displayAddress)) {
-    Serial.println("WARNING: SSD1306 OLED not found at 0x3C or 0x3D");
-    return;
+    if (!displayResponding(displayAddress)) {
+      if (!displayWarningPrinted) {
+        Serial.println("WARNING: SSD1306 OLED not found at 0x3C or 0x3D; retrying");
+        displayWarningPrinted = true;
+      }
+      return false;
+    }
   }
 
   // The environment module owns initialization of the shared I2C bus. Passing
@@ -70,10 +77,14 @@ void initDisplay() {
   // probe.
   displayReady = display.begin(SSD1306_SWITCHCAPVCC, displayAddress, true, false);
   if (!displayReady) {
-    Serial.println("WARNING: SSD1306 OLED initialization failed");
-    return;
+    if (!displayWarningPrinted) {
+      Serial.println("WARNING: SSD1306 OLED initialization failed; retrying");
+      displayWarningPrinted = true;
+    }
+    return false;
   }
 
+  displayWarningPrinted = false;
   Serial.print("Display ready at 0x");
   Serial.println(displayAddress, HEX);
 
@@ -84,11 +95,18 @@ void initDisplay() {
   display.println("CROSSWIND");
   display.println("Display ready");
   display.display();
+  return true;
+}
+
+void initDisplay() {
+  tryInitDisplay();
 }
 
 void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDisplayMode) {
   if (!displayReady) {
-    return;
+    if (millis() - lastDisplayInitAttempt < DISPLAY_RETRY_INTERVAL_MS || !tryInitDisplay()) {
+      return;
+    }
   }
 
   unsigned long now = millis();

@@ -12,6 +12,7 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 ## Display And Inputs
 
 - Confirm the SSD1306 OLED boots at I2C address `0x3C` or `0x3D` and Serial reports the detected address.
+- If the OLED is unavailable during startup, confirm firmware retries and recovers after the display begins responding without rebooting the controller.
 - Confirm OLED home screen shows motor percent, safety state, relay state, and limit status.
 - Rotate encoder and confirm speed changes.
 - Press encoder switch and confirm `MAIN`/`SETUP` display toggle when not faulted.

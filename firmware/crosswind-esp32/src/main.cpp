@@ -290,8 +290,8 @@ void setup() {
 
   updateInputs();
   updateLimits();
-  if (bothLimitsActive()) {
-    state.faultActive = ENABLE_LIMIT_FAULTS;
+  if (ENABLE_LIMIT_FAULTS && bothLimitsActive()) {
+    state.faultActive = true;
     state.lastFault = FAULT_STARTUP_BOTH_LIMITS;
     setRunning(false);
     state.speed = 0;
