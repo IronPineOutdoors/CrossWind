@@ -10,6 +10,7 @@
 
 static constexpr uint8_t OLED_I2C_ADDRESS = 0x3C;
 static constexpr uint8_t OLED_I2C_FALLBACK_ADDRESS = 0x3D;
+static constexpr uint8_t OLED_RESET_PIN = 5;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;
 static constexpr uint16_t DISPLAY_RETRY_INTERVAL_MS = 2000;
 static constexpr uint16_t DISPLAY_STARTUP_TEST_MS = 1000;
@@ -17,7 +18,7 @@ static constexpr uint16_t DISPLAY_STARTUP_TEST_MS = 1000;
 // Confirmed in the installed U8g2 library. Full-buffer mode uses 1024 bytes
 // for the 128 x 64 monochrome frame buffer.
 static U8G2_SSD1309_128X64_NONAME0_F_HW_I2C display(
-  U8G2_R0, U8X8_PIN_NONE, OLED_SCL_PIN, OLED_SDA_PIN
+  U8G2_R0, OLED_RESET_PIN, OLED_SCL_PIN, OLED_SDA_PIN
 );
 static bool displayReady = false;
 static bool displayWarningPrinted = false;
@@ -27,6 +28,16 @@ static unsigned long lastDisplayInitAttempt = 0;
 static bool deviceResponding(uint8_t address) {
   Wire.beginTransmission(address);
   return Wire.endTransmission() == 0;
+}
+
+static void resetDisplay() {
+  pinMode(OLED_RESET_PIN, OUTPUT);
+  digitalWrite(OLED_RESET_PIN, HIGH);
+  delay(1);
+  digitalWrite(OLED_RESET_PIN, LOW);
+  delay(10);
+  digitalWrite(OLED_RESET_PIN, HIGH);
+  delay(10);
 }
 
 static void printI2cDiagnostics() {
@@ -94,6 +105,7 @@ static void showStartupTest() {
 
 static bool tryInitDisplay() {
   lastDisplayInitAttempt = millis();
+  resetDisplay();
   uint8_t displayAddress = detectedDisplayAddress();
   if (displayAddress == 0) {
     if (!displayWarningPrinted) {
@@ -123,6 +135,7 @@ static bool tryInitDisplay() {
 }
 
 void initDisplay() {
+  resetDisplay();
   printI2cDiagnostics();
   tryInitDisplay();
 }

@@ -98,6 +98,7 @@ Modes currently accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`.
 | Right limit | 35 |
 | OLED SDA | 21 |
 | OLED SCL | 22 |
+| OLED RES | 5 |
 | BME280 SDA | 21 |
 | BME280 SCL | 22 |
 | RGB LED red | 27 |

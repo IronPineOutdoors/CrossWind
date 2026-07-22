@@ -11,6 +11,7 @@
 | DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
 | SSD1309 OLED SDA | GPIO21 | Shared I2C bus |
 | SSD1309 OLED SCL | GPIO22 | Shared I2C bus |
+| SSD1309 OLED RES | GPIO5 | Active-LOW hardware reset for five-pin module |
 | BME280 SDA | GPIO21 | Optional environment sensor on shared I2C bus |
 | BME280 SCL | GPIO22 | Optional environment sensor on shared I2C bus |
 | Left limit | GPIO34 | Green, DT pin 1; powered module OUT, active LOW; external pull-up |
@@ -43,7 +44,7 @@ During Alpha, Green, Blue, Black, and Red are connected. White and Yellow remain
 
 The DIYables RGB LED module is common cathode with built-in resistors. Connect module `GND` to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4. Because common cathode colors turn on when driven HIGH, PWM values above 0 illuminate the color and PWM 0 turns it off.
 
-GPIO12 can affect boot mode on some ESP32 boards if externally pulled at reset. Keep GPIO12 for the current Alpha wiring unless it causes boot or upload issues; if it does, move the green channel to a non-strapping PWM-capable pin such as GPIO5 and update `RGB_GREEN_PIN`.
+GPIO12 can affect boot mode on some ESP32 boards if externally pulled at reset. Keep GPIO12 for the current Alpha wiring unless it causes boot or upload issues. GPIO5 is now reserved for OLED reset and must not be used as an RGB fallback.
 
 ## Buttons
 
@@ -59,7 +60,7 @@ Wire encoder `CLK` to GPIO32, `DT` to GPIO33, `SW` to GPIO25, `+`/`VCC` to ESP32
 
 The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never triggers the relay.
 
-The Hosyond 2.42-inch 128x64 SSD1309 OLED shares the I2C bus on GPIO21/GPIO22. Connect OLED `VCC` to ESP32 `3V3`, `GND` to system ground, `SDA` to GPIO21, and `SCL` to GPIO22. Crosswind continues to supply 3.3 V even though the module listing indicates 3.3-5 V compatibility. Firmware scans the bus, uses centralized address `0x3C`, and retains `0x3D` as a diagnostic fallback.
+The Hosyond 2.42-inch 128x64 SSD1309 OLED shares the I2C bus on GPIO21/GPIO22. Connect OLED `VCC` to ESP32 `3V3`, `GND` to system ground, `SDA` to GPIO21, `SCL` to GPIO22, and `RES` to GPIO5. Crosswind continues to supply 3.3 V even though the module listing indicates 3.3-5 V compatibility. Firmware pulses the active-LOW reset before scanning the bus, uses centralized address `0x3C`, and retains `0x3D` as a diagnostic fallback.
 
 ## Environmental Sensor
 
