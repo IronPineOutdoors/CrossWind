@@ -282,8 +282,11 @@ void setup() {
   }
   Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
   Wire.setTimeOut(50);
-  initEnvironment();
   initDisplay();
+  // U8g2 initializes the shared Wire transport during display.begin(). Start
+  // the BME280 afterward so its driver binds to the final I2C bus state.
+  Wire.setTimeOut(50);
+  initEnvironment();
   beginStorage();
 
   StoredSettings settings = loadSettings();
