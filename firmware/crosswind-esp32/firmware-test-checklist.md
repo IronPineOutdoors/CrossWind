@@ -13,7 +13,7 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 
 - Confirm the I2C scan reports every detected address and the SSD1309 OLED boots at configured address `0x3C` or fallback `0x3D`.
 - Confirm the five-pin OLED `RES` input is connected to GPIO5 and the display acknowledges after the firmware reset pulse.
-- Confirm BME280 readings remain valid after SSD1309 initialization on the shared I2C bus.
+- Confirm the I2C scan reports both the SSD1309 and BME280, and BME280 readings remain valid after the shared bus is restored following display initialization.
 - Confirm the startup screen briefly shows `CROSSWIND`, `Display OK`, and `SSD1309 128x64` before the normal interface.
 - If the OLED is unavailable during startup, confirm firmware retries and recovers after the display begins responding without rebooting the controller.
 - Confirm OLED home screen shows motor percent, safety state, relay state, and limit status.
