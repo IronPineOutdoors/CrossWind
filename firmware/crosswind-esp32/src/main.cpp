@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <esp_arduino_version.h>
 #include <esp_task_wdt.h>
+#include <Wire.h>
 
 #include "ble_control.h"
 #include "diagnostics.h"
@@ -279,6 +280,8 @@ void setup() {
   if (MOTOR_CURRENT_SENSE_PIN >= 0) {
     pinMode(MOTOR_CURRENT_SENSE_PIN, INPUT);
   }
+  Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
+  Wire.setTimeOut(50);
   initEnvironment();
   initDisplay();
   beginStorage();

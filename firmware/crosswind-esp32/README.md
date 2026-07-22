@@ -20,7 +20,7 @@ The code is split into beginner-readable modules:
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - BME280 temperature, humidity, and pressure support.
-- `display.*` - SSD1306 OLED status display.
+- `display.*` - U8g2-driven SSD1309 128x64 OLED status display with I2C diagnostics and recovery.
 - `status_led.*` - non-blocking DIYables RGB status LED control.
 - `trigger.*` - non-blocking thrower relay pulse control.
 - `diagnostics.*` - Serial startup diagnostics and runtime status payloads.
@@ -41,7 +41,7 @@ The Alpha bench controller uses the rotary encoder for speed, encoder press for 
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
 
-The OLED home screen shows the current motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and `Limit: OK`, `ACTIVE`, `FAULT: LIMIT`, or `FAULT: BOTH`. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
+The Hosyond 2.42-inch 128x64 SSD1309 OLED uses U8g2 and retains the existing home-screen layout: motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and `Limit: OK`, `ACTIVE`, `FAULT: LIMIT`, or `FAULT: BOTH`. At startup it briefly shows `CROSSWIND`, `Display OK`, and `SSD1309 128x64`. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
 
 ## Build
 
@@ -118,7 +118,7 @@ Alpha firmware reads a BME280 on the existing OLED I2C bus at GPIO21/GPIO22 no f
 See `firmware-test-checklist.md` for a fuller bench checklist and `fault-matrix.md` for fault behavior.
 
 1. Upload firmware with PlatformIO.
-2. Confirm the OLED boots and shows the home screen.
+2. Confirm Serial reports the I2C scan and SSD1309 address, then confirm the OLED startup test transitions to the home screen.
 3. Confirm encoder rotation changes motor speed.
 4. Confirm ARM toggles between `SAFE` and `ARMED`.
 5. Confirm FIRE is blocked while `SAFE`.

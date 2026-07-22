@@ -1,30 +1,64 @@
 #include "display.h"
 
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <U8g2lib.h>
 #include <Wire.h>
+#include <esp_task_wdt.h>
 
 #include "environment.h"
 #include "limits.h"
 #include "trigger.h"
 
-static constexpr int SCREEN_WIDTH = 128;
-static constexpr int SCREEN_HEIGHT = 64;
-static constexpr int OLED_RESET = -1;
-static constexpr uint8_t OLED_ADDRESS_PRIMARY = 0x3C;
-static constexpr uint8_t OLED_ADDRESS_SECONDARY = 0x3D;
+static constexpr uint8_t OLED_I2C_ADDRESS = 0x3C;
+static constexpr uint8_t OLED_I2C_FALLBACK_ADDRESS = 0x3D;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;
 static constexpr uint16_t DISPLAY_RETRY_INTERVAL_MS = 2000;
+static constexpr uint16_t DISPLAY_STARTUP_TEST_MS = 1000;
 
-static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// Confirmed in the installed U8g2 library. Full-buffer mode uses 1024 bytes
+// for the 128 x 64 monochrome frame buffer.
+static U8G2_SSD1309_128X64_NONAME0_F_HW_I2C display(
+  U8G2_R0, U8X8_PIN_NONE, OLED_SCL_PIN, OLED_SDA_PIN
+);
 static bool displayReady = false;
 static bool displayWarningPrinted = false;
 static unsigned long lastDisplayUpdate = 0;
 static unsigned long lastDisplayInitAttempt = 0;
 
-static bool displayResponding(uint8_t address) {
+static bool deviceResponding(uint8_t address) {
   Wire.beginTransmission(address);
   return Wire.endTransmission() == 0;
+}
+
+static void printI2cDiagnostics() {
+  Serial.println("I2C scan:");
+  uint8_t deviceCount = 0;
+  for (uint8_t address = 1; address < 127; ++address) {
+    if ((address & 0x07) == 0) {
+      esp_task_wdt_reset();
+    }
+    if (!deviceResponding(address)) {
+      continue;
+    }
+    Serial.print("  Device at 0x");
+    if (address < 0x10) {
+      Serial.print('0');
+    }
+    Serial.println(address, HEX);
+    ++deviceCount;
+  }
+  if (deviceCount == 0) {
+    Serial.println("  No I2C devices detected");
+  }
+}
+
+static uint8_t detectedDisplayAddress() {
+  if (deviceResponding(OLED_I2C_ADDRESS)) {
+    return OLED_I2C_ADDRESS;
+  }
+  if (deviceResponding(OLED_I2C_FALLBACK_ADDRESS)) {
+    return OLED_I2C_FALLBACK_ADDRESS;
+  }
+  return 0;
 }
 
 static int motorPercent(const ControllerState& state) {
@@ -33,116 +67,97 @@ static int motorPercent(const ControllerState& state) {
 
 static const char* displayStatusText(const ControllerState& state, bool systemArmed) {
   EnvironmentStatus environmentStatus = getEnvironmentStatus();
-  if (isTriggerActive()) {
-    return "FIRING";
-  }
-  if (state.faultActive) {
-    return "FAULT";
-  }
-  if (environmentStatus == ENV_STATUS_HOT || environmentStatus == ENV_STATUS_TEMP_FAULT || environmentStatus == ENV_STATUS_ERROR) {
-    return "WARNING";
-  }
+  if (isTriggerActive()) return "FIRING";
+  if (state.faultActive) return "FAULT";
+  if (environmentStatus == ENV_STATUS_HOT || environmentStatus == ENV_STATUS_TEMP_FAULT || environmentStatus == ENV_STATUS_ERROR) return "WARNING";
   return systemArmed ? "ARMED" : "SAFE";
 }
 
 static const char* limitStatusText(const ControllerState& state) {
-  if (state.faultActive && state.lastFault == FAULT_BOTH_LIMITS) {
-    return "FAULT: BOTH";
-  }
-  if (state.faultActive && state.lastFault == FAULT_LIMIT) {
-    return "FAULT: LIMIT";
-  }
-  if (leftLimitActive() || rightLimitActive()) {
-    return "ACTIVE";
-  }
+  if (state.faultActive && state.lastFault == FAULT_BOTH_LIMITS) return "FAULT: BOTH";
+  if (state.faultActive && state.lastFault == FAULT_LIMIT) return "FAULT: LIMIT";
+  if (leftLimitActive() || rightLimitActive()) return "ACTIVE";
   return "OK";
+}
+
+static void showStartupTest() {
+  display.clearBuffer();
+  display.setFont(u8g2_font_6x12_tr);
+  display.setFontMode(1);
+  display.setDrawColor(1);
+  display.drawStr(0, 12, "CROSSWIND");
+  display.drawStr(0, 30, "Display OK");
+  display.drawStr(0, 48, "SSD1309 128x64");
+  display.sendBuffer();
+  delay(DISPLAY_STARTUP_TEST_MS);
 }
 
 static bool tryInitDisplay() {
   lastDisplayInitAttempt = millis();
-  uint8_t displayAddress = OLED_ADDRESS_PRIMARY;
-  if (!displayResponding(displayAddress)) {
-    displayAddress = OLED_ADDRESS_SECONDARY;
-    if (!displayResponding(displayAddress)) {
-      if (!displayWarningPrinted) {
-        Serial.println("WARNING: SSD1306 OLED not found at 0x3C or 0x3D; retrying");
-        displayWarningPrinted = true;
-      }
-      return false;
-    }
-  }
-
-  // The environment module owns initialization of the shared I2C bus. Passing
-  // false here prevents Adafruit_SSD1306 from restarting Wire after the BME280
-  // probe.
-  displayReady = display.begin(SSD1306_SWITCHCAPVCC, displayAddress, true, false);
-  if (!displayReady) {
+  uint8_t displayAddress = detectedDisplayAddress();
+  if (displayAddress == 0) {
     if (!displayWarningPrinted) {
-      Serial.println("WARNING: SSD1306 OLED initialization failed; retrying");
+      Serial.println("WARNING: SSD1309 OLED not found at 0x3C or 0x3D; retrying");
       displayWarningPrinted = true;
     }
     return false;
   }
 
-  displayWarningPrinted = false;
-  Serial.print("Display ready at 0x");
-  Serial.println(displayAddress, HEX);
+  // U8g2 expects an 8-bit I2C address; diagnostics print conventional 7-bit addresses.
+  display.setI2CAddress(displayAddress << 1);
+  if (!display.begin()) {
+    if (!displayWarningPrinted) {
+      Serial.println("WARNING: SSD1309 OLED initialization failed; retrying");
+      displayWarningPrinted = true;
+    }
+    return false;
+  }
 
-  display.clearDisplay();
-  display.setTextColor(SSD1306_WHITE);
-  display.setTextSize(1);
-  display.setCursor(0, 0);
-  display.println("CROSSWIND");
-  display.println("Display ready");
-  display.display();
+  displayReady = true;
+  displayWarningPrinted = false;
+  Serial.print("SSD1309 display ready at 0x");
+  if (displayAddress < 0x10) Serial.print('0');
+  Serial.println(displayAddress, HEX);
+  showStartupTest();
   return true;
 }
 
 void initDisplay() {
+  printI2cDiagnostics();
   tryInitDisplay();
 }
 
 void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDisplayMode) {
   if (!displayReady) {
-    if (millis() - lastDisplayInitAttempt < DISPLAY_RETRY_INTERVAL_MS || !tryInitDisplay()) {
-      return;
-    }
+    if (millis() - lastDisplayInitAttempt < DISPLAY_RETRY_INTERVAL_MS || !tryInitDisplay()) return;
   }
 
   unsigned long now = millis();
-  if (now - lastDisplayUpdate < DISPLAY_UPDATE_INTERVAL_MS) {
-    return;
-  }
+  if (now - lastDisplayUpdate < DISPLAY_UPDATE_INTERVAL_MS) return;
   lastDisplayUpdate = now;
 
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setCursor(0, 0);
-  display.println("CROSSWIND");
+  char line[24];
+  display.clearBuffer();
+  display.setFont(u8g2_font_5x8_tr);
+  display.setFontMode(1);
+  display.setDrawColor(1);
+  display.drawStr(0, 8, "CROSSWIND");
 
-  display.print("Motor: ");
-  display.print(motorPercent(state));
-  display.println("%");
-
-  display.print("Status: ");
-  display.println(displayStatusText(state, systemArmed));
-
-  display.print("Relay: ");
-  display.println(isTriggerActive() ? "ON" : "OFF");
+  snprintf(line, sizeof(line), "Motor: %d%%", motorPercent(state));
+  display.drawStr(0, 18, line);
+  snprintf(line, sizeof(line), "Status: %s", displayStatusText(state, systemArmed));
+  display.drawStr(0, 28, line);
+  snprintf(line, sizeof(line), "Relay: %s", isTriggerActive() ? "ON" : "OFF");
+  display.drawStr(0, 38, line);
 
   if (setupDisplayMode) {
-    display.print("L:");
-    display.print(leftLimitActive() ? "1" : "0");
-    display.print(" raw:");
-    display.println(leftLimitRawLevel());
-
-    display.print("R:");
-    display.print(rightLimitActive() ? "1" : "0");
-    display.print(" raw:");
-    display.println(rightLimitRawLevel());
+    snprintf(line, sizeof(line), "L:%d raw:%d", leftLimitActive() ? 1 : 0, leftLimitRawLevel());
+    display.drawStr(0, 48, line);
+    snprintf(line, sizeof(line), "R:%d raw:%d", rightLimitActive() ? 1 : 0, rightLimitRawLevel());
+    display.drawStr(0, 58, line);
   } else {
-    display.print("Limit: ");
-    display.println(limitStatusText(state));
+    snprintf(line, sizeof(line), "Limit: %s", limitStatusText(state));
+    display.drawStr(0, 48, line);
   }
-  display.display();
+  display.sendBuffer();
 }

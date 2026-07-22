@@ -32,7 +32,7 @@ Reserve a fused branch for the future pitch actuator. Expect startup and stall c
 
 ## 5V Buck Converter Circuit
 
-A fused 5V buck converter is fed from the 12V bus. The 5V bus feeds ESP32 `VIN`/`5V`, the relay module, BTS7960 logic, and support modules as appropriate. ESP32 `3V3` feeds OLED, BME280, DHT11, and small logic sensors. All grounds must be common.
+A fused 5V buck converter is fed from the 12V bus. The 5V bus feeds ESP32 `VIN`/`5V`, the relay module, BTS7960 logic, and support modules as appropriate. ESP32 `3V3` feeds the Hosyond 2.42-inch SSD1309 OLED, BME280, DHT11, and small logic sensors. The OLED remains on 3.3 V even though its listing indicates 3.3-5 V compatibility. All grounds must be common.
 
 ## Trigger Relay Circuit
 

@@ -6,7 +6,7 @@
 - Fit VEVOR NH113 on adjustable rails.
 - Measure wiper motor current draw.
 - Finalize left/right switch bracket placement.
-- Validate Alpha DHT11 or optional BME280, OLED, rotary encoder, ARM, FIRE, RGB status LED, and BLE status controls in the enclosure.
+- Validate the BME280, Hosyond 2.42-inch SSD1309 OLED, rotary encoder, ARM, FIRE, RGB status LED, and BLE status controls in the enclosure.
 - Field test with conservative sweep angle.
 
 ## Phase 2

@@ -15,3 +15,9 @@ Core dimensions:
 The top plate rides on the lazy susan bearing. The wiper motor should mount to the stationary base plate with its output crank offset from the rotation center; the linkage does not need to attach at the exact center of the rotating top plate. Mount the BTS7960 with its heatsink exposed and ventilated inside the electronics enclosure.
 
 See `limit-switch-layout.md` for the Phase 1 YL-99 safety switch layout.
+
+## Controller Display
+
+The controller enclosure now uses a Hosyond 2.42-inch 128x64 SSD1309 OLED. The logical resolution is unchanged, but the larger physical module may require revisions to the panel opening, mounting-hole locations, standoffs, and display bezel.
+
+TODO: measure the actual installed OLED module and update the enclosure/CAD dimensions. Do not infer board or mounting dimensions from the 2.42-inch diagonal specification.

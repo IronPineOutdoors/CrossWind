@@ -16,7 +16,9 @@
 - DHT11 is mounted inside the Apache case with airflow, away from the BTS7960 heat sink, motor driver, and case wall.
 - Optional BME280 `VCC` is wired to ESP32 `3V3`, `GND` to common ground, `SDA` to GPIO21, and `SCL` to GPIO22.
 - If BME280 is installed, `ENV_SENSOR_TYPE` is set to `ENV_SENSOR_BME280` and Serial diagnostics show a valid `pressureHpa`.
-- OLED `SDA` is wired to GPIO21 and `SCL` is wired to GPIO22.
+- Hosyond 2.42-inch SSD1309 OLED `VCC` is wired to ESP32 `3V3` and `GND` to system ground.
+- SSD1309 OLED `SDA` is wired to GPIO21 and `SCL` is wired to GPIO22.
+- Serial I2C diagnostics report the OLED address, normally `0x3C` (with `0x3D` fallback).
 - Rotary encoder `CLK` is wired to GPIO32, `DT` to GPIO33, and `SW` to GPIO25.
 - ARM button is wired between GPIO16 and GND.
 - FIRE / TEST button is wired between GPIO17 and GND.

@@ -9,8 +9,8 @@
 | BTS7960 R_EN | GPIO23 | Right enable |
 | BTS7960 L_EN | GPIO13 | Left enable |
 | DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
-| OLED SDA | GPIO21 | Shared I2C bus |
-| OLED SCL | GPIO22 | Shared I2C bus |
+| SSD1309 OLED SDA | GPIO21 | Shared I2C bus |
+| SSD1309 OLED SCL | GPIO22 | Shared I2C bus |
 | BME280 SDA | GPIO21 | Optional environment sensor on shared I2C bus |
 | BME280 SCL | GPIO22 | Optional environment sensor on shared I2C bus |
 | Left limit | GPIO34 | Green, DT pin 1; powered module OUT, active LOW; external pull-up |
@@ -59,7 +59,7 @@ Wire encoder `CLK` to GPIO32, `DT` to GPIO33, `SW` to GPIO25, `+`/`VCC` to ESP32
 
 The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never triggers the relay.
 
-The SSD1306 OLED shares the I2C bus on GPIO21/GPIO22. Firmware probes both common OLED addresses, `0x3C` and `0x3D`.
+The Hosyond 2.42-inch 128x64 SSD1309 OLED shares the I2C bus on GPIO21/GPIO22. Connect OLED `VCC` to ESP32 `3V3`, `GND` to system ground, `SDA` to GPIO21, and `SCL` to GPIO22. Crosswind continues to supply 3.3 V even though the module listing indicates 3.3-5 V compatibility. Firmware scans the bus, uses centralized address `0x3C`, and retains `0x3D` as a diagnostic fallback.
 
 ## Environmental Sensor
 

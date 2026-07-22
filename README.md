@@ -21,7 +21,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - Left and right YL-99 limit switch modules
 - Rotary encoder speed control with menu/select button
 - Dedicated ARM and FIRE / TEST buttons
-- SSD1306 OLED status display
+- Hosyond 2.42-inch 128x64 SSD1309 I2C OLED status display (ASIN B0G2RFLG1L)
 - DHT11 enclosure temperature/humidity sensor by default, with optional BME280 support on I2C
 - Dry-contact thrower trigger relay
 - DIYables common-cathode RGB status LED
