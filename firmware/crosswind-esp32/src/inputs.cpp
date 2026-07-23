@@ -52,14 +52,14 @@ static void updateRotaryEncoder() {
   if (clk == LOW) {
     bool dt = digitalRead(ROTARY_ENCODER_DT_PIN);
     if (dt == HIGH) {
-      lastSpeedPwm = lastSpeedPwm > ROTARY_ENCODER_SPEED_STEP ? lastSpeedPwm - ROTARY_ENCODER_SPEED_STEP : 0;
+      uint16_t nextSpeed = lastSpeedPwm + ROTARY_ENCODER_SPEED_STEP;
+      lastSpeedPwm = nextSpeed > MAX_PWM ? MAX_PWM : nextSpeed;
       Serial.print("Encoder speed: ");
       Serial.println(lastSpeedPwm);
       return;
     }
 
-    uint16_t nextSpeed = lastSpeedPwm + ROTARY_ENCODER_SPEED_STEP;
-    lastSpeedPwm = nextSpeed > MAX_PWM ? MAX_PWM : nextSpeed;
+    lastSpeedPwm = lastSpeedPwm > ROTARY_ENCODER_SPEED_STEP ? lastSpeedPwm - ROTARY_ENCODER_SPEED_STEP : 0;
     Serial.print("Encoder speed: ");
     Serial.println(lastSpeedPwm);
   }
