@@ -11,6 +11,7 @@
 static constexpr uint8_t OLED_I2C_ADDRESS = 0x3C;
 static constexpr uint8_t OLED_I2C_FALLBACK_ADDRESS = 0x3D;
 static constexpr uint8_t OLED_RESET_PIN = 5;
+static constexpr uint32_t OLED_I2C_CLOCK_HZ = 100000;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;
 static constexpr uint16_t DISPLAY_RETRY_INTERVAL_MS = 2000;
 static constexpr uint16_t DISPLAY_STARTUP_TEST_MS = 1000;
@@ -117,6 +118,7 @@ static bool tryInitDisplay() {
 
   // U8g2 expects an 8-bit I2C address; diagnostics print conventional 7-bit addresses.
   display.setI2CAddress(displayAddress << 1);
+  display.setBusClock(OLED_I2C_CLOCK_HZ);
   if (!display.begin()) {
     if (!displayWarningPrinted) {
       Serial.println("WARNING: SSD1309 OLED initialization failed; retrying");
@@ -124,6 +126,11 @@ static bool tryInitDisplay() {
     }
     return false;
   }
+
+  // U8g2 initializes Wire internally. Restore the finite transaction timeout
+  // before sending the first full frame so a bad bus cannot stall loopTask.
+  Wire.setClock(OLED_I2C_CLOCK_HZ);
+  Wire.setTimeOut(50);
 
   displayReady = true;
   displayWarningPrinted = false;
