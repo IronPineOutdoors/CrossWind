@@ -13,9 +13,22 @@ static bool bmeReady = false;
 static unsigned long lastReadAttempt = 0;
 static unsigned long lastInitAttempt = 0;
 static constexpr uint16_t ENV_INIT_RETRY_INTERVAL_MS = 2000;
+static constexpr float BME280_MIN_TEMPERATURE_C = -40.0F;
+static constexpr float BME280_MAX_TEMPERATURE_C = 85.0F;
+static constexpr float BME280_MIN_HUMIDITY_PERCENT = 0.0F;
+static constexpr float BME280_MAX_HUMIDITY_PERCENT = 100.0F;
+static constexpr float BME280_MIN_PRESSURE_HPA = 300.0F;
+static constexpr float BME280_MAX_PRESSURE_HPA = 1100.0F;
 
 static float cToF(float tempC) {
   return tempC * 9.0F / 5.0F + 32.0F;
+}
+
+static bool readingIsPlausible(float temperatureC, float humidity, float pressureHpa) {
+  return isfinite(temperatureC) && isfinite(humidity) && isfinite(pressureHpa) &&
+         temperatureC >= BME280_MIN_TEMPERATURE_C && temperatureC <= BME280_MAX_TEMPERATURE_C &&
+         humidity >= BME280_MIN_HUMIDITY_PERCENT && humidity <= BME280_MAX_HUMIDITY_PERCENT &&
+         pressureHpa >= BME280_MIN_PRESSURE_HPA && pressureHpa <= BME280_MAX_PRESSURE_HPA;
 }
 
 static bool beginBme280() {
@@ -64,7 +77,7 @@ void updateEnvironment() {
   float humidity = bme.readHumidity();
   float pressureHpa = bme.readPressure() / 100.0F;
 
-  if (isnan(temperatureC) || isnan(humidity) || isnan(pressureHpa)) {
+  if (!readingIsPlausible(temperatureC, humidity, pressureHpa)) {
     lastReadFailed = true;
     bmeReady = false;
     lastInitAttempt = now;
@@ -96,20 +109,17 @@ float getPressureHpa() {
 }
 
 bool environmentDataValid() {
-  return hasValidReading;
+  return hasValidReading && !lastReadFailed;
 }
 
 EnvironmentStatus getEnvironmentStatus() {
-  if (!hasValidReading) {
+  if (!hasValidReading || lastReadFailed) {
     return ENV_STATUS_ERROR;
   }
 
   float temperatureF = getTemperatureF();
   if (ENABLE_TEMP_FAULTS && temperatureF >= TEMP_FAULT_F) {
     return ENV_STATUS_TEMP_FAULT;
-  }
-  if (lastReadFailed) {
-    return ENV_STATUS_ERROR;
   }
   if (temperatureF >= TEMP_WARNING_F) {
     return ENV_STATUS_HOT;
