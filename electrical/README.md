@@ -5,3 +5,5 @@ This folder documents Crosswind wiring, power distribution, and safety checks.
 Use these notes before powering the controller or motor driver.
 
 The finalized limit-switch cable colors, Deutsch DT 6-pin pinout, diagrams, and assembly procedure are in [limit-switch-harness.md](limit-switch-harness.md).
+
+The official Crosswind Alpha OLED connector pinout, five-conductor lid-harness diagram, BOM, fabrication procedure, and acceptance tests are in [oled-lid-harness.md](oled-lid-harness.md).

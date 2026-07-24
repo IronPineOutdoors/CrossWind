@@ -41,7 +41,7 @@ The Alpha bench controller uses the rotary encoder for speed, encoder press for 
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
 
-The Hosyond 2.42-inch 128x64 SSD1309 OLED uses U8g2 and retains the existing home-screen layout: motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and `Limit: OK`, `ACTIVE`, `FAULT: LIMIT`, or `FAULT: BOTH`. At startup it briefly shows `CROSSWIND`, `Display OK`, and `SSD1309 128x64`. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
+The verified Hosyond 2.42-inch 128x64 SSD1309 OLED uses U8g2 and the official five-conductor JST lid harness: GND, 3.3 V, GPIO21 SDA, GPIO22 SCL, and GPIO5 RESET. It retains the existing home-screen layout: motor speed percentage, `SAFE`, `ARMED`, `FAULT`, `WARNING`, or `FIRING`, relay `ON`/`OFF`, and `Limit: OK`, `ACTIVE`, `FAULT: LIMIT`, or `FAULT: BOTH`. At startup it briefly shows `CROSSWIND`, `Display OK`, and `SSD1309 128x64`. The RGB status LED mirrors the same safety state with green ready, blue armed, red fault, yellow warning/hot, and a white/purple firing flash.
 
 ## Build
 
@@ -108,7 +108,9 @@ Modes currently accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`.
 | E-stop placeholder | disabled |
 | Motor current sense placeholder | disabled |
 
-The DIYables RGB LED module is common cathode with built-in resistors: connect module `GND` to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4. GPIO12 is a boot strapping pin on many ESP32 boards; keep it for the Alpha wiring above, but if boot or upload problems appear, move green to another PWM-capable non-strapping pin such as GPIO5 and update `RGB_GREEN_PIN`.
+The DIYables RGB LED module is common cathode with built-in resistors: connect module `GND` to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4. GPIO12 is a boot strapping pin on many ESP32 boards. Keep it for the Alpha wiring above; GPIO5 is reserved for OLED reset and is not available as an RGB fallback.
+
+The electrical source of truth for display connector numbering, harness fabrication, and acceptance testing is [OLED Lid Harness Standard](../../electrical/oled-lid-harness.md).
 
 ## Environmental Sensor
 

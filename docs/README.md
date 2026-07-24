@@ -15,3 +15,5 @@ Firmware-aligned hardware aliases:
 - `electrical/wiring-checklist.md`
 - `mechanical/phase-1/wiper-motor-linkage.md`
 - `mechanical/phase-1/limit-switch-layout.md`
+
+The canonical Alpha OLED connector, pinout, harness BOM, and fabrication instructions are in `../electrical/oled-lid-harness.md`.

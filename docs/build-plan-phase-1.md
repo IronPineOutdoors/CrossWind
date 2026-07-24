@@ -34,7 +34,7 @@ Assemble the limit cable to the [Deutsch DT 6-pin harness standard](../electrica
 
 Mount the ESP32, BTS7960, high-current 12V buck, 5V buck, fuse block, and wiring terminals in a waterproof electronics box. Keep the BTS7960 heat sink exposed to airflow and add strain relief for motor, battery, switch, and control wiring.
 
-Use the Hosyond 2.42-inch 128x64 SSD1309 OLED for the controller display. Preserve the existing 128x64 interface layout. TODO: measure the installed module before revising the enclosure panel opening, mounting-hole locations, standoffs, or display bezel; do not derive mechanical dimensions from the nominal screen size.
+Use the verified Hosyond 2.42-inch 128x64 SSD1309 OLED for the controller display. Fabricate its lid wiring to the [official five-pin OLED lid-harness standard](../electrical/oled-lid-harness.md), including GPIO5 reset. Preserve the existing 128x64 interface layout. TODO: measure the installed module before revising the enclosure panel opening, mounting-hole locations, standoffs, or display bezel; do not derive mechanical dimensions from the nominal screen size.
 
 Add an opto-isolated trigger relay if thrower launch control is being tested. Keep the factory VEVOR NH113 pedal connected and wire the relay contacts in parallel with the pedal switch.
 

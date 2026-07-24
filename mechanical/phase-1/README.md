@@ -20,4 +20,6 @@ See `limit-switch-layout.md` for the Phase 1 YL-99 safety switch layout.
 
 The controller enclosure now uses a Hosyond 2.42-inch 128x64 SSD1309 OLED. The logical resolution is unchanged, but the larger physical module may require revisions to the panel opening, mounting-hole locations, standoffs, and display bezel.
 
+The enclosure lid must accommodate the official five-conductor OLED harness and five-position JST connector, including strain relief and a service loop. See [OLED Lid Harness Standard](../../electrical/oled-lid-harness.md).
+
 TODO: measure the actual installed OLED module and update the enclosure/CAD dimensions. Do not infer board or mounting dimensions from the 2.42-inch diagonal specification.

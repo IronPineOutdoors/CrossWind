@@ -10,7 +10,6 @@
 
 static constexpr uint8_t OLED_I2C_ADDRESS = 0x3C;
 static constexpr uint8_t OLED_I2C_FALLBACK_ADDRESS = 0x3D;
-static constexpr uint8_t OLED_RESET_PIN = 5;
 static constexpr uint32_t OLED_I2C_CLOCK_HZ = 100000;
 static constexpr uint16_t DISPLAY_POWER_SETTLE_MS = 500;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;

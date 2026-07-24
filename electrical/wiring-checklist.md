@@ -19,6 +19,9 @@
 - Hosyond 2.42-inch SSD1309 OLED `VCC` is wired to ESP32 `3V3` and `GND` to system ground.
 - SSD1309 OLED `SDA` is wired to GPIO21 and `SCL` is wired to GPIO22.
 - SSD1309 OLED `RES` is wired to GPIO5 for active-LOW hardware reset.
+- OLED lid harness uses the official five-position JST connector and the pin order in `oled-lid-harness.md`.
+- All five OLED harness conductors pass point-to-point continuity and adjacent-pin short tests.
+- OLED starts after a complete cold power cycle without requiring Serial Monitor to reset the ESP32.
 - Serial I2C diagnostics report the OLED address, normally `0x3C` (with `0x3D` fallback).
 - Rotary encoder `CLK` is wired to GPIO32, `DT` to GPIO33, and `SW` to GPIO25.
 - ARM button is wired between GPIO16 and GND.

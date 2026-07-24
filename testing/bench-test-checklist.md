@@ -15,6 +15,7 @@
 - Trigger the right roller switch and confirm Serial status changes.
 - Trigger both and confirm a fault is reported.
 - Turn the rotary encoder and confirm OLED motor percentage and Serial speed output change.
+- Cold-cycle controller power with Serial Monitor closed and confirm the SSD1309 starts through the five-conductor lid harness.
 - Press the encoder switch and confirm OLED menu toggles between `MAIN` and `SETUP`.
 - Press FIRE while OLED shows `SAFE` and confirm Serial prints `FIRE BLOCKED - NOT ARMED`.
 - Press ARM and confirm OLED shows `ARMED` and Serial prints `ARM ON`.

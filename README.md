@@ -21,7 +21,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - Left and right YL-99 limit switch modules
 - Rotary encoder speed control with menu/select button
 - Dedicated ARM and FIRE / TEST buttons
-- Hosyond 2.42-inch 128x64 SSD1309 I2C OLED status display (ASIN B0G2RFLG1L)
+- Hosyond 2.42-inch 128x64 SSD1309 I2C OLED status display (ASIN B0G2RFLG1L) with the official five-conductor JST lid harness
 - DHT11 enclosure temperature/humidity sensor by default, with optional BME280 support on I2C
 - Dry-contact thrower trigger relay
 - DIYables common-cathode RGB status LED
@@ -38,7 +38,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - `firmware/crosswind-esp32/` - PlatformIO ESP32 firmware split into motor, limits, inputs, modes, storage, BLE, environment, display, RGB status LED, trigger, and diagnostics modules.
 - `firmware/crosswind-arduino/` - Arduino Uno/Nano fallback firmware.
 - `mechanical/` - Phase 1 and Phase 2 mechanical notes, dimensions, fitment, and cut lists.
-- `electrical/` - Pinout, power system, fusing, the [Deutsch DT 6-pin limit-switch harness standard](electrical/limit-switch-harness.md), and wiring checklist.
+- `electrical/` - Pinout, power system, fusing, the [five-pin OLED lid-harness standard](electrical/oled-lid-harness.md), the [Deutsch DT 6-pin limit-switch harness standard](electrical/limit-switch-harness.md), and wiring checklist.
 - `cad/` - CAD export/drop folders for Phase 1 and Phase 2.
 - `testing/` - Bench, motor, sweep, runtime, and field test records.
 - `branding/` - Iron Pine Outdoors and Crosswind product identity notes.

@@ -62,6 +62,8 @@ The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never
 
 The Hosyond 2.42-inch 128x64 SSD1309 OLED shares the I2C bus on GPIO21/GPIO22. Connect OLED `VCC` to ESP32 `3V3`, `GND` to system ground, `SDA` to GPIO21, `SCL` to GPIO22, and `RES` to GPIO5. Crosswind continues to supply 3.3 V even though the module listing indicates 3.3-5 V compatibility. Firmware pulses the active-LOW reset before scanning the bus, uses centralized address `0x3C`, and retains `0x3D` as a diagnostic fallback.
 
+These five signals must run through the official five-position JST lid connector. Use the numbered pinout, diagram, BOM, and fabrication procedure in [OLED Lid Harness Standard](oled-lid-harness.md).
+
 ## Environmental Sensor
 
 Crosswind Alpha uses a DHT11 by default because it is already available and good enough for early Apache case enclosure temperature and humidity checks. Wire DHT11 `VCC` to ESP32 `3V3`, `GND` to ESP32 `GND`, and `DATA` to GPIO26.

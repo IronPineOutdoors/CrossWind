@@ -14,6 +14,7 @@
     GPIO14 -> opto-isolated relay input for thrower pedal dry contact
     GPIO21 -> OLED SDA
     GPIO22 -> OLED SCL
+    GPIO5  -> OLED RES, active LOW
     BME280 -> environment sensor on shared I2C bus, 0x76 or 0x77
     GPIO34 -> left powered limit module OUT (HIGH clear, LOW pressed)
     GPIO35 -> right powered limit module OUT (HIGH clear, LOW pressed)
@@ -38,8 +39,8 @@
     G   -> GPIO12
     B   -> GPIO4
   Common cathode means HIGH/PWM > 0 turns a color ON.
-  GPIO12 is a strapping pin on many ESP32 boards; if boot/upload issues appear,
-  move RGB_GREEN_PIN to a non-strapping PWM-capable GPIO such as GPIO5.
+  GPIO12 is a strapping pin on many ESP32 boards. GPIO5 is reserved for the
+  verified OLED reset circuit and must not be used as an RGB fallback.
 */
 
 const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.11-hardening";
@@ -64,11 +65,12 @@ const int ROTARY_ENCODER_DT_PIN = 33;
 const int ROTARY_ENCODER_SW_PIN = 25;
 const int THROWER_TRIGGER_PIN = 14;
 const int RGB_RED_PIN = 27;
-// GPIO12 is an ESP32 strapping pin; use GPIO5 for green if boot/upload becomes unreliable.
+// GPIO12 is an ESP32 strapping pin; GPIO5 is reserved for OLED reset.
 const int RGB_GREEN_PIN = 12;
 const int RGB_BLUE_PIN = 4;
 const int OLED_SDA_PIN = 21;
 const int OLED_SCL_PIN = 22;
+const int OLED_RESET_PIN = 5;
 const int MOTOR_CURRENT_SENSE_PIN = -1;
 
 // Future expansion placeholders for Phase 2 and production hardware.
