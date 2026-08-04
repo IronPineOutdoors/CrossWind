@@ -28,6 +28,8 @@ static unsigned long lastBleStatus = 0;
 static unsigned long runStartedAt = 0;
 static bool systemArmed = false;
 static bool setupDisplayMode = false;
+static bool benchTestActive = false;
+static unsigned long benchTestEndsAt = 0;
 
 static void setRunning(bool running);
 
@@ -174,6 +176,15 @@ static bool requestSafeTrigger() {
 
 static bool handleBleCommand(const String& command, const String& value) {
   if (command == "START") {
+    Serial.printf("BLE START received: state=%s speed=%u direction=%s fault=%s limits=%u/%u\n",
+                  state.running ? "RUNNING" : "STOPPED", state.speed,
+                  directionToString(state.direction),
+                  state.faultActive ? faultToString(state.lastFault) : "NONE",
+                  leftLimitActive(), rightLimitActive());
+    if (benchTestActive) {
+      benchTestActive = false;
+      stopMotor();
+    }
     if (state.faultActive) {
       sendBleResponse("ERROR", "FAULT_ACTIVE_CLEAR_REQUIRED");
     } else if (!movementSafeToStart()) {
@@ -186,11 +197,29 @@ static bool handleBleCommand(const String& command, const String& value) {
   }
 
   if (command == "STOP") {
+    Serial.println("BLE STOP received");
+    benchTestActive = false;
     setRunning(false);
     stopMotor();
     cancelThrowerTrigger();
     resetModeState();
     sendBleResponse("OK", "STOPPED");
+    return true;
+  }
+
+  if (command == "IBT2_BENCH_FORWARD" || command == "IBT2_BENCH_REVERSE") {
+    if (!ENABLE_IBT2_BENCH_TEST) {
+      sendBleResponse("ERROR", "IBT2_BENCH_TEST_DISABLED");
+    } else if (state.running || state.faultActive || !limitsReleased() ||
+               emergencyStopActive() || !motorPwmReady()) {
+      sendBleResponse("ERROR", "IBT2_BENCH_TEST_BLOCKED_SAFETY");
+    } else {
+      Direction testDirection = command.endsWith("REVERSE") ? DIR_LEFT : DIR_RIGHT;
+      benchTestActive = true;
+      benchTestEndsAt = millis() + IBT2_BENCH_TEST_DURATION_MS;
+      driveMotor(testDirection, IBT2_BENCH_TEST_PWM);
+      sendBleResponse("OK", testDirection == DIR_RIGHT ? "IBT2_BENCH_FORWARD_STARTED" : "IBT2_BENCH_REVERSE_STARTED");
+    }
     return true;
   }
 
@@ -332,6 +361,13 @@ void loop() {
   updateLimits();
   updateEnvironment();
 
+  if (benchTestActive &&
+      (state.faultActive || !movementSafeToStart() || (long)(millis() - benchTestEndsAt) >= 0)) {
+    benchTestActive = false;
+    stopMotor();
+    Serial.println("IBT2 bench test complete/aborted: outputs disabled");
+  }
+
   if (emergencyStopActive()) {
     latchFault(FAULT_ESTOP);
   }
@@ -414,7 +450,9 @@ void loop() {
   }
 
   bool wasFaulted = state.faultActive;
-  if (motorAllowed()) {
+  if (benchTestActive) {
+    // The explicit diagnostic command owns the motor for its bounded duration.
+  } else if (motorAllowed()) {
     updateMode(state);
   } else {
     resetModeState();

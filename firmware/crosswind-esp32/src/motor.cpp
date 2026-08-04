@@ -10,6 +10,11 @@ static bool motorRunning = false;
 static bool directionChangePending = false;
 static unsigned long directionDeadtimeUntil = 0;
 static unsigned long lastRampUpdate = 0;
+static bool pwmReady = false;
+static uint8_t rightPwmOutput = 0;
+static uint8_t leftPwmOutput = 0;
+static bool rightEnableOutput = false;
+static bool leftEnableOutput = false;
 
 static uint8_t normalizeRunPwm(uint8_t pwm) {
   if (pwm == 0) {
@@ -22,18 +27,20 @@ static uint8_t normalizeRunPwm(uint8_t pwm) {
 }
 
 static void writeRightPwm(uint8_t pwm) {
+  rightPwmOutput = pwmReady ? pwm : 0;
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
-  ledcWrite(RPWM_PIN, pwm);
+  if (pwmReady) ledcWrite(RPWM_PIN, pwm);
 #else
-  ledcWrite(PWM_CHANNEL_RIGHT, pwm);
+  if (pwmReady) ledcWrite(PWM_CHANNEL_RIGHT, pwm);
 #endif
 }
 
 static void writeLeftPwm(uint8_t pwm) {
+  leftPwmOutput = pwmReady ? pwm : 0;
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
-  ledcWrite(LPWM_PIN, pwm);
+  if (pwmReady) ledcWrite(LPWM_PIN, pwm);
 #else
-  ledcWrite(PWM_CHANNEL_LEFT, pwm);
+  if (pwmReady) ledcWrite(PWM_CHANNEL_LEFT, pwm);
 #endif
 }
 
@@ -44,20 +51,54 @@ static void writeOptionalPin(int pin, uint8_t value) {
 }
 
 static void writeOutputs(Direction dir, uint8_t pwm) {
-  if (dir == DIR_RIGHT) {
-    writeOptionalPin(L_EN_PIN, LOW);
+  // The BTS7960 uses one enable input per half-bridge. Both halves must be
+  // enabled to provide a complete current path; RPWM/LPWM select direction.
+  if (!pwmReady || pwm == 0) {
+    writeRightPwm(0);
     writeLeftPwm(0);
-    writeOptionalPin(R_EN_PIN, HIGH);
+    writeOptionalPin(R_EN_PIN, LOW);
+    writeOptionalPin(L_EN_PIN, LOW);
+    rightEnableOutput = false;
+    leftEnableOutput = false;
+    return;
+  }
+  writeOptionalPin(R_EN_PIN, HIGH);
+  writeOptionalPin(L_EN_PIN, HIGH);
+  rightEnableOutput = R_EN_PIN >= 0;
+  leftEnableOutput = L_EN_PIN >= 0;
+
+  if (dir == DIR_RIGHT) {
+    writeLeftPwm(0);
     writeRightPwm(pwm);
   } else {
-    writeOptionalPin(R_EN_PIN, LOW);
     writeRightPwm(0);
-    writeOptionalPin(L_EN_PIN, HIGH);
     writeLeftPwm(pwm);
   }
 }
 
-void beginMotor() {
+static void writeEnables(bool enabled) {
+  rightEnableOutput = enabled && R_EN_PIN >= 0;
+  leftEnableOutput = enabled && L_EN_PIN >= 0;
+  writeOptionalPin(R_EN_PIN, enabled ? HIGH : LOW);
+  writeOptionalPin(L_EN_PIN, enabled ? HIGH : LOW);
+}
+
+static void logOutputsIfChanged() {
+  static bool first = true;
+  static uint8_t lastRightPwm = 0, lastLeftPwm = 0;
+  static bool lastRightEnable = false, lastLeftEnable = false;
+  if (!first && lastRightPwm == rightPwmOutput && lastLeftPwm == leftPwmOutput &&
+      lastRightEnable == rightEnableOutput && lastLeftEnable == leftEnableOutput) return;
+  first = false;
+  lastRightPwm = rightPwmOutput;
+  lastLeftPwm = leftPwmOutput;
+  lastRightEnable = rightEnableOutput;
+  lastLeftEnable = leftEnableOutput;
+  Serial.printf("MOTOR OUT R_EN=%u L_EN=%u RPWM=%u LPWM=%u\n",
+                rightEnableOutput, leftEnableOutput, rightPwmOutput, leftPwmOutput);
+}
+
+bool beginMotor() {
   pinMode(RPWM_PIN, OUTPUT);
   pinMode(LPWM_PIN, OUTPUT);
   if (R_EN_PIN >= 0) {
@@ -68,16 +109,21 @@ void beginMotor() {
   }
 
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
-  ledcAttach(RPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
-  ledcAttach(LPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
+  bool rightAttached = ledcAttach(RPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
+  bool leftAttached = ledcAttach(LPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
+  pwmReady = rightAttached && leftAttached;
 #else
-  ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION);
-  ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION);
+  bool rightAttached = ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION) > 0;
+  bool leftAttached = ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION) > 0;
   ledcAttachPin(RPWM_PIN, PWM_CHANNEL_RIGHT);
   ledcAttachPin(LPWM_PIN, PWM_CHANNEL_LEFT);
+  pwmReady = rightAttached && leftAttached;
 #endif
 
   stopMotor();
+  Serial.printf("MOTOR PWM init %s: RPWM=%d LPWM=%d freq=%dHz resolution=%dbit\n",
+                pwmReady ? "OK" : "FAILED", RPWM_PIN, LPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
+  return pwmReady;
 }
 
 void stopMotor() {
@@ -85,13 +131,22 @@ void stopMotor() {
   appliedPwm = 0;
   motorRunning = false;
   directionChangePending = false;
-  writeOptionalPin(R_EN_PIN, LOW);
-  writeOptionalPin(L_EN_PIN, LOW);
   writeRightPwm(0);
   writeLeftPwm(0);
+  writeEnables(false);
+  logOutputsIfChanged();
 }
 
 void driveMotor(Direction dir, uint8_t pwm) {
+  if (!pwmReady) {
+    stopMotor();
+    return;
+  }
+  if (dir != DIR_RIGHT && dir != DIR_LEFT) {
+    Serial.println("MOTOR command rejected: invalid/conflicting direction");
+    stopMotor();
+    return;
+  }
   uint8_t normalizedPwm = normalizeRunPwm(pwm);
   if (normalizedPwm == 0) {
     stopMotor();
@@ -104,12 +159,12 @@ void driveMotor(Direction dir, uint8_t pwm) {
   if (motorRunning && dir != activeDirection && !directionChangePending) {
     writeRightPwm(0);
     writeLeftPwm(0);
-    writeOptionalPin(R_EN_PIN, LOW);
-    writeOptionalPin(L_EN_PIN, LOW);
+    writeEnables(false);
     appliedPwm = 0;
     motorRunning = false;
     directionChangePending = true;
     directionDeadtimeUntil = millis() + DIRECTION_CHANGE_DEADTIME_MS;
+    logOutputsIfChanged();
   }
 }
 
@@ -142,6 +197,7 @@ void updateMotorRamp() {
   activeDirection = requestedDirection;
   motorRunning = true;
   writeOutputs(activeDirection, appliedPwm);
+  logOutputsIfChanged();
 }
 
 uint8_t motorAppliedPwm() {
@@ -151,3 +207,9 @@ uint8_t motorAppliedPwm() {
 Direction motorDirection() {
   return activeDirection;
 }
+
+bool motorPwmReady() { return pwmReady; }
+uint8_t motorRightPwm() { return rightPwmOutput; }
+uint8_t motorLeftPwm() { return leftPwmOutput; }
+bool motorRightEnable() { return rightEnableOutput; }
+bool motorLeftEnable() { return leftEnableOutput; }

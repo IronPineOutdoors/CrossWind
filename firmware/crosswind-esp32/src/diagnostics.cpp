@@ -126,6 +126,8 @@ void printStartupDiagnostics(const ControllerState& state) {
   Serial.println(state.speed);
   Serial.print("  Motor PWM: ");
   Serial.println(motorAppliedPwm());
+  Serial.print("  Motor PWM initialization: ");
+  Serial.println(motorPwmReady() ? "OK" : "FAILED - OUTPUTS DISABLED");
   Serial.print("  Last stored fault: ");
   Serial.println(faultToString(state.lastFault));
   Serial.print("  Fault active: ");
@@ -159,6 +161,11 @@ String buildStatusPayload(const ControllerState& state) {
   payload += ";sweepState=" + String(sweepStateToString());
   payload += ";speed=" + String(state.speed);
   payload += ";motorPwm=" + String(motorAppliedPwm());
+  payload += ";rEn=" + String(motorRightEnable() ? "1" : "0");
+  payload += ";lEn=" + String(motorLeftEnable() ? "1" : "0");
+  payload += ";rPwm=" + String(motorRightPwm());
+  payload += ";lPwm=" + String(motorLeftPwm());
+  payload += ";pwmReady=" + String(motorPwmReady() ? "1" : "0");
   payload += ";leftLimit=" + String(leftLimitActive() ? "1" : "0");
   payload += ";rightLimit=" + String(rightLimitActive() ? "1" : "0");
   payload += ";leftLimitRaw=" + String(leftLimitRawLevel());

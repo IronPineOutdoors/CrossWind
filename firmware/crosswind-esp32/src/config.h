@@ -99,6 +99,10 @@ const int LIMIT_ACTIVE_STATE = LOW;
 const uint16_t DEBOUNCE_DELAY_MS = 50;
 const uint16_t LIMIT_DEBOUNCE_MS = 20;
 const uint16_t DIRECTION_CHANGE_DEADTIME_MS = 50;
+// Disabled in normal firmware. Enable only for a supervised, unloaded test.
+const bool ENABLE_IBT2_BENCH_TEST = false;
+const uint8_t IBT2_BENCH_TEST_PWM = 64;
+const uint16_t IBT2_BENCH_TEST_DURATION_MS = 1000;
 const uint8_t WATCHDOG_TIMEOUT_SECONDS = 5;
 const uint16_t BLE_STATUS_INTERVAL_MS = 1000;
 const uint16_t BLE_COMMAND_MIN_INTERVAL_MS = 100;
