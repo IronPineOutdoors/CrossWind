@@ -17,6 +17,8 @@ static DebouncedButton fireButton = { FIRE_BUTTON_PIN, false, false, false, 0 };
 static int lastSpeedRaw = 0;
 static uint8_t lastSpeedPwm = DEFAULT_PWM;
 static bool lastEncoderClk = HIGH;
+static int8_t encoderStep = 0;
+static bool encoderMenuActive = false;
 
 static bool readPressed(int pin) {
   if (pin < 0) {
@@ -51,6 +53,11 @@ static void updateRotaryEncoder() {
 
   if (clk == LOW) {
     bool dt = digitalRead(ROTARY_ENCODER_DT_PIN);
+    int8_t step = dt == HIGH ? 1 : -1;
+    if (encoderMenuActive) {
+      encoderStep = step;
+      return;
+    }
     if (dt == HIGH) {
       uint16_t nextSpeed = lastSpeedPwm + ROTARY_ENCODER_SPEED_STEP;
       lastSpeedPwm = nextSpeed > MAX_PWM ? MAX_PWM : nextSpeed;
@@ -145,6 +152,17 @@ bool consumeMenuPressed() {
   bool event = encoderButton.pressEvent;
   encoderButton.pressEvent = false;
   return event;
+}
+
+int8_t consumeEncoderStep() {
+  int8_t step = encoderStep;
+  encoderStep = 0;
+  return step;
+}
+
+void setEncoderMenuActive(bool active) {
+  encoderMenuActive = active;
+  encoderStep = 0;
 }
 
 bool emergencyStopActive() {

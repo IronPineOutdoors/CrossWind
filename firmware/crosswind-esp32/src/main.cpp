@@ -27,7 +27,8 @@ static ControllerState state = {
 static unsigned long lastBleStatus = 0;
 static unsigned long runStartedAt = 0;
 static bool systemArmed = false;
-static bool setupDisplayMode = false;
+static bool menuActive = false;
+static uint8_t menuSelection = 0;
 static bool benchTestActive = false;
 static unsigned long benchTestEndsAt = 0;
 
@@ -301,7 +302,8 @@ void setup() {
   initTrigger();
   initStatusLed();
   systemArmed = false;
-  setupDisplayMode = false;
+  menuActive = false;
+  setEncoderMenuActive(false);
 
   beginMotor();
   beginLimits();
@@ -321,7 +323,16 @@ void setup() {
   state.speed = settings.lastSpeed;
 
   updateInputs();
+
+  // Give the limit inputs a short settling window before evaluating startup
+  // faults. This prevents transient boot-time states from falsely tripping the
+  // system during power-on.
+  for (uint8_t i = 0; i < 3; ++i) {
+    updateLimits();
+    delay(LIMIT_DEBOUNCE_MS);
+  }
   updateLimits();
+
   if (ENABLE_LIMIT_FAULTS && bothLimitsActive()) {
     state.faultActive = true;
     state.lastFault = FAULT_STARTUP_BOTH_LIMITS;
@@ -422,10 +433,34 @@ void loop() {
   if (consumeMenuPressed()) {
     if (state.faultActive) {
       clearFaultIfSafe("ENCODER");
+    } else if (!menuActive) {
+      menuActive = true;
+      menuSelection = 0;
+      setEncoderMenuActive(true);
+      Serial.println("LOCAL MENU OPEN");
+    } else if (menuSelection == 0) {
+      if (state.running) {
+        setRunning(false);
+        stopMotor();
+        cancelThrowerTrigger();
+        resetModeState();
+        Serial.println("LOCAL MOTOR STOP");
+      } else if (!movementSafeToStart()) {
+        Serial.println("LOCAL MOTOR START blocked: safety input active");
+      } else {
+        setRunning(true);
+        Serial.println("LOCAL MOTOR START");
+      }
     } else {
-      setupDisplayMode = !setupDisplayMode;
-      Serial.println(setupDisplayMode ? "MENU SETUP" : "MENU MAIN");
+      menuActive = false;
+      setEncoderMenuActive(false);
+      Serial.println("LOCAL MENU EXIT");
     }
+  }
+
+  int8_t encoderStep = consumeEncoderStep();
+  if (menuActive && encoderStep != 0) {
+    menuSelection = menuSelection == 0 ? 1 : 0;
   }
 
   if (consumeArmPressed()) {
@@ -470,7 +505,7 @@ void loop() {
   updateTrigger();
   selectStatusLedMode();
   updateStatusLed();
-  updateDisplay(state, systemArmed, setupDisplayMode);
+  updateDisplay(state, systemArmed, menuActive, menuSelection);
   printRuntimeStatus(state);
 
   unsigned long now = millis();

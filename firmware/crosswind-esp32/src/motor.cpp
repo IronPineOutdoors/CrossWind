@@ -166,6 +166,11 @@ void driveMotor(Direction dir, uint8_t pwm) {
     directionDeadtimeUntil = millis() + DIRECTION_CHANGE_DEADTIME_MS;
     logOutputsIfChanged();
   }
+
+  Serial.printf("MOTOR CMD dir=%s pwm=%u normalized=%u\n",
+                dir == DIR_RIGHT ? "RIGHT" : "LEFT",
+                pwm,
+                normalizedPwm);
 }
 
 void updateMotorRamp() {
@@ -198,6 +203,9 @@ void updateMotorRamp() {
   motorRunning = true;
   writeOutputs(activeDirection, appliedPwm);
   logOutputsIfChanged();
+  Serial.printf("MOTOR RUN dir=%s appliedPwm=%u\n",
+                activeDirection == DIR_RIGHT ? "RIGHT" : "LEFT",
+                appliedPwm);
 }
 
 uint8_t motorAppliedPwm() {

@@ -37,7 +37,7 @@ An E-stop input path exists as a disabled placeholder with `ESTOP_PIN = -1`. Ass
 
 Motor session timeout and motor overcurrent fault hooks exist but are disabled by default. They require configuring `ENABLE_MOTOR_SESSION_TIMEOUT` or `ENABLE_MOTOR_OVERCURRENT_FAULT` plus the related timeout/current-sense constants in `config.h`.
 
-The Alpha bench controller uses the rotary encoder for speed, encoder press for the `MAIN`/`SETUP` display menu, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
+The Alpha bench controller uses the rotary encoder for speed and local motor control, a dedicated ARM button on GPIO16, and a dedicated FIRE / TEST button on GPIO17. Press the encoder to open `LOCAL CONTROL`, rotate to choose `MOTOR: START`/`MOTOR: STOP` or `EXIT`, and press to execute. Menu motor control uses the same enabled fault, limit, E-stop, and temperature protections as BLE. The relay can only fire when `systemArmed` is true and no fault is active. The encoder button never triggers the relay.
 
 On boot the system always starts `SAFE` / unarmed and the relay is initialized off. Pressing ARM toggles `ARM ON` / `ARM OFF` in Serial and updates the OLED. Pressing FIRE while safe prints `FIRE BLOCKED - NOT ARMED`; pressing FIRE while armed pulses the relay using the existing non-blocking trigger timing.
 

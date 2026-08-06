@@ -150,7 +150,7 @@ void initDisplay() {
   tryInitDisplay();
 }
 
-void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDisplayMode) {
+void updateDisplay(const ControllerState& state, bool systemArmed, bool menuActive, uint8_t menuSelection) {
   if (!displayReady) {
     if (millis() - lastDisplayInitAttempt < DISPLAY_RETRY_INTERVAL_MS || !tryInitDisplay()) return;
   }
@@ -166,6 +166,17 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
   display.setDrawColor(1);
   display.drawStr(0, 8, "CROSSWIND");
 
+  if (menuActive) {
+    display.drawStr(0, 20, "LOCAL CONTROL");
+    snprintf(line, sizeof(line), "%c MOTOR: %s", menuSelection == 0 ? '>' : ' ', state.running ? "STOP" : "START");
+    display.drawStr(0, 36, line);
+    snprintf(line, sizeof(line), "%c EXIT", menuSelection == 1 ? '>' : ' ');
+    display.drawStr(0, 50, line);
+    display.drawStr(0, 62, "Turn=select Press=OK");
+    display.sendBuffer();
+    return;
+  }
+
   snprintf(line, sizeof(line), "Motor: %d%%", motorPercent(state));
   display.drawStr(0, 18, line);
   snprintf(line, sizeof(line), "Status: %s", displayStatusText(state, systemArmed));
@@ -173,14 +184,7 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool setupDis
   snprintf(line, sizeof(line), "Relay: %s", isTriggerActive() ? "ON" : "OFF");
   display.drawStr(0, 38, line);
 
-  if (setupDisplayMode) {
-    snprintf(line, sizeof(line), "L:%d raw:%d", leftLimitActive() ? 1 : 0, leftLimitRawLevel());
-    display.drawStr(0, 48, line);
-    snprintf(line, sizeof(line), "R:%d raw:%d", rightLimitActive() ? 1 : 0, rightLimitRawLevel());
-    display.drawStr(0, 58, line);
-  } else {
-    snprintf(line, sizeof(line), "Limit: %s", limitStatusText(state));
-    display.drawStr(0, 48, line);
-  }
+  snprintf(line, sizeof(line), "Limit: %s", limitStatusText(state));
+  display.drawStr(0, 48, line);
   display.sendBuffer();
 }

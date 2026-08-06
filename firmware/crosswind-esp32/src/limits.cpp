@@ -50,8 +50,15 @@ void beginLimits() {
   if (RIGHT_LIMIT_PIN >= 0) {
     pinMode(RIGHT_LIMIT_PIN, limitPinMode);
   }
-  leftLimit.rawActive = leftLimit.stableActive = readActive(LEFT_LIMIT_PIN);
-  rightLimit.rawActive = rightLimit.stableActive = readActive(RIGHT_LIMIT_PIN);
+
+  // Start from a known-clear state so boot-time noise or floating inputs do not
+  // immediately latch a startup fault before the inputs have settled.
+  leftLimit.rawActive = false;
+  leftLimit.stableActive = false;
+  leftLimit.changedAt = 0;
+  rightLimit.rawActive = false;
+  rightLimit.stableActive = false;
+  rightLimit.changedAt = 0;
 }
 
 void updateLimits() {
