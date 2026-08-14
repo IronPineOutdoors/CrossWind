@@ -52,10 +52,10 @@ const int R_EN_PIN = 23;
 const int L_EN_PIN = 13;
 const int LEFT_LIMIT_PIN = 34;
 const int RIGHT_LIMIT_PIN = 35;
-const bool ENABLE_LIMIT_SWITCHES = true;
-// Limit faults are intentionally disabled until the limit-module wiring is
-// verified on the hardware side; the firmware should boot cleanly even when the
-// inputs are held active at power-up.
+// Disabled for the current pre-limit-switch motor tests. GPIO34/GPIO35 float
+// without powered modules or external pull-ups and can otherwise block START.
+// Re-enable both settings after the switches are mounted and verified.
+const bool ENABLE_LIMIT_SWITCHES = false;
 const bool ENABLE_LIMIT_FAULTS = false;
 const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
 const int START_STOP_BUTTON_PIN = -1;
