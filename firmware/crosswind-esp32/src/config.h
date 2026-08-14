@@ -52,11 +52,10 @@ const int R_EN_PIN = 23;
 const int L_EN_PIN = 13;
 const int LEFT_LIMIT_PIN = 34;
 const int RIGHT_LIMIT_PIN = 35;
-// Disabled for the current pre-limit-switch motor tests. GPIO34/GPIO35 float
-// without powered modules or external pull-ups and can otherwise block START.
-// Re-enable both settings after the switches are mounted and verified.
-const bool ENABLE_LIMIT_SWITCHES = false;
-const bool ENABLE_LIMIT_FAULTS = false;
+// The powered limit modules have been verified HIGH when released and LOW when
+// pressed. GPIO34/GPIO35 use the modules' onboard pull-ups, not ESP32 pull-ups.
+const bool ENABLE_LIMIT_SWITCHES = true;
+const bool ENABLE_LIMIT_FAULTS = true;
 const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
 const int START_STOP_BUTTON_PIN = -1;
 const int MODE_BUTTON_PIN = -1;

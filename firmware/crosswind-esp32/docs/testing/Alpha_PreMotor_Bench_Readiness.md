@@ -54,7 +54,7 @@ Changing direction while moving immediately commands both PWM outputs and both e
 
 Both powered YL-99 outputs are active LOW with 20 ms software debounce. Clear is HIGH and triggered is LOW. GPIO34/35 have no internal pull-ups, so the module output or an external pull-up must provide a defined clear state.
 
-An active RIGHT limit immediately inhibits RIGHT/RPWM; LEFT movement away remains permitted. An active LEFT limit inhibits LEFT/LPWM; RIGHT movement away remains permitted. Both active inhibits either direction. Automatic reversal was not present in the Alpha state machine and was not invented. `ENABLE_LIMIT_FAULTS` remains disabled pending hardware wiring verification; directional inhibition remains active independently.
+An active RIGHT limit immediately inhibits RIGHT/RPWM; LEFT movement away remains permitted. An active LEFT limit inhibits LEFT/LPWM; RIGHT movement away remains permitted. Both active inhibits either direction. Automatic reversal was not present in the Alpha state machine and was not invented. The powered limit modules have now been verified HIGH when released and LOW when pressed, so `ENABLE_LIMIT_SWITCHES` and `ENABLE_LIMIT_FAULTS` are enabled.
 
 ## 10. BLE Start/Stop Behavior
 
