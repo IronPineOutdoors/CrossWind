@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <esp_task_wdt.h>
 
+#include "diagnostics.h"
 #include "environment.h"
 #include "limits.h"
 #include "trigger.h"
@@ -14,7 +15,8 @@ static constexpr uint32_t OLED_I2C_CLOCK_HZ = 100000;
 static constexpr uint16_t DISPLAY_POWER_SETTLE_MS = 500;
 static constexpr uint16_t DISPLAY_UPDATE_INTERVAL_MS = 250;
 static constexpr uint16_t DISPLAY_RETRY_INTERVAL_MS = 2000;
-static constexpr uint16_t DISPLAY_STARTUP_TEST_MS = 1000;
+static constexpr uint16_t DISPLAY_STARTUP_ANIMATION_MS = 1000;
+static constexpr uint8_t DISPLAY_STARTUP_FRAME_MS = 40;
 
 // Confirmed in the installed U8g2 library. Full-buffer mode uses 1024 bytes
 // for the 128 x 64 monochrome frame buffer.
@@ -92,16 +94,143 @@ static const char* limitStatusText(const ControllerState& state) {
   return "OK";
 }
 
-static void showStartupTest() {
+static void drawMenuRow(uint8_t y, bool selected, const char* text) {
+  if (selected) {
+    display.drawBox(0, y - 8, 128, 10);
+    display.setDrawColor(0);
+  }
+  display.drawStr(3, y, text);
+  display.setDrawColor(1);
+}
+
+static void drawMenuList(const char* title, const char* const* items, uint8_t itemCount,
+                         uint8_t selection) {
+  display.setFont(u8g2_font_5x8_tr);
+  display.drawStr(0, 8, title);
+  display.drawHLine(0, 10, 128);
+
+  uint8_t first = selection > 3 ? selection - 3 : 0;
+  if (first + 5 > itemCount && itemCount > 5) first = itemCount - 5;
+  for (uint8_t row = 0; row < 5 && first + row < itemCount; ++row) {
+    uint8_t item = first + row;
+    drawMenuRow(20 + row * 10, item == selection, items[item]);
+  }
+}
+
+static void drawMenu(const ControllerState& state, MenuPage page, uint8_t selection,
+                     bool editing) {
+  char line[24];
   display.clearBuffer();
-  display.setFont(u8g2_font_6x12_tr);
   display.setFontMode(1);
   display.setDrawColor(1);
-  display.drawStr(0, 12, "CROSSWIND");
-  display.drawStr(0, 30, "Display OK");
-  display.drawStr(0, 48, "SSD1309 128x64");
+
+  if (page == MENU_ROOT) {
+    static const char* const items[] = {
+      "Motor", "Mode", "Environment", "Diagnostics", "About", "Exit"
+    };
+    drawMenuList("CROSSWIND MENU", items, 6, selection);
+  } else if (page == MENU_MOTOR) {
+    const char* items[4];
+    char runLine[20];
+    char speedLine[20];
+    char directionLine[20];
+    snprintf(runLine, sizeof(runLine), "%s Motor", state.running ? "Stop" : "Start");
+    snprintf(speedLine, sizeof(speedLine), "Speed: %d%%%s", motorPercent(state), editing ? " *" : "");
+    snprintf(directionLine, sizeof(directionLine), "Direction: %s", directionToString(state.direction));
+    items[0] = runLine;
+    items[1] = speedLine;
+    items[2] = directionLine;
+    items[3] = "< Back";
+    drawMenuList("MOTOR", items, 4, selection);
+  } else if (page == MENU_MODE) {
+    const char* items[5];
+    char modeLines[4][18];
+    static const char* const names[] = {"Sweep", "Random", "Flush", "Centering"};
+    for (uint8_t i = 0; i < 4; ++i) {
+      snprintf(modeLines[i], sizeof(modeLines[i]), "%c %s", state.mode == (Mode)i ? '*' : ' ', names[i]);
+      items[i] = modeLines[i];
+    }
+    items[4] = "< Back";
+    drawMenuList("MODE", items, 5, selection);
+  } else {
+    display.setFont(u8g2_font_5x8_tr);
+    const char* title = page == MENU_ENVIRONMENT ? "ENVIRONMENT" :
+                        page == MENU_DIAGNOSTICS ? "DIAGNOSTICS" : "ABOUT";
+    display.drawStr(0, 8, title);
+    display.drawHLine(0, 10, 128);
+
+    if (page == MENU_ENVIRONMENT) {
+      if (environmentDataValid()) {
+        snprintf(line, sizeof(line), "Temp: %.1f F", getTemperatureF());
+        display.drawStr(0, 22, line);
+        snprintf(line, sizeof(line), "Humidity: %.1f%%", getHumidity());
+        display.drawStr(0, 33, line);
+        snprintf(line, sizeof(line), "Pressure: %.0f hPa", getPressureHpa());
+        display.drawStr(0, 44, line);
+      } else {
+        display.drawStr(0, 27, "Sensor unavailable");
+      }
+    } else if (page == MENU_DIAGNOSTICS) {
+      snprintf(line, sizeof(line), "Limits L:%s R:%s", leftLimitActive() ? "ON" : "OK", rightLimitActive() ? "ON" : "OK");
+      display.drawStr(0, 22, line);
+      snprintf(line, sizeof(line), "Fault: %s", state.faultActive ? faultToString(state.lastFault) : "NONE");
+      display.drawStr(0, 33, line);
+      snprintf(line, sizeof(line), "Relay: %s", isTriggerActive() ? "ON" : "OFF");
+      display.drawStr(0, 44, line);
+    } else {
+      display.drawStr(0, 23, "Crosswind Controller");
+      display.drawStr(0, 35, FIRMWARE_VERSION);
+    }
+    drawMenuRow(62, true, "< Back");
+  }
+
   display.sendBuffer();
-  delay(DISPLAY_STARTUP_TEST_MS);
+}
+
+static void drawWindStreak(uint8_t x, uint8_t y, uint8_t length) {
+  display.drawHLine(x, y, length);
+  display.drawPixel(x + length + 2, y);
+}
+
+static void showStartupAnimation() {
+  static const int8_t rotorX[8] = {0, 5, 7, 5, 0, -5, -7, -5};
+  static const int8_t rotorY[8] = {-7, -5, 0, 5, 7, 5, 0, -5};
+  const uint8_t frameCount = DISPLAY_STARTUP_ANIMATION_MS / DISPLAY_STARTUP_FRAME_MS;
+
+  display.setFontMode(1);
+  display.setDrawColor(1);
+
+  for (uint8_t frame = 0; frame < frameCount; ++frame) {
+    display.clearBuffer();
+
+    // Wind streaks sweep behind a small, rotating three-blade rotor.
+    uint8_t sweep = (frame * 6) % 42;
+    drawWindStreak((sweep + 2) % 42, 11, 12);
+    drawWindStreak((sweep + 23) % 42, 19, 8);
+    drawWindStreak((sweep + 11) % 42, 51, 15);
+
+    const uint8_t rotorPhase = frame & 0x07;
+    display.drawCircle(22, 32, 11);
+    display.drawDisc(22, 32, 2);
+    for (uint8_t blade = 0; blade < 3; ++blade) {
+      uint8_t point = (rotorPhase + blade * 3) & 0x07;
+      display.drawLine(22, 32, 22 + rotorX[point], 32 + rotorY[point]);
+      display.drawDisc(22 + rotorX[point], 32 + rotorY[point], 1);
+    }
+
+    display.setFont(u8g2_font_7x13B_tr);
+    display.drawStr(43, 29, "CROSSWIND");
+    display.setFont(u8g2_font_5x8_tr);
+    display.drawStr(44, 41, frame < frameCount - 4 ? "SYSTEM START" : "READY");
+
+    display.drawFrame(43, 48, 81, 7);
+    uint8_t progress = ((frame + 1) * 77) / frameCount;
+    display.drawBox(45, 50, progress, 3);
+    display.sendBuffer();
+
+    esp_task_wdt_reset();
+    delay(DISPLAY_STARTUP_FRAME_MS);
+  }
 }
 
 static bool tryInitDisplay() {
@@ -137,7 +266,7 @@ static bool tryInitDisplay() {
   Serial.print("SSD1309 display ready at 0x");
   if (displayAddress < 0x10) Serial.print('0');
   Serial.println(displayAddress, HEX);
-  showStartupTest();
+  showStartupAnimation();
   return true;
 }
 
@@ -150,7 +279,8 @@ void initDisplay() {
   tryInitDisplay();
 }
 
-void updateDisplay(const ControllerState& state, bool systemArmed, bool menuActive, uint8_t menuSelection) {
+void updateDisplay(const ControllerState& state, bool systemArmed, MenuPage menuPage,
+                   uint8_t menuSelection, bool menuEditing) {
   if (!displayReady) {
     if (millis() - lastDisplayInitAttempt < DISPLAY_RETRY_INTERVAL_MS || !tryInitDisplay()) return;
   }
@@ -159,23 +289,17 @@ void updateDisplay(const ControllerState& state, bool systemArmed, bool menuActi
   if (now - lastDisplayUpdate < DISPLAY_UPDATE_INTERVAL_MS) return;
   lastDisplayUpdate = now;
 
+  if (menuPage != MENU_CLOSED) {
+    drawMenu(state, menuPage, menuSelection, menuEditing);
+    return;
+  }
+
   char line[24];
   display.clearBuffer();
   display.setFont(u8g2_font_5x8_tr);
   display.setFontMode(1);
   display.setDrawColor(1);
   display.drawStr(0, 8, "CROSSWIND");
-
-  if (menuActive) {
-    display.drawStr(0, 20, "LOCAL CONTROL");
-    snprintf(line, sizeof(line), "%c MOTOR: %s", menuSelection == 0 ? '>' : ' ', state.running ? "STOP" : "START");
-    display.drawStr(0, 36, line);
-    snprintf(line, sizeof(line), "%c EXIT", menuSelection == 1 ? '>' : ' ');
-    display.drawStr(0, 50, line);
-    display.drawStr(0, 62, "Turn=select Press=OK");
-    display.sendBuffer();
-    return;
-  }
 
   snprintf(line, sizeof(line), "Motor: %d%%", motorPercent(state));
   display.drawStr(0, 18, line);

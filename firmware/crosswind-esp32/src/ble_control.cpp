@@ -10,6 +10,7 @@
 static BLECharacteristic* statusCharacteristic = nullptr;
 static BLECharacteristic* responseCharacteristic = nullptr;
 static BleCommandHandler commandHandler = nullptr;
+static BleDisconnectHandler onClientDisconnect = nullptr;
 static bool clientConnected = false;
 static unsigned long lastCommandAt = 0;
 
@@ -59,17 +60,21 @@ class ServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* server) override {
     (void)server;
     clientConnected = true;
+    Serial.println("[BLE] CONNECTED");
   }
 
   void onDisconnect(BLEServer* server) override {
     (void)server;
     clientConnected = false;
+    Serial.println("[BLE] DISCONNECTED");
+    if (onClientDisconnect) onClientDisconnect();
     BLEDevice::startAdvertising();
   }
 };
 
-void beginBle(BleCommandHandler handler) {
+void beginBle(BleCommandHandler handler, BleDisconnectHandler disconnectHandler) {
   commandHandler = handler;
+  onClientDisconnect = disconnectHandler;
 
   BLEDevice::init(BLE_DEVICE_NAME);
   BLEServer* server = BLEDevice::createServer();

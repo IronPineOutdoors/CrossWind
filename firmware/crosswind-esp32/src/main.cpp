@@ -27,17 +27,53 @@ static ControllerState state = {
 static unsigned long lastBleStatus = 0;
 static unsigned long runStartedAt = 0;
 static bool systemArmed = false;
-static bool menuActive = false;
+static MenuPage menuPage = MENU_CLOSED;
 static uint8_t menuSelection = 0;
+static bool menuEditing = false;
 static bool benchTestActive = false;
 static unsigned long benchTestEndsAt = 0;
 
 static void setRunning(bool running);
 
+static uint8_t menuItemCount(MenuPage page) {
+  switch (page) {
+    case MENU_ROOT: return 6;
+    case MENU_MOTOR: return 4;
+    case MENU_MODE: return 5;
+    case MENU_ENVIRONMENT:
+    case MENU_DIAGNOSTICS:
+    case MENU_ABOUT: return 1;
+    default: return 0;
+  }
+}
+
+static void openMenuPage(MenuPage page) {
+  menuPage = page;
+  menuSelection = 0;
+  menuEditing = false;
+  setEncoderMenuActive(page != MENU_CLOSED);
+}
+
+static void closeMenu() {
+  bool wasOpen = menuPage != MENU_CLOSED;
+  openMenuPage(MENU_CLOSED);
+  if (wasOpen) Serial.println("LOCAL MENU EXIT");
+}
+
+static void handleBleDisconnect() {
+  benchTestActive = false;
+  setRunning(false);
+  stopMotor();
+  cancelThrowerTrigger();
+  resetModeState();
+  Serial.println("[MOTOR] BLE disconnect safe stop");
+}
+
 static void latchFault(FaultCode fault) {
   stopMotor();
   cancelThrowerTrigger();
   systemArmed = false;
+  closeMenu();
   setRunning(false);
   state.speed = 0;
   if (state.faultActive) {
@@ -66,8 +102,15 @@ static bool limitsReleased() {
   return !leftLimitActive() && !rightLimitActive();
 }
 
+static bool directionAllowed(Direction direction) {
+  if (bothLimitsActive()) return false;
+  if (direction == DIR_LEFT && leftLimitActive()) return false;
+  if (direction == DIR_RIGHT && rightLimitActive()) return false;
+  return true;
+}
+
 static bool movementSafeToStart() {
-  return (!ENABLE_LIMIT_FAULTS || limitsReleased()) && !emergencyStopActive();
+  return directionAllowed(state.direction) && !emergencyStopActive();
 }
 
 static bool motorAllowed() {
@@ -191,9 +234,32 @@ static bool handleBleCommand(const String& command, const String& value) {
     } else if (!movementSafeToStart()) {
       sendBleResponse("ERROR", "START_BLOCKED_LIMIT_ACTIVE");
     } else {
+      if (state.speed == 0) {
+        state.speed = DEFAULT_PWM;
+        setSpeedPwm(state.speed);
+        Serial.printf("[MOTOR] zero speed replaced with bench default %u/255\n", state.speed);
+      }
       setRunning(true);
       sendBleResponse("OK", "STARTED");
     }
+    return true;
+  }
+
+  if (command == "FORWARD" || command == "REVERSE" || command == "DIRECTION") {
+    String requested = command == "DIRECTION" ? value : command;
+    requested.trim();
+    requested.toUpperCase();
+    Direction nextDirection;
+    if (requested == "FORWARD" || requested == "RIGHT") nextDirection = DIR_RIGHT;
+    else if (requested == "REVERSE" || requested == "LEFT") nextDirection = DIR_LEFT;
+    else return false;
+    if (!directionAllowed(nextDirection)) {
+      sendBleResponse("ERROR", "DIRECTION_BLOCKED_LIMIT_ACTIVE");
+      return true;
+    }
+    state.direction = nextDirection;
+    Serial.printf("[MOTOR] requested direction=%s\n", directionToString(state.direction));
+    sendBleResponse("OK", "DIRECTION_SET");
     return true;
   }
 
@@ -250,6 +316,7 @@ static bool handleBleCommand(const String& command, const String& value) {
       return true;
     }
     state.speed = requestedSpeed;
+    setSpeedPwm(requestedSpeed);
     saveSettings(state);
     sendBleResponse("OK", "SPEED_SET");
     return true;
@@ -285,6 +352,7 @@ static bool handleBleCommand(const String& command, const String& value) {
 
 void setup() {
   Serial.begin(115200);
+  beginMotor();
   delay(300);
 
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
@@ -302,10 +370,9 @@ void setup() {
   initTrigger();
   initStatusLed();
   systemArmed = false;
-  menuActive = false;
+  menuPage = MENU_CLOSED;
   setEncoderMenuActive(false);
 
-  beginMotor();
   beginLimits();
   beginInputs();
   if (MOTOR_CURRENT_SENSE_PIN >= 0) {
@@ -321,6 +388,7 @@ void setup() {
   state.mode = settings.mode;
   state.lastFault = settings.lastFault;
   state.speed = settings.lastSpeed;
+  setSpeedPwm(state.speed);
 
   updateInputs();
 
@@ -350,7 +418,7 @@ void setup() {
   }
 
   printStartupDiagnostics(state);
-  beginBle(handleBleCommand);
+  beginBle(handleBleCommand, handleBleDisconnect);
   updateBleStatus(state);
 }
 
@@ -371,6 +439,19 @@ void loop() {
   updateInputs();
   updateLimits();
   updateEnvironment();
+
+  static bool lastLeftLimit = false;
+  static bool lastRightLimit = false;
+  bool leftNow = leftLimitActive();
+  bool rightNow = rightLimitActive();
+  if (leftNow != lastLeftLimit) Serial.printf("[LIMIT] LEFT %s\n", leftNow ? "ACTIVE" : "CLEAR");
+  if (rightNow != lastRightLimit) Serial.printf("[LIMIT] RIGHT %s\n", rightNow ? "ACTIVE" : "CLEAR");
+  lastLeftLimit = leftNow;
+  lastRightLimit = rightNow;
+
+  if (state.running && !directionAllowed(state.direction)) {
+    stopMotor();
+  }
 
   if (benchTestActive &&
       (state.faultActive || !movementSafeToStart() || (long)(millis() - benchTestEndsAt) >= 0)) {
@@ -433,34 +514,78 @@ void loop() {
   if (consumeMenuPressed()) {
     if (state.faultActive) {
       clearFaultIfSafe("ENCODER");
-    } else if (!menuActive) {
-      menuActive = true;
-      menuSelection = 0;
-      setEncoderMenuActive(true);
+    } else if (menuPage == MENU_CLOSED) {
+      openMenuPage(MENU_ROOT);
       Serial.println("LOCAL MENU OPEN");
-    } else if (menuSelection == 0) {
-      if (state.running) {
-        setRunning(false);
-        stopMotor();
-        cancelThrowerTrigger();
-        resetModeState();
-        Serial.println("LOCAL MOTOR STOP");
-      } else if (!movementSafeToStart()) {
-        Serial.println("LOCAL MOTOR START blocked: safety input active");
+    } else if (menuPage == MENU_ROOT) {
+      switch (menuSelection) {
+        case 0: openMenuPage(MENU_MOTOR); break;
+        case 1: openMenuPage(MENU_MODE); break;
+        case 2: openMenuPage(MENU_ENVIRONMENT); break;
+        case 3: openMenuPage(MENU_DIAGNOSTICS); break;
+        case 4: openMenuPage(MENU_ABOUT); break;
+        default: closeMenu(); break;
+      }
+    } else if (menuPage == MENU_MOTOR) {
+      if (menuSelection == 0) {
+        if (state.running) {
+          setRunning(false);
+          stopMotor();
+          cancelThrowerTrigger();
+          resetModeState();
+          Serial.println("LOCAL MOTOR STOP");
+        } else if (!movementSafeToStart()) {
+          Serial.println("LOCAL MOTOR START blocked: safety input active");
+        } else {
+          setRunning(true);
+          Serial.println("LOCAL MOTOR START");
+        }
+      } else if (menuSelection == 1) {
+        menuEditing = !menuEditing;
+      } else if (menuSelection == 2) {
+        Direction nextDirection = state.direction == DIR_RIGHT ? DIR_LEFT : DIR_RIGHT;
+        if (state.running) {
+          Serial.println("LOCAL DIRECTION blocked: stop motor first");
+        } else if (!directionAllowed(nextDirection)) {
+          Serial.println("LOCAL DIRECTION blocked: limit active");
+        } else {
+          state.direction = nextDirection;
+          Serial.printf("LOCAL DIRECTION: %s\n", directionToString(state.direction));
+        }
       } else {
-        setRunning(true);
-        Serial.println("LOCAL MOTOR START");
+        openMenuPage(MENU_ROOT);
+      }
+    } else if (menuPage == MENU_MODE) {
+      if (menuSelection < 4) {
+        if (state.running) {
+          Serial.println("LOCAL MODE blocked: stop motor first");
+        } else {
+          setMode((Mode)menuSelection);
+          Serial.printf("LOCAL MODE: %s\n", modeToString(state.mode));
+        }
+      } else {
+        openMenuPage(MENU_ROOT);
       }
     } else {
-      menuActive = false;
-      setEncoderMenuActive(false);
-      Serial.println("LOCAL MENU EXIT");
+      openMenuPage(MENU_ROOT);
     }
   }
 
   int8_t encoderStep = consumeEncoderStep();
-  if (menuActive && encoderStep != 0) {
-    menuSelection = menuSelection == 0 ? 1 : 0;
+  if (menuPage != MENU_CLOSED && encoderStep != 0) {
+    if (menuPage == MENU_MOTOR && menuEditing && menuSelection == 1) {
+      int16_t nextSpeed = (int16_t)readSpeedPwm() + encoderStep * ROTARY_ENCODER_SPEED_STEP;
+      setSpeedPwm((uint8_t)constrain(nextSpeed, 0, MAX_PWM));
+      state.speed = readSpeedPwm();
+      saveSettings(state);
+    } else {
+      uint8_t count = menuItemCount(menuPage);
+      if (encoderStep > 0) {
+        menuSelection = (menuSelection + 1) % count;
+      } else {
+        menuSelection = menuSelection == 0 ? count - 1 : menuSelection - 1;
+      }
+    }
   }
 
   if (consumeArmPressed()) {
@@ -505,7 +630,7 @@ void loop() {
   updateTrigger();
   selectStatusLedMode();
   updateStatusLed();
-  updateDisplay(state, systemArmed, menuActive, menuSelection);
+  updateDisplay(state, systemArmed, menuPage, menuSelection, menuEditing);
   printRuntimeStatus(state);
 
   unsigned long now = millis();

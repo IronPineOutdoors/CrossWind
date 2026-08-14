@@ -13,4 +13,5 @@ int8_t consumeEncoderStep();
 void setEncoderMenuActive(bool active);
 bool emergencyStopActive();
 uint8_t readSpeedPwm();
+void setSpeedPwm(uint8_t pwm);
 int readSpeedRaw();

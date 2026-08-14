@@ -153,6 +153,7 @@ void driveMotor(Direction dir, uint8_t pwm) {
     return;
   }
 
+  bool commandChanged = requestedDirection != dir || requestedPwm != normalizedPwm;
   requestedDirection = dir;
   requestedPwm = normalizedPwm;
 
@@ -167,10 +168,11 @@ void driveMotor(Direction dir, uint8_t pwm) {
     logOutputsIfChanged();
   }
 
-  Serial.printf("MOTOR CMD dir=%s pwm=%u normalized=%u\n",
-                dir == DIR_RIGHT ? "RIGHT" : "LEFT",
-                pwm,
-                normalizedPwm);
+  if (commandChanged) {
+    Serial.printf("[MOTOR] direction=%s requestedDuty=%u/255 reversal=%s\n",
+                  dir == DIR_RIGHT ? "RIGHT" : "LEFT", normalizedPwm,
+                  directionChangePending ? "DEAD_TIME" : "NONE");
+  }
 }
 
 void updateMotorRamp() {
@@ -203,9 +205,6 @@ void updateMotorRamp() {
   motorRunning = true;
   writeOutputs(activeDirection, appliedPwm);
   logOutputsIfChanged();
-  Serial.printf("MOTOR RUN dir=%s appliedPwm=%u\n",
-                activeDirection == DIR_RIGHT ? "RIGHT" : "LEFT",
-                appliedPwm);
 }
 
 uint8_t motorAppliedPwm() {

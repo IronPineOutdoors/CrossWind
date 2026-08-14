@@ -173,6 +173,11 @@ uint8_t readSpeedPwm() {
   return lastSpeedPwm;
 }
 
+void setSpeedPwm(uint8_t pwm) {
+  lastSpeedPwm = pwm > MAX_PWM ? MAX_PWM : pwm;
+  lastSpeedRaw = map(lastSpeedPwm, 0, MAX_PWM, 0, 4095);
+}
+
 int readSpeedRaw() {
   return lastSpeedRaw;
 }

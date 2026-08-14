@@ -30,9 +30,9 @@
 
   The powered YL-99 limit modules drive OUT HIGH when clear and short OUT to
   GND when pressed, so LIMIT_ACTIVE_STATE must remain LOW. Red in the limit
-  harness supplies 3.3 V and Black is common ground. The firmware enables the
-  ESP32 internal pull-ups for these inputs so they stay biased high when the
-  limit modules are disconnected or at power-up.
+  harness supplies 3.3 V and Black is common ground. GPIO34/GPIO35 do not have
+  internal pull-ups; the powered modules (or external 3.3 V pull-ups) must
+  provide a defined HIGH level when clear.
 
   DIYables common cathode RGB LED module wiring:
     GND -> common ground
@@ -57,7 +57,7 @@ const bool ENABLE_LIMIT_SWITCHES = true;
 // verified on the hardware side; the firmware should boot cleanly even when the
 // inputs are held active at power-up.
 const bool ENABLE_LIMIT_FAULTS = false;
-const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = true;
+const bool LIMIT_SWITCHES_USE_INTERNAL_PULLUPS = false;
 const int START_STOP_BUTTON_PIN = -1;
 const int MODE_BUTTON_PIN = -1;
 const int ESTOP_PIN = -1;
@@ -93,7 +93,8 @@ const int RGB_PWM_RESOLUTION = 8;
 
 const uint8_t MIN_PWM = 45;
 const uint8_t MAX_PWM = 255;
-const uint8_t DEFAULT_PWM = 120;
+// Conservative Alpha no-load bench default: 64/255, approximately 25% duty.
+const uint8_t DEFAULT_PWM = 64;
 const uint8_t RAMP_STEP = 5;
 const uint16_t RAMP_INTERVAL_MS = 20;
 const uint16_t LIMIT_DWELL_MS = 1000;

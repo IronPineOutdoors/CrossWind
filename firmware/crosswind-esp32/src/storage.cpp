@@ -39,7 +39,7 @@ StoredSettings loadSettings() {
   if (!knownFaultCode(settings.lastFault)) {
     settings.lastFault = FAULT_UNKNOWN;
   }
-  if (settings.lastSpeed > MAX_PWM) {
+  if (settings.lastSpeed == 0 || settings.lastSpeed > MAX_PWM) {
     settings.lastSpeed = DEFAULT_PWM;
   }
 
