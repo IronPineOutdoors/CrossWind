@@ -8,14 +8,13 @@
 | BTS7960 LPWM | GPIO19 | Left direction PWM |
 | BTS7960 R_EN | GPIO23 | Right enable |
 | BTS7960 L_EN | GPIO13 | Left enable |
-| DHT11 data | GPIO26 | Alpha enclosure temperature/humidity sensor |
 | SSD1309 OLED SDA | GPIO21 | Shared I2C bus |
 | SSD1309 OLED SCL | GPIO22 | Shared I2C bus |
 | SSD1309 OLED RES | GPIO5 | Active-LOW hardware reset for five-pin module |
 | BME280 SDA | GPIO21 | Optional environment sensor on shared I2C bus |
 | BME280 SCL | GPIO22 | Optional environment sensor on shared I2C bus |
-| Left limit | GPIO34 | Green, DT pin 1; powered module OUT, active LOW; external pull-up |
-| Right limit | GPIO35 | Blue, DT pin 2; powered module OUT, active LOW; external pull-up |
+| Left limit | GPIO34 | Green, DT pin 1; powered module OUT, active LOW; module onboard pull-up |
+| Right limit | GPIO35 | Blue, DT pin 2; powered module OUT, active LOW; module onboard pull-up |
 | ARM button | GPIO16 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | FIRE / TEST button | GPIO17 | Button to GND, `INPUT_PULLUP`, pressed LOW |
 | Speed potentiometer | GPIO39 | 0-3.3V analog input |
@@ -38,7 +37,7 @@
 
 Use the [finalized limit-switch harness standard](limit-switch-harness.md): Green / DT pin 1 is Left OUT, Blue / pin 2 is Right OUT, White / pin 3 is Lower OUT, Yellow / pin 4 is Upper OUT, Black / pin 5 is shared ground, and Red / pin 6 is regulated 3.3 V. The powered modules output HIGH normally and short OUT to ground when pressed, so active is LOW.
 
-During Alpha, Green, Blue, Black, and Red are connected. White and Yellow remain terminated but unused. GPIO34/GPIO35 do not support internal pull-ups, so the retained Alpha assignments require external 3.3 V pull-ups. A broken OUT wire will commonly read HIGH/clear and is not automatically detected. These switches are safety/calibration inputs only, not normal travel controls or physical hard stops.
+During Alpha, Green, Blue, Black, and Red are connected. White and Yellow remain terminated but unused. GPIO34/GPIO35 do not support internal pull-ups, so Alpha relies on the powered modules' onboard pull-ups. A broken or disconnected OUT wire leaves the input undefined and is not automatically detected. These switches command normal reversal and provide safety input, but separate physical hard stops remain required.
 
 ## RGB Status LED
 
@@ -58,7 +57,7 @@ Use a potentiometer wired between 3.3V and GND, with the wiper to GPIO39. Do not
 
 Wire encoder `CLK` to GPIO32, `DT` to GPIO33, `SW` to GPIO25, `+`/`VCC` to ESP32 `3V3`, and `GND` to common ground. The firmware uses internal pullups, so the encoder outputs and switch should pull the pins to ground when active.
 
-The encoder switch toggles the display menu between `MAIN` and `SETUP`. It never triggers the relay.
+The encoder switch opens/selects the local Motor, Mode, Environment, Diagnostics, and About menus. It never triggers the relay.
 
 The Hosyond 2.42-inch 128x64 SSD1309 OLED shares the I2C bus on GPIO21/GPIO22. Connect OLED `VCC` to ESP32 `3V3`, `GND` to system ground, `SDA` to GPIO21, `SCL` to GPIO22, and `RES` to GPIO5. Crosswind continues to supply 3.3 V even though the module listing indicates 3.3-5 V compatibility. Firmware pulses the active-LOW reset before scanning the bus, uses centralized address `0x3C`, and retains `0x3D` as a diagnostic fallback.
 
@@ -66,11 +65,9 @@ These five signals must run through the official five-position JST lid connector
 
 ## Environmental Sensor
 
-Crosswind Alpha uses a DHT11 by default because it is already available and good enough for early Apache case enclosure temperature and humidity checks. Wire DHT11 `VCC` to ESP32 `3V3`, `GND` to ESP32 `GND`, and `DATA` to GPIO26.
+Crosswind Alpha uses a BME280 on the OLED I2C bus for temperature, humidity, and pressure. Wire BME280 `VCC` to ESP32 `3V3`, `GND` to common ground, `SDA` to GPIO21, and `SCL` to GPIO22. The firmware tries address `0x76`, then `0x77`.
 
-Mount the sensor inside the Apache case where air can circulate. Keep it away from the BTS7960 heat sink, motor driver body, and direct contact with the case wall so readings are not dominated by a local hot surface.
-
-A BME280 can share the OLED I2C bus on GPIO21/GPIO22 for better temperature, humidity, and pressure data. Wire BME280 `VCC` to ESP32 `3V3`, `GND` to common ground, `SDA` to GPIO21, and `SCL` to GPIO22, then set `ENV_SENSOR_TYPE` to `ENV_SENSOR_BME280` in firmware. The firmware tries BME280 address `0x76`, then `0x77`.
+Mount the sensor inside the enclosure where air can circulate. Keep it away from the BTS7960 heat sink, motor driver body, and direct contact with the case wall so readings are not dominated by a local hot surface.
 
 ## Thrower Trigger Relay
 

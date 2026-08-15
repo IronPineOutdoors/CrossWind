@@ -2,9 +2,11 @@
 
 Crosswind is an Iron Pine Outdoors prototype for programmable target presentation: a universal wobbler base that can add controlled yaw, and later pitch, to automatic clay throwers.
 
-Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating top plate on a lazy susan bearing, a crank-driven wiper motor, a BTS7960 / IBT-2 motor driver, and two YL-99 roller limit switch modules used as safety/calibration inputs.
+Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating top plate on a lazy susan bearing, a reversing wiper-motor linkage, a BTS7960 / IBT-2 motor driver, and two YL-99 roller limit modules that define the normal left/right travel boundaries and provide fault protection.
 
 Phase 2 is planned as a dual-axis yaw + pitch system with programmable presentation modes.
+
+Current firmware release candidate: `v1.12.0-rc.1` on the `alpha-motion-rc` branch. Its bounded sweep, timed centering, STOP behavior, stuck-limit protection, both-limits fault, and travel timeout have passed Alpha bench testing.
 
 ## Current Phase
 
@@ -22,7 +24,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - Rotary encoder speed control with menu/select button
 - Dedicated ARM and FIRE / TEST buttons
 - Hosyond 2.42-inch 128x64 SSD1309 I2C OLED status display (ASIN B0G2RFLG1L) with the official five-conductor JST lid harness
-- DHT11 enclosure temperature/humidity sensor by default, with optional BME280 support on I2C
+- BME280 temperature, humidity, and pressure sensor on the shared I2C bus
 - Dry-contact thrower trigger relay
 - DIYables common-cathode RGB status LED
 - 20V/24V tool battery input
@@ -60,7 +62,7 @@ Crosswind moves heavy equipment with a 12V motor. Keep hands clear of linkages, 
 ## Next Milestones
 
 - Finish Phase 1 wiring and enclosure layout.
-- Validate YL-99 safety switch placement with rotating flags/tabs.
+- Finalize the hardware-validated YL-99 reversal-switch placement with adjustable rotating flags/tabs.
 - Record no-load motor current and loaded sweep current.
 - Fit the VEVOR NH113 on adjustable rails.
 - Add Phase 2 pitch-axis mechanical sketches.

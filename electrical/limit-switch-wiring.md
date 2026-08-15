@@ -11,7 +11,7 @@ For ESP32 Phase 1:
 - Black / Deutsch pin 5 is the shared switch ground.
 - Red / Deutsch pin 6 supplies regulated ESP32 3.3 V to the modules.
 - White / pin 3 and Yellow / pin 4 are terminated but electrically unused during Alpha.
-- GPIO34/GPIO35 are input-only pins without internal pull-ups and therefore require external 3.3 V pull-up resistors. This is the Alpha exception to the preferred internal-pull-up design.
-- Limit switches are safety/calibration inputs only. They are not normal travel controls and must not be used as physical hard stops.
+- GPIO34/GPIO35 are input-only pins without internal pull-ups. The installed powered YL-99 modules provide the required onboard pull-ups; no additional external resistors are installed in Alpha.
+- Limit switches command normal end-of-travel reversal and also provide safety input. They must actuate before separate physical hard stops.
 
-Check that normal reads HIGH/clear and pressing either switch reads LOW/active in Serial diagnostics before connecting motor power. A disconnected OUT wire reads HIGH/clear and is not automatically detected by this powered active-LOW arrangement.
+Check that normal reads HIGH/clear and pressing either switch reads LOW/active in Serial diagnostics before connecting motor power. Because GPIO34/GPIO35 have no internal pull-ups, a disconnected OUT wire is electrically undefined and is not automatically detected; inspect and continuity-test the harness before operation.

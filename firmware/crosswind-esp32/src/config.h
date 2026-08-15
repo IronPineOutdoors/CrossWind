@@ -44,7 +44,7 @@
   verified OLED reset circuit and must not be used as an RGB fallback.
 */
 
-const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.11-hardening";
+const char FIRMWARE_VERSION[] = "Crosswind ESP32 Phase 1 v1.12.0-rc.1";
 
 const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;

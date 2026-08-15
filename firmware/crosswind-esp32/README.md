@@ -1,5 +1,7 @@
 # Crosswind ESP32 Firmware
 
+Current release candidate: `v1.12.0-rc.1`. The Alpha bounded-motion behavior has been compiled and bench-validated with the installed motor and both YL-99 endpoints.
+
 This folder contains the Phase 1 ESP32 controller firmware in a PlatformIO project.
 
 Current PlatformIO settings:

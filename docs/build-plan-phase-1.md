@@ -22,11 +22,11 @@ Mount the Mitsubishi Outlander rear wiper motor to the fixed base. The motor sho
 
 ## Linkage
 
-Use a simple crank/linkage from the motor output to a rear corner or tab on the rotating plate. Start with conservative travel and low PWM before widening the sweep angle.
+Use a reversing linkage from the motor output to a rear corner or tab on the rotating plate. Confirm by hand that it can move through the complete switch-bounded range without reaching a linkage dead center, binding, or colliding. Start with conservative travel and low PWM before widening the sweep angle.
 
 ## Roller Switch Placement
 
-Mount left and right YL-99 roller switch modules on adjustable stationary brackets. Adjustable flags or tabs on the rotating plate should actuate the rollers lightly. These switches are safety/calibration inputs only, not travel reversal controls or hard stops.
+Mount left and right YL-99 roller switch modules on adjustable stationary brackets. Adjustable flags or tabs on the rotating plate should actuate the rollers lightly. The switches command normal firmware reversal but are not load-bearing hard stops; install separate mechanical stops beyond the switch actuation points.
 
 Assemble the limit cable to the [Deutsch DT 6-pin harness standard](../electrical/limit-switch-harness.md). For Alpha, connect Green to Left OUT, Blue to Right OUT, Black to shared ground, and Red to the modules' regulated 3.3 V supply. Terminate White and Yellow in their assigned connector cavities but isolate their equipment-side ends for future use. Verify each OUT reads HIGH normally and LOW when pressed before applying motor power.
 

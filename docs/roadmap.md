@@ -2,10 +2,10 @@
 
 ## Phase 1
 
-- Validate single-axis sweep with no thrower mounted.
+- Complete mechanical mounting and loaded validation of the hardware-validated single-axis reversal firmware.
 - Fit VEVOR NH113 on adjustable rails.
 - Measure wiper motor current draw.
-- Finalize left/right switch bracket placement.
+- Finalize adjustable left/right reversal-switch brackets and independent mechanical stops.
 - Validate the BME280, Hosyond 2.42-inch SSD1309 OLED, rotary encoder, ARM, FIRE, RGB status LED, and BLE status controls in the enclosure.
 - Field test with conservative sweep angle.
 

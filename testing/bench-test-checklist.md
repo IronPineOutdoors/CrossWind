@@ -10,13 +10,13 @@
 
 - Confirm Red-to-Black measures approximately 3.3 V with controller power on.
 - Confirm Green (Left OUT) and Blue (Right OUT) each read HIGH normally and LOW when pressed.
-- Disconnect Green, then Blue, and confirm each input returns HIGH/clear; record that this active-LOW module arrangement does not automatically detect an open OUT wire.
+- With power removed, continuity-test Green and Blue end to end. Do not treat a disconnected live input as valid because GPIO34/GPIO35 have no internal pull-ups and will float.
 - Trigger the left roller switch and confirm Serial status changes.
 - Trigger the right roller switch and confirm Serial status changes.
 - Trigger both and confirm a fault is reported.
 - Turn the rotary encoder and confirm OLED motor percentage and Serial speed output change.
 - Cold-cycle controller power with Serial Monitor closed and confirm the SSD1309 starts through the five-conductor lid harness.
-- Press the encoder switch and confirm OLED menu toggles between `MAIN` and `SETUP`.
+- Press the encoder switch and confirm it opens the menu; verify Motor, Mode, Environment, Diagnostics, and About navigation.
 - Press FIRE while OLED shows `SAFE` and confirm Serial prints `FIRE BLOCKED - NOT ARMED`.
 - Press ARM and confirm OLED shows `ARMED` and Serial prints `ARM ON`.
 - Press FIRE while armed and confirm the relay pulses briefly.
@@ -37,7 +37,11 @@
 ## Sweep Mode No-Load Test
 
 - Let the plate sweep with no thrower mounted.
-- Confirm right limit stop, dwell, left movement, left limit stop, dwell, repeat.
+- Confirm each endpoint stops the current output, observes reversal dead time, moves away, and repeats without a normal endpoint fault.
+- Hold a departed switch active beyond `LIMIT_DWELL_MS` and confirm `FAULT_LIMIT`.
+- Prevent the next endpoint from activating until `MAX_TRAVEL_TIME_MS` and confirm `FAULT_TRAVEL_TIMEOUT`.
+- Activate both limits and confirm `FAULT_BOTH_LIMITS`.
+- Run `CENTERING` and confirm a full measured traverse, half-time return, and automatic stop.
 
 ## Thrower-Mounted Test
 

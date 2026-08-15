@@ -5,17 +5,15 @@
 - 12V bus feeds BTS7960 motor power and thrower power output through fused branches.
 - 12V bus feeds a fused 5V buck for controller/support electronics.
 - Motor power is never taken from the 5V buck.
-- ESP32 3V3 feeds OLED, BME280, DHT11, and small logic sensors.
+- ESP32 3V3 feeds the OLED, BME280, powered YL-99 modules, and small logic sensors.
 - ESP32/Arduino ground and BTS7960 ground are common.
 - ESP32 analog input never sees more than 3.3V.
 - BTS7960 `RPWM` is wired to GPIO18.
 - BTS7960 `LPWM` is wired to GPIO19.
 - BTS7960 `R_EN` is wired to GPIO23.
 - BTS7960 `L_EN` is wired to GPIO13.
-- DHT11 `VCC` is wired to ESP32 `3V3`, `GND` to common ground, and `DATA` to GPIO26.
-- DHT11 is mounted inside the Apache case with airflow, away from the BTS7960 heat sink, motor driver, and case wall.
-- Optional BME280 `VCC` is wired to ESP32 `3V3`, `GND` to common ground, `SDA` to GPIO21, and `SCL` to GPIO22.
-- If BME280 is installed, `ENV_SENSOR_TYPE` is set to `ENV_SENSOR_BME280` and Serial diagnostics show a valid `pressureHpa`.
+- BME280 `VCC` is wired to ESP32 `3V3`, `GND` to common ground, `SDA` to GPIO21, and `SCL` to GPIO22.
+- Serial diagnostics show a recovered/ready BME280 and valid `pressureHpa`.
 - Hosyond 2.42-inch SSD1309 OLED `VCC` is wired to ESP32 `3V3` and `GND` to system ground.
 - SSD1309 OLED `SDA` is wired to GPIO21 and `SCL` is wired to GPIO22.
 - SSD1309 OLED `RES` is wired to GPIO5 for active-LOW hardware reset.
@@ -26,21 +24,21 @@
 - Rotary encoder `CLK` is wired to GPIO32, `DT` to GPIO33, and `SW` to GPIO25.
 - ARM button is wired between GPIO16 and GND.
 - FIRE / TEST button is wired between GPIO17 and GND.
-- Deutsch DT pin 1 / Green is wired from the Left powered module `OUT` to GPIO34 with an external 3.3 V pull-up.
-- Deutsch DT pin 2 / Blue is wired from the Right powered module `OUT` to GPIO35 with an external 3.3 V pull-up.
+- Deutsch DT pin 1 / Green is wired from the Left powered module `OUT` to GPIO34; the module's onboard pull-up provides HIGH/clear.
+- Deutsch DT pin 2 / Blue is wired from the Right powered module `OUT` to GPIO35; the module's onboard pull-up provides HIGH/clear.
 - Deutsch DT pin 3 / White is terminated for the future Lower / Axis 2 Down limit and remains unused during Alpha.
 - Deutsch DT pin 4 / Yellow is terminated for the future Upper / Axis 2 Up limit and remains unused during Alpha.
 - Deutsch DT pin 5 / Black is the shared ground for all limit switch modules.
 - Deutsch DT pin 6 / Red carries regulated ESP32 3.3 V to all limit switch module `VCC` terminals.
 - Molded Deutsch cavity numbers are checked from the mating face before the wedge locks are installed.
 - Red-to-Black measures approximately 3.3 V with controller power on.
-- Limit switches are confirmed as safety/calibration inputs only, with separate hard stops added if the mechanism needs physical travel limits.
+- Limit switches are confirmed as normal reversal boundaries and safety inputs, with separate mechanical hard stops beyond their actuation points.
 - Thrower trigger relay input is wired to GPIO14.
 - DIYables RGB LED module `GND` is wired to common ground, `R` to GPIO27, `G` to GPIO12, and `B` to GPIO4.
 - GPIO12 is checked for boot/upload issues after wiring the RGB green channel.
 - Limit module OUT signals read HIGH normally and LOW/active when pressed.
-- Disconnecting an OUT wire returns HIGH/clear; the harness is inspected because open-wire faults are not automatically detected.
-- Limit faults stop the motor, disarm the system, block FIRE, and clear only after both switches are released.
+- Disconnecting an OUT wire leaves GPIO34/GPIO35 undefined; the harness is inspected because open-wire faults are not automatically detected.
+- A normal single endpoint reverses motion. Both limits, a switch that fails to release, and travel timeout stop the motor, disarm, block FIRE, and latch a fault.
 - Thrower pedal black/white wires are confirmed with a continuity test before relay wiring.
 - Trigger relay COM and NO are wired in parallel with the factory pedal, not in series.
 - Trigger relay contacts are dry contact only; no ESP32 voltage is sent into the pedal circuit.

@@ -15,13 +15,13 @@ Disabling one half prevented a complete motor-current path.
 
 `BLE write` -> `CommandCallback::onWrite()` -> `handleBleCommand(START)` ->
 `state.running = true` -> main `loop()` -> `motorAllowed()` ->
-`updateMode()` / `updateSweep()` -> `driveMotor(state.direction, state.speed)`
+`updateMode()` / bounded mode state machine -> `driveMotor(state.direction, state.speed)`
 -> `updateMotorRamp()` -> `writeOutputs()` -> both enables high -> exactly one
 of RPWM/LPWM receives the ramped duty.
 
-The default speed is 120. With the rotary encoder selected, `readSpeedPwm()`
-updates the requested speed each loop; a deliberately selected speed of zero
-therefore remains a safe stop request.
+The default speed is 64 (approximately 25%). With the rotary encoder selected,
+`readSpeedPwm()` updates the requested speed each loop; a deliberately selected
+speed of zero therefore remains a safe stop request.
 
 ## Hardware and PWM mapping
 
@@ -33,8 +33,8 @@ therefore remains a safe stop request.
 | L_EN | 13 | n/a |
 
 PWM is 5 kHz, 8-bit, with raw duty 0-255. Nonzero run requests below 45 are
-raised to the configured minimum duty of 45. The normal default is 120
-(approximately 47%). The installed build uses Arduino-ESP32 2.0.17, so PWM is
+raised to the configured minimum duty of 45. The normal default is 64
+(approximately 25%). The installed build uses Arduino-ESP32 2.0.17, so PWM is
 configured with `ledcSetup()`, attached with `ledcAttachPin()`, and written by
 channel. The source retains the matching Arduino-ESP32 3.x pin-based API path.
 Either setup failure leaves both enables low and all reported duties at zero.
@@ -75,7 +75,7 @@ run automatically. For a supervised test with the linkage unloaded:
 4. Test reverse only as a separate deliberate action by sending
    `IBT2_BENCH_REVERSE`.
 5. Send `STOP` at any time to end the test immediately. A fault, E-stop, or
-   active hard limit also aborts it.
+   the limit in the commanded direction also aborts it.
 6. Restore the flag to `false` after testing.
 
 A multimeter displays approximately the PWM average: at 3.3 V logic, 25% may
@@ -88,9 +88,10 @@ PlatformIO builds the `esp32dev` environment successfully. GPIO searches show
 no duplicate use of GPIO18, GPIO19, GPIO23, or GPIO13, and the two legacy LEDC
 channels are distinct. Static output-path review covers forward, reverse,
 stop, zero speed, reversal dead time, and PWM setup failure. Runtime safety
-gating remains in the main state machine: E-stop, temperature, hard limits,
-session timeout, overcurrent hooks, and fault state all retain authority to
-stop motor output.
+gating remains in the main and bounded-mode state machines: E-stop, temperature,
+endpoint direction constraints, both-limits/stuck-limit/travel-timeout checks,
+session timeout, overcurrent hooks, and fault state all retain authority to stop
+motor output.
 
 On the bench, confirm both enable terminals reach about 3.3 V during motion,
 only the selected PWM terminal shows a waveform/average, and all four control
