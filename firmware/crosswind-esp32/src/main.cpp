@@ -110,11 +110,11 @@ static bool directionAllowed(Direction direction) {
 }
 
 static bool movementSafeToStart() {
-  return directionAllowed(state.direction) && !emergencyStopActive();
+  return !bothLimitsActive() && !emergencyStopActive();
 }
 
 static bool motorAllowed() {
-  return state.running && !state.faultActive && movementSafeToStart();
+  return state.running && !state.faultActive && !emergencyStopActive();
 }
 
 static void setRunning(bool running) {
@@ -187,7 +187,7 @@ static bool triggerAllowed() {
     return false;
   }
 
-  if (!movementSafeToStart()) {
+  if (!limitsReleased() || emergencyStopActive()) {
     Serial.println("Trigger ignored: limit active");
     sendBleResponse("ERROR", "TRIGGER_BLOCKED_LIMIT_ACTIVE");
     return false;
@@ -408,13 +408,6 @@ void setup() {
     state.speed = 0;
     Serial.println("FAULT: both limits active at startup");
     saveSettings(state);
-  } else if (ENABLE_LIMIT_FAULTS && !limitsReleased()) {
-    state.faultActive = true;
-    state.lastFault = FAULT_LIMIT;
-    setRunning(false);
-    state.speed = 0;
-    Serial.println("FAULT: limit active at startup");
-    saveSettings(state);
   }
 
   printStartupDiagnostics(state);
@@ -449,12 +442,9 @@ void loop() {
   lastLeftLimit = leftNow;
   lastRightLimit = rightNow;
 
-  if (state.running && !directionAllowed(state.direction)) {
-    stopMotor();
-  }
-
   if (benchTestActive &&
-      (state.faultActive || !movementSafeToStart() || (long)(millis() - benchTestEndsAt) >= 0)) {
+      (state.faultActive || !directionAllowed(state.direction) || emergencyStopActive() ||
+       (long)(millis() - benchTestEndsAt) >= 0)) {
     benchTestActive = false;
     stopMotor();
     Serial.println("IBT2 bench test complete/aborted: outputs disabled");
@@ -468,8 +458,8 @@ void loop() {
     latchFault(FAULT_TEMP);
   }
 
-  if (ENABLE_LIMIT_FAULTS && state.running && (leftLimitActive() || rightLimitActive())) {
-    latchFault(bothLimitsActive() ? FAULT_BOTH_LIMITS : FAULT_LIMIT);
+  if (ENABLE_LIMIT_FAULTS && state.running && bothLimitsActive()) {
+    latchFault(FAULT_BOTH_LIMITS);
   }
 
   if (ENABLE_MOTOR_SESSION_TIMEOUT && state.running && runStartedAt > 0 && millis() - runStartedAt >= MOTOR_SESSION_TIMEOUT_MS) {
@@ -480,7 +470,7 @@ void loop() {
     latchFault(FAULT_OVERCURRENT);
   }
 
-  if (systemArmed && !movementSafeToStart()) {
+  if (systemArmed && (!limitsReleased() || emergencyStopActive())) {
     systemArmed = false;
     cancelThrowerTrigger();
     Serial.println("ARM OFF: limit active");
@@ -591,7 +581,7 @@ void loop() {
   if (consumeArmPressed()) {
     if (state.faultActive) {
       clearFaultIfSafe("ARM");
-    } else if (!movementSafeToStart()) {
+    } else if (!limitsReleased() || emergencyStopActive()) {
       systemArmed = false;
       Serial.println("ARM blocked: limit active");
       sendBleResponse("ERROR", "ARM_BLOCKED_LIMIT_ACTIVE");
@@ -613,7 +603,8 @@ void loop() {
   if (benchTestActive) {
     // The explicit diagnostic command owns the motor for its bounded duration.
   } else if (motorAllowed()) {
-    updateMode(state);
+    FaultCode modeFault = updateMode(state);
+    if (modeFault != FAULT_NONE) latchFault(modeFault);
   } else {
     resetModeState();
   }

@@ -16,7 +16,7 @@ The code is split into beginner-readable modules:
 - `motor.*` - BTS7960 / IBT-2 motor control, safe reversal, soft-start ramping, and stop behavior.
 - `limits.*` - left/right roller switch reads and debounce.
 - `inputs.*` - ARM/FIRE buttons, rotary encoder speed/menu input, and optional speed potentiometer reads.
-- `modes.*` - Phase 1 sweep motor command plus future hooks for RANDOM, FLUSH, and CENTERING.
+- `modes.*` - bounded single-axis sweep/reversal and timed centering, with future hooks for the second axis.
 - `storage.*` - Preferences-backed mode, last fault, and last speed storage.
 - `ble_control.*` - optional BLE command interface.
 - `environment.*` - BME280 temperature, humidity, and pressure support.
@@ -27,11 +27,11 @@ The code is split into beginner-readable modules:
 
 ## Phase 1 Behavior
 
-Default mode is `SWEEP`. In Phase 1 the crank linkage creates the physical oscillation, so firmware runs the sweep motor continuously in the selected direction while the controller is running.
+Default mode is `SWEEP`. The motor travels between the left and right limit switches, stops at each end, observes direction-change dead time, and reverses. `RANDOM` and `FLUSH` use the same bounded single-axis movement until the second axis and mode-specific motion are added. `CENTERING` establishes both endpoints, measures end-to-end travel time, returns for half that time, and stops.
 
-The Alpha limit switches are safety/calibration inputs, not normal travel controls. During powered motor operation, either active YL-99 limit switch immediately stops the BTS7960 output, disarms the system, blocks the FIRE relay, and latches `FAULT: LIMIT`. If both limits are active together, firmware latches `FAULT: BOTH LIMITS`. The fault can only be cleared after both limit switches are released.
+The Alpha limit switches are normal travel boundaries as well as safety inputs. A single active limit commands movement away from that end; the switch must release within `LIMIT_DWELL_MS`. Both limits active together, failure to release, or failure to reach an endpoint within `MAX_TRAVEL_TIME_MS` latches a fault and stops the motor. A single active limit at startup is valid and establishes the initial direction away from that endpoint.
 
-The controller refuses START, ARM, and FIRE requests while a limit switch is already active, even before a run has begun. If a limit becomes active while armed, the controller automatically returns to SAFE. The powered limit modules provide defined HIGH outputs when released and LOW outputs when pressed; limit monitoring and fault protection are enabled. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.
+The controller permits motor START with one limit active because the mode controller selects the direction away from it. ARM and FIRE remain blocked while either limit is active, and a limit transition while armed returns the controller to SAFE. The powered limit modules provide defined HIGH outputs when released and LOW outputs when pressed; limit monitoring and fault protection are enabled. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.
 
 An E-stop input path exists as a disabled placeholder with `ESTOP_PIN = -1`. Assigning that pin in `config.h` enables a pulled-to-ground emergency stop input that latches `FAULT: ESTOP`. BLE command writes are rate-limited by `BLE_COMMAND_MIN_INTERVAL_MS`.
 
@@ -78,7 +78,7 @@ Trigger commands and the FIRE / TEST button pulse the thrower relay only when th
 
 Limit faults can be cleared from BLE with `CLEAR_FAULT`, or locally with the ARM/encoder button, only after both limit switches read clear.
 
-Modes currently accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`. In the current Phase 1 firmware these modes share the same safe sweep motor behavior; automatic triggering remains disabled unless `ENABLE_AUTOMATIC_TRIGGER` is intentionally enabled and safety-tested.
+Modes accepted by BLE are `SWEEP`, `RANDOM`, `FLUSH`, and `CENTERING`. `SWEEP`, `RANDOM`, and `FLUSH` currently share bounded end-to-end movement. `CENTERING` measures a complete traverse and returns halfway before stopping. Automatic triggering remains disabled unless `ENABLE_AUTOMATIC_TRIGGER` is intentionally enabled and safety-tested.
 
 ## Current Alpha Pinout
 
@@ -129,4 +129,4 @@ See `firmware-test-checklist.md` for a fuller bench checklist and `fault-matrix.
 7. Confirm relay `COM`/`NO` act as dry-contact continuity only.
 8. Confirm left/right limits show inactive and active correctly in Serial/OLED setup view.
 9. Confirm motor PWM changes speed on the bench before connecting linkage.
-10. Confirm a limit or temperature fault stops motor output and blocks triggering.
+10. Confirm a normal endpoint reverses motion, while both limits, a stuck limit, travel timeout, or temperature fault stops motor output and blocks triggering.

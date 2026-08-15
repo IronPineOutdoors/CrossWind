@@ -38,8 +38,11 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 
 - Confirm left YL-99 on GPIO34 reads clear/inactive, then active when triggered.
 - Confirm right YL-99 on GPIO35 reads clear/inactive, then active when triggered.
-- Confirm START, ARM, and FIRE are blocked while either limit is active.
-- While motor is running on the bench, trigger one limit and confirm motor output stops, the system disarms, RGB shows fault, and firing is blocked.
+- Confirm START is permitted with one limit active and motion begins only away from that limit; ARM and FIRE remain blocked.
+- In `SWEEP`, trigger the limit in the direction of travel and confirm output stops, observes reversal dead time, then moves away without latching a fault.
+- Hold the departed limit active longer than `LIMIT_DWELL_MS` and confirm a `LIMIT` fault.
+- Prevent either endpoint from activating for `MAX_TRAVEL_TIME_MS` and confirm a `TRAVEL_TIMEOUT` fault.
+- In `CENTERING`, confirm one complete end-to-end measurement followed by a half-travel return and automatic stop.
 - Trigger both limits together and confirm `BOTH_LIMITS` fault.
 - Confirm limit faults cannot clear until both switches are released.
 - If `ESTOP_PIN` is configured, trigger it and confirm motor output stops, the system disarms, relay firing is blocked, and the fault cannot clear until released.
