@@ -11,4 +11,6 @@ The official Alpha controller lid uses the Hosyond 2.42-inch 128x64 SSD1309 OLED
 
 The current measured side-panel layout is recorded in [side-panel-layout.md](side-panel-layout.md). The OLED module and primary control locations are measured; dimensions explicitly marked for verification must not be treated as fabrication-ready.
 
+A provisional printable fit-check panel, including four corner M3 mounting holes, is in [`side-panel`](side-panel/README.md).
+
 TODO: measure the JST housing, visible OLED window, standoffs, bezel overlap, cable bend radius, service loop, RGB LED lens/body/PCB, and BME280 board envelope before producing a final dimensional drawing. Do not infer missing dimensions from a generic part name.
