@@ -11,7 +11,7 @@
 - ARM and FIRE openings: 16.5 mm diameter, 70 mm center-to-center
 - Encoder opening: 6 mm diameter
 - RGB LED opening: provisional 5.2 mm diameter
-- Upper-right recessed wordmark: `TRAILBOSS` / `BY IRON PINE OUTDOORS`, 0.6 mm deep
+- Upper-right recessed wordmark: `CROSSWIND` / `BY IRON PINE OUTDOORS`, 0.6 mm deep
 
 The panel size, OLED window placement, button vertical datum, LED diameter, and interpretation of the reported OLED mounting-hole spans are provisional. Use this print as a fit coupon/prototype, not as the final weather-sealed panel.
 
