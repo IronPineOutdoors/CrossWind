@@ -12,7 +12,7 @@ Locations are described while looking at the finished outside/front face of the 
 | --- | --- |
 | PCB envelope | 73 wide x 43 high |
 | PCB mounting holes | M3, four holes |
-| Left-to-right mounting-hole span | 70 outside-to-outside |
+| Left-to-right mounting-hole span | 70 outside-to-outside as initially measured; fit print requires each side moved 1 outward (2 total horizontal correction) |
 | Top-to-bottom mounting-hole span | 42 outside-to-outside |
 | Display body | 57 wide x 28 high x 2 proud of PCB |
 | Connector | Left side when viewed from the panel front |
@@ -29,6 +29,7 @@ The mounting-hole spans above were reported as outside-to-outside, not center-to
 | Rotary encoder | 6 diameter hole | 30 right of OLED, vertically centered on OLED |
 | RGB status LED | Hole diameter not yet specified | Horizontally centered between ARM and FIRE; 6 below OLED |
 | BME280 | Mounting tab with hole | Tab location and clearance envelope not yet specified; sensor mounting hole is 2 diameter |
+| Master power toggle | Cutout not yet specified | Reserve an accessible location after switch body and electrical ratings are known |
 
 Unless later measurements say otherwise, relative offsets in this table should be interpreted as center-to-center. Do not release the side panel for cutting until the ambiguous OLED datums and all missing clearances below are resolved.
 
@@ -40,6 +41,7 @@ Unless later measurements say otherwise, relative offsets in this table should b
 - Meaning of the OLED's 15 mm top offset and of the 13 mm/6 mm below-OLED offsets (edge gap or center datum).
 - ARM and FIRE button thread/body diameter, anti-rotation feature, flange diameter, and rear clearance.
 - Encoder body, washer, anti-rotation tab, knob, and rear connector clearances.
+- Power-toggle bushing/cutout, anti-rotation feature, body and terminal envelope, and DC voltage/current rating.
 - RGB LED lens diameter, retaining hardware, PCB envelope, mounting holes, and rear clearance.
 - BME280 PCB width/height/thickness, exact mounting-hole coordinates, sensing-port airflow needs, connector side, and desired tab position.
 - Five-pin OLED connector envelope, cable exit direction, bend radius, strain relief, and service loop.

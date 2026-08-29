@@ -30,6 +30,9 @@ OLED_WINDOW_HEIGHT = 28.0
 # diameter to obtain provisional center spans; verify against the physical PCB.
 OLED_HOLE_X_SPAN = 70.0 - M3_CLEARANCE_DIAMETER
 OLED_HOLE_Y_SPAN = 42.0 - M3_CLEARANCE_DIAMETER
+# Fit-check correction: increase the horizontal center span by 2 mm, moving
+# each left hole 1 mm left and each right hole 1 mm right.
+OLED_HOLE_X_SPAN += 2.0
 
 ARM_CENTER = (46.5, 20.75)
 FIRE_CENTER = (ARM_CENTER[0] + 70.0, ARM_CENTER[1])
@@ -62,7 +65,9 @@ FONT_5X7 = {
 FONT_3X5 = {
     "A": ("010", "101", "111", "101", "101"), "B": ("110", "101", "110", "101", "110"),
     "D": ("110", "101", "101", "101", "110"), "E": ("111", "100", "110", "100", "111"),
+    "F": ("111", "100", "110", "100", "100"),
     "I": ("111", "010", "010", "010", "111"), "N": ("101", "111", "111", "111", "101"),
+    "M": ("101", "111", "111", "101", "101"),
     "O": ("010", "101", "101", "101", "010"), "P": ("110", "101", "110", "100", "100"),
     "R": ("110", "101", "110", "101", "101"), "S": ("011", "100", "010", "001", "110"),
     "T": ("111", "010", "010", "010", "010"), "U": ("101", "101", "101", "101", "111"),
@@ -122,6 +127,8 @@ def build_panel() -> m3d.Manifold:
     # 2.4 mm of the panel intact and clears the corner fastener and controls.
     holes.extend(engraved_text("CROSSWIND", FONT_5X7, 1.0, (88.0, 84.0)))
     holes.extend(engraved_text("BY IRON PINE OUTDOORS", FONT_3X5, 0.55, (90.0, 79.0)))
+    holes.extend(engraved_text("ARM", FONT_3X5, 0.7, (42.65, 31.0)))
+    holes.extend(engraved_text("FIRE", FONT_3X5, 0.7, (111.25, 31.0)))
     return panel - m3d.Manifold.batch_boolean(holes, m3d.OpType.Add)
 
 
