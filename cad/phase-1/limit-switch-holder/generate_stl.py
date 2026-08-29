@@ -36,23 +36,25 @@ def holder(offset_x: float = 0.0) -> list[Triangle]:
     tris: list[Triangle] = []
     add = lambda part: tris.extend(part)
 
-    # 50 x 44 x 4 base, assembled around two 5 x 24 mm adjustment slots.
-    add(box(-25, 0, 0, 25, 10, 4))
-    add(box(-25, 34, 0, 25, 44, 4))
-    add(box(-25, 10, 0, -17.5, 34, 4))
-    add(box(-12.5, 10, 0, 12.5, 34, 4))
-    add(box(17.5, 10, 0, 25, 34, 4))
+    # Compact 38 x 38 x 4 base, assembled around two 4.5 x 20 mm slots.
+    # The slots provide more than the module's approximately 2 mm click travel.
+    add(box(-19, 0, 0, 19, 8, 4))
+    add(box(-19, 28, 0, 19, 38, 4))
+    add(box(-19, 8, 0, -13, 28, 4))
+    add(box(-8.5, 8, 0, 8.5, 28, 4))
+    add(box(13, 8, 0, 19, 28, 4))
 
-    # 50 x 42 mm upright at the rear. A 4 x 25 mm M3 clearance slot
-    # provides vertical switch adjustment and fits differing YL-99 boards.
-    add(box(-25, 40, 4, -2, 44, 46))
-    add(box(2, 40, 4, 25, 44, 46))
-    add(box(-2, 40, 4, 2, 44, 12))
-    add(box(-2, 40, 37, 2, 44, 46))
+    # The 26 mm wide upright clears a 14 mm PCB and its offset mounting hole.
+    # A 3.6 x 16 mm slot fits the measured 3 mm hole and lets the lever height
+    # be set without relying on nominal dimensions from other YL-99 variants.
+    add(box(-13, 34, 4, -1.8, 38, 42))
+    add(box(1.8, 34, 4, 13, 38, 42))
+    add(box(-1.8, 34, 4, 1.8, 38, 9))
+    add(box(-1.8, 34, 25, 1.8, 38, 42))
 
     # Two 4 mm gussets resist vibration and switch-actuation loads.
-    add(triangular_prism(-22, -18, 26, 40, 4, 22))
-    add(triangular_prism(18, 22, 26, 40, 4, 22))
+    add(triangular_prism(-12, -9, 23, 34, 4, 19))
+    add(triangular_prism(9, 12, 23, 34, 4, 19))
 
     if offset_x:
         return [tuple((x + offset_x, y, z) for x, y, z in tri) for tri in tris]  # type: ignore[return-value]
@@ -83,6 +85,6 @@ def write_ascii_stl(path: Path, name: str, triangles: Iterable[Triangle]) -> Non
 if __name__ == "__main__":
     output = Path(__file__).resolve().parent
     write_ascii_stl(output / "crosswind_yl99_holder.stl", "crosswind_yl99_holder", holder())
-    pair = holder(-29) + holder(29)
+    pair = holder(-21) + holder(21)
     write_ascii_stl(output / "crosswind_yl99_holder_pair.stl", "crosswind_yl99_holder_pair", pair)
     print("Generated single-holder and two-holder STL files.")

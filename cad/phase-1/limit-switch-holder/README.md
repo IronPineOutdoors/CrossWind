@@ -11,15 +11,23 @@ YL-99 limit-switch modules.
 
 ## Dimensions and hardware
 
-- Overall envelope: 50 mm wide x 44 mm deep x 46 mm high
-- Base: 4 mm thick with two 5 mm x 24 mm adjustment slots
-- Upright: 4 mm thick with one 4 mm x 25 mm vertical module slot
+- Overall envelope: 38 mm wide x 38 mm deep x 42 mm high
+- Base: 4 mm thick with two 4.5 mm x 20 mm adjustment slots
+- Upright: 26 mm wide and 4 mm thick, with one 3.6 mm x 16 mm module slot
 - Module fastener: M3 x 12 mm bolt, washers, and locknut
 - Base fasteners: M4 or #8 pan-head screws with washers
 
-The YL-99 name is used for several board sizes. The long module slot accepts the
-common single-M3-hole variants; confirm fit against the actual module before
-mounting the powered mechanism.
+The holder is sized from the measured Crosswind module: 18 mm PCB length, 14 mm
+PCB width, approximately 6 mm switch block, 30 mm complete pin-to-switch
+envelope, and a 3 mm mounting hole whose center is 6 mm from the pin end. The
+lever rests approximately 4 mm above the switch block and travels about 2 mm
+before clicking. The vertical slot retains 16 mm of setup adjustment.
+
+Mount the board with its pins downward and its open switch mouth/offset mounting
+hole toward the center slot. During setup, move the bracket until the flag just
+touches the lever, then add approximately 1.5 mm of engagement. Confirm the
+electrical transition by hand before powering the motor; do not use all of the
+lever's available overtravel.
 
 ## Printing
 
