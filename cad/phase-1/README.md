@@ -3,6 +3,7 @@
 Use this folder for the yaw base, top plate, switch brackets, motor mount, and electronics box layout.
 
 Printable adjustable YL-99 switch holders are in [`limit-switch-holder`](limit-switch-holder/README.md).
+Matching printable striker flags are in [`limit-switch-flag`](limit-switch-flag/README.md).
 
 ## Controller Lid
 
