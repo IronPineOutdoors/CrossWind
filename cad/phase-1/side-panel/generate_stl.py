@@ -40,6 +40,30 @@ BUTTON_DIAMETER = 16.5
 ENCODER_DIAMETER = 6.0
 LED_DIAMETER = 5.2  # Provisional lens clearance; replace from LED measurement.
 CIRCLE_SEGMENTS = 64
+ENGRAVING_DEPTH = 0.6
+
+# Compact print-safe bitmap alphabets. A filled character pixel becomes one
+# engraving stroke; this avoids relying on a locally installed font.
+FONT_5X7 = {
+    "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
+    "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
+    "I": ("11111", "00100", "00100", "00100", "00100", "00100", "11111"),
+    "L": ("10000", "10000", "10000", "10000", "10000", "10000", "11111"),
+    "O": ("01110", "10001", "10001", "10001", "10001", "10001", "01110"),
+    "R": ("11110", "10001", "10001", "11110", "10100", "10010", "10001"),
+    "S": ("01111", "10000", "10000", "01110", "00001", "00001", "11110"),
+    "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
+}
+
+FONT_3X5 = {
+    "A": ("010", "101", "111", "101", "101"), "B": ("110", "101", "110", "101", "110"),
+    "D": ("110", "101", "101", "101", "110"), "E": ("111", "100", "110", "100", "111"),
+    "I": ("111", "010", "010", "010", "111"), "N": ("101", "111", "111", "111", "101"),
+    "O": ("010", "101", "101", "101", "010"), "P": ("110", "101", "110", "100", "100"),
+    "R": ("110", "101", "110", "101", "101"), "S": ("011", "100", "010", "001", "110"),
+    "T": ("111", "010", "010", "010", "010"), "U": ("101", "101", "101", "101", "111"),
+    "Y": ("101", "101", "010", "010", "010"), " ": ("000", "000", "000", "000", "000"),
+}
 
 
 def cutter(diameter: float, center: tuple[float, float]) -> m3d.Manifold:
@@ -47,6 +71,23 @@ def cutter(diameter: float, center: tuple[float, float]) -> m3d.Manifold:
         PANEL_THICKNESS + 2.0, diameter / 2.0,
         circular_segments=CIRCLE_SEGMENTS,
     ).translate((center[0], center[1], -1.0))
+
+
+def engraved_text(text: str, font: dict[str, tuple[str, ...]], pixel: float,
+                  origin: tuple[float, float]) -> list[m3d.Manifold]:
+    """Return top-face engraving cutters for a fixed-width bitmap wordmark."""
+    glyph_width = len(next(iter(font.values()))[0])
+    cutters: list[m3d.Manifold] = []
+    for char_index, char in enumerate(text):
+        glyph = font[char]
+        for row, bits in enumerate(glyph):
+            for column, bit in enumerate(bits):
+                if bit == "1":
+                    x = origin[0] + (char_index * (glyph_width + 1) + column) * pixel
+                    y = origin[1] + (len(glyph) - 1 - row) * pixel
+                    cutters.append(m3d.Manifold.cube((pixel, pixel, ENGRAVING_DEPTH + 0.1))
+                                   .translate((x, y, PANEL_THICKNESS - ENGRAVING_DEPTH)))
+    return cutters
 
 
 def build_panel() -> m3d.Manifold:
@@ -73,6 +114,10 @@ def build_panel() -> m3d.Manifold:
         cutter(ENCODER_DIAMETER, ENCODER_CENTER),
         cutter(LED_DIAMETER, LED_CENTER),
     ))
+    # Upper-right recessed product/master-brand lockup. Its 0.6 mm depth leaves
+    # 2.4 mm of the panel intact and clears the corner fastener and controls.
+    holes.extend(engraved_text("TRAILBOSS", FONT_5X7, 1.0, (91.0, 84.0)))
+    holes.extend(engraved_text("BY IRON PINE OUTDOORS", FONT_3X5, 0.55, (90.0, 79.0)))
     return panel - m3d.Manifold.batch_boolean(holes, m3d.OpType.Add)
 
 

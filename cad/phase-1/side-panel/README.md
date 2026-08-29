@@ -11,10 +11,13 @@
 - ARM and FIRE openings: 16.5 mm diameter, 70 mm center-to-center
 - Encoder opening: 6 mm diameter
 - RGB LED opening: provisional 5.2 mm diameter
+- Upper-right recessed wordmark: `TRAILBOSS` / `BY IRON PINE OUTDOORS`, 0.6 mm deep
 
 The panel size, OLED window placement, button vertical datum, LED diameter, and interpretation of the reported OLED mounting-hole spans are provisional. Use this print as a fit coupon/prototype, not as the final weather-sealed panel.
 
 The BME280 mounting tab is intentionally omitted until its PCB envelope, hole coordinates, connector orientation, airflow clearance, and desired location are measured. Those details determine whether the tab belongs on the rear face or panel edge.
+
+The engraved lockup uses a dependency-free block alphabet sized for FDM printing. For the cleanest lettering, print the exterior face upward at 0.2 mm layers or finer. A contrasting paint fill can be wiped into the recess after printing.
 
 ## Regeneration
 
