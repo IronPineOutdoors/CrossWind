@@ -84,6 +84,7 @@ FONT_3X5 = {
     "R": ("110", "101", "110", "101", "101"), "S": ("011", "100", "010", "001", "110"),
     "T": ("111", "010", "010", "010", "010"), "U": ("101", "101", "101", "101", "111"),
     "Y": ("101", "101", "010", "010", "010"), " ": ("000", "000", "000", "000", "000"),
+    "-": ("000", "000", "111", "000", "000"), "+": ("000", "010", "111", "010", "000"),
 }
 
 
@@ -158,6 +159,9 @@ def build_panel() -> m3d.Manifold:
     holes.extend(engraved_text("BY IRON PINE OUTDOORS", FONT_3X5, 0.55, (90.0, 79.0)))
     holes.extend(engraved_text("ARM", FONT_3X5, 0.7, (42.65, 31.0)))
     holes.extend(engraved_text("FIRE", FONT_3X5, 0.7, (111.25, 31.0)))
+    holes.extend(engraved_text("SPEED", FONT_3X5, 0.7, (98.35, 70.5)))
+    holes.extend(engraved_text("-", FONT_3X5, 0.7, (91.0, 61.75)))
+    holes.extend(engraved_text("+", FONT_3X5, 0.7, (116.9, 61.75)))
     panel -= m3d.Manifold.batch_boolean(holes, m3d.OpType.Add)
 
     rear_stops = [
