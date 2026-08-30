@@ -35,7 +35,6 @@ CIRCLE_SEGMENTS = 64
 MOUNT_EAR_WIDTH = 18.0
 MOUNT_EAR_HEIGHT = 22.0
 MOUNT_EAR_THICKNESS = 4.0
-WOOD_SCREW_DIAMETER = 5.0
 CABLE_NOTCH_WIDTH = 32.0
 CABLE_NOTCH_HEIGHT = 14.0
 
@@ -101,20 +100,11 @@ def build_pod() -> m3d.Manifold:
     # Recessed rear tabs allow the pod to screw directly to the wooden side
     # without leaving external projections that cantilever during printing.
     ears: list[m3d.Manifold] = []
-    ear_holes: list[m3d.Manifold] = []
     for x in (0.0, BODY_WIDTH - MOUNT_EAR_WIDTH):
         for z in (8.0, WOOD_SIDE_HEIGHT - MOUNT_EAR_HEIGHT - 8.0):
             ears.append(m3d.Manifold.cube((MOUNT_EAR_WIDTH, MOUNT_EAR_THICKNESS,
                                            MOUNT_EAR_HEIGHT)).translate((x, 0.0, z)))
-            ear_holes.append(m3d.Manifold.cylinder(MOUNT_EAR_THICKNESS + 2.0,
-                                                   WOOD_SCREW_DIAMETER / 2.0,
-                                                   circular_segments=CIRCLE_SEGMENTS)
-                             .rotate((90.0, 0.0, 0.0))
-                             .translate((x + MOUNT_EAR_WIDTH / 2.0,
-                                         MOUNT_EAR_THICKNESS + 1.0,
-                                         z + MOUNT_EAR_HEIGHT / 2.0)))
     pod += m3d.Manifold.batch_boolean(ears, m3d.OpType.Add)
-    pod -= m3d.Manifold.batch_boolean(ear_holes, m3d.OpType.Add)
 
     # A centered lower notch allows harnesses to leave the open back downward.
     notch = m3d.Manifold.cube((CABLE_NOTCH_WIDTH, 12.0, CABLE_NOTCH_HEIGHT)).translate((
