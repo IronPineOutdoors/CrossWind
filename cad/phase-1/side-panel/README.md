@@ -12,9 +12,12 @@
 - Recessed `ARM` and `FIRE` labels above their respective buttons
 - Encoder opening: 6 mm diameter
 - RGB LED opening: provisional 5.2 mm diameter
+- Paired 3 mm-tall rear anti-rotation rails around the encoder and RGB LED modules
 - Upper-right recessed wordmark: `CROSSWIND` / `BY IRON PINE OUTDOORS`, 0.6 mm deep
 
-The panel size, OLED window placement, button vertical datum, LED diameter, and interpretation of the reported OLED mounting-hole spans are provisional. Use this print as a fit coupon/prototype, not as the final weather-sealed panel.
+The encoder rails provisionally fit an 18 mm-wide PCB and the LED rails a 15 mm-wide PCB, each with 0.4 mm total clearance. They resist rotation but do not replace the components' panel nuts or other retention hardware. Print with the exterior/engraved face on the bed so the rear rails rise without supports, and keep the rail contact surfaces clear of solder joints and wiring.
+
+The panel size, OLED window placement, button vertical datum, LED diameter, module widths, and interpretation of the reported OLED mounting-hole spans are provisional. Use this print as a fit coupon/prototype, not as the final weather-sealed panel.
 
 The BME280 mounting tab is intentionally omitted until its PCB envelope, hole coordinates, connector orientation, airflow clearance, and desired location are measured. Those details determine whether the tab belongs on the rear face or panel edge.
 

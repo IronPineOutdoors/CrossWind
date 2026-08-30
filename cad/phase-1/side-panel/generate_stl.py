@@ -45,6 +45,18 @@ LED_DIAMETER = 5.2  # Provisional lens clearance; replace from LED measurement.
 CIRCLE_SEGMENTS = 64
 ENGRAVING_DEPTH = 0.6
 
+# Rear-face anti-rotation rails. These locate the sides of the breakout PCBs
+# while leaving their headers and solder joints open. The module widths remain
+# provisional until checked against the installed hardware.
+STOP_CLEARANCE = 0.4
+STOP_WALL = 2.0
+STOP_HEIGHT = 3.0
+STOP_PANEL_OVERLAP = 0.2
+ENCODER_MODULE_WIDTH = 18.0
+ENCODER_STOP_LENGTH = 12.0
+LED_MODULE_WIDTH = 15.0
+LED_STOP_LENGTH = 10.0
+
 # Compact print-safe bitmap alphabets. A filled character pixel becomes one
 # engraving stroke; this avoids relying on a locally installed font.
 FONT_5X7 = {
@@ -80,6 +92,23 @@ def cutter(diameter: float, center: tuple[float, float]) -> m3d.Manifold:
         PANEL_THICKNESS + 2.0, diameter / 2.0,
         circular_segments=CIRCLE_SEGMENTS,
     ).translate((center[0], center[1], -1.0))
+
+
+def anti_rotation_rails(center: tuple[float, float], module_width: float,
+                        length: float) -> list[m3d.Manifold]:
+    """Return paired rear rails that prevent a panel-mounted PCB rotating."""
+    inside_width = module_width + STOP_CLEARANCE
+    rail_z = -STOP_HEIGHT
+    rail_depth = STOP_HEIGHT + STOP_PANEL_OVERLAP
+    rail_y = center[1] - length / 2.0
+    return [
+        m3d.Manifold.cube((STOP_WALL, length, rail_depth)).translate((
+            center[0] - inside_width / 2.0 - STOP_WALL, rail_y, rail_z,
+        )),
+        m3d.Manifold.cube((STOP_WALL, length, rail_depth)).translate((
+            center[0] + inside_width / 2.0, rail_y, rail_z,
+        )),
+    ]
 
 
 def engraved_text(text: str, font: dict[str, tuple[str, ...]], pixel: float,
@@ -129,7 +158,13 @@ def build_panel() -> m3d.Manifold:
     holes.extend(engraved_text("BY IRON PINE OUTDOORS", FONT_3X5, 0.55, (90.0, 79.0)))
     holes.extend(engraved_text("ARM", FONT_3X5, 0.7, (42.65, 31.0)))
     holes.extend(engraved_text("FIRE", FONT_3X5, 0.7, (111.25, 31.0)))
-    return panel - m3d.Manifold.batch_boolean(holes, m3d.OpType.Add)
+    panel -= m3d.Manifold.batch_boolean(holes, m3d.OpType.Add)
+
+    rear_stops = [
+        *anti_rotation_rails(ENCODER_CENTER, ENCODER_MODULE_WIDTH, ENCODER_STOP_LENGTH),
+        *anti_rotation_rails(LED_CENTER, LED_MODULE_WIDTH, LED_STOP_LENGTH),
+    ]
+    return panel + m3d.Manifold.batch_boolean(rear_stops, m3d.OpType.Add)
 
 
 def write_binary_stl(path: Path, solid: m3d.Manifold) -> None:
