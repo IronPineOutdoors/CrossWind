@@ -23,7 +23,9 @@ WOOD_TOP_THICKNESS = 19.05  # 3/4 inch; recorded as an overhead keep-out.
 WALL = 3.0
 FACE_RIM = 7.0
 LOWER_EDGE_HEIGHT = 7.5
-M3_CLEARANCE_DIAMETER = 3.2
+M3_PILOT_DIAMETER = 2.7
+M3_BOSS_DIAMETER = 9.0
+M3_BOSS_DEPTH = 8.0
 CIRCLE_SEGMENTS = 64
 
 MOUNT_EAR_WIDTH = 18.0
@@ -78,13 +80,18 @@ def build_pod() -> m3d.Manifold:
     ])
     pod = outer - cavity
 
-    # Faceplate fasteners follow the inclined panel normal and match its holes.
+    # Reinforced pilot-hole bosses receive the faceplate's four M3 screws.
+    face_bosses: list[m3d.Manifold] = []
     face_holes: list[m3d.Manifold] = []
     for x in (5.0, PANEL_WIDTH - 5.0):
         for y in (5.0, PANEL_HEIGHT - 5.0):
-            hole = m3d.Manifold.cylinder(12.0, M3_CLEARANCE_DIAMETER / 2.0,
+            boss = m3d.Manifold.cylinder(M3_BOSS_DEPTH, M3_BOSS_DIAMETER / 2.0,
                                          circular_segments=CIRCLE_SEGMENTS)
-            face_holes.append(panel_feature(hole, x, y, -3.0))
+            face_bosses.append(panel_feature(boss, x, y, 0.0))
+            hole = m3d.Manifold.cylinder(M3_BOSS_DEPTH + 2.0, M3_PILOT_DIAMETER / 2.0,
+                                         circular_segments=CIRCLE_SEGMENTS)
+            face_holes.append(panel_feature(hole, x, y, -1.0))
+    pod += m3d.Manifold.batch_boolean(face_bosses, m3d.OpType.Add)
     pod -= m3d.Manifold.batch_boolean(face_holes, m3d.OpType.Add)
 
     # External rear ears allow the pod to screw directly to the wooden side.
@@ -107,7 +114,24 @@ def build_pod() -> m3d.Manifold:
     notch = m3d.Manifold.cube((CABLE_NOTCH_WIDTH, 12.0, CABLE_NOTCH_HEIGHT)).translate((
         (BODY_WIDTH - CABLE_NOTCH_WIDTH) / 2.0, -2.0, -1.0,
     ))
-    return pod - notch
+    pod -= notch
+
+    # Save the STL with its inclined face rim on the build plate. This is the
+    # inverse of the installed panel transform and avoids printing the front
+    # shell as a large unsupported cantilever.
+    print_ready = pod.translate((
+        -(3.0 + PANEL_CLEARANCE / 2.0), -55.0, -LOWER_EDGE_HEIGHT,
+    )).rotate((-(90.0 + PANEL_TILT_FROM_VERTICAL), 0.0, 0.0))
+    bounds = print_ready.bounding_box()
+    if bounds[2] < 0.0:
+        below_face = m3d.Manifold.cube((
+            bounds[3] - bounds[0] + 2.0,
+            bounds[4] - bounds[1] + 2.0,
+            -bounds[2] + 1.0,
+        )).translate((bounds[0] - 1.0, bounds[1] - 1.0, bounds[2] - 1.0))
+        print_ready -= below_face
+    bounds = print_ready.bounding_box()
+    return print_ready.translate((-bounds[0], -bounds[1], -bounds[2]))
 
 
 def write_binary_stl(path: Path, solid: m3d.Manifold) -> None:
