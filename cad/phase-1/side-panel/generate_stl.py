@@ -37,7 +37,9 @@ OLED_HOLE_X_SPAN += 2.0
 ARM_CENTER = (46.5, 20.75)
 FIRE_CENTER = (ARM_CENTER[0] + 70.0, ARM_CENTER[1])
 ENCODER_CENTER = (105.0, OLED_PCB_BOTTOM + 43.0 / 2.0)
-LED_CENTER = ((ARM_CENTER[0] + FIRE_CENTER[0]) / 2.0, OLED_PCB_BOTTOM - 6.0)
+# Lowered to clear the OLED PCB when the 15 x 19 mm LED module is vertical,
+# with its connector facing down toward the ARM/FIRE row.
+LED_CENTER = ((ARM_CENTER[0] + FIRE_CENTER[0]) / 2.0, OLED_PCB_BOTTOM - 11.0)
 
 BUTTON_DIAMETER = 16.5
 ENCODER_DIAMETER = 6.0

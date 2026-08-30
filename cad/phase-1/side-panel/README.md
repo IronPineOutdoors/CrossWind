@@ -11,7 +11,7 @@
 - ARM and FIRE openings: 16.5 mm diameter, 70 mm center-to-center
 - Recessed `ARM` and `FIRE` labels above their respective buttons
 - Encoder opening: 6 mm diameter, with recessed `SPEED` and `-` / `+` direction markings
-- RGB LED opening: provisional 5.2 mm diameter
+- RGB LED opening: provisional 5.2 mm diameter, lowered 11 mm below the OLED for vertical PCB clearance
 - Paired 3 mm-tall rear anti-rotation rails around the encoder and RGB LED modules
 - Upper-right recessed wordmark: `CROSSWIND` / `BY IRON PINE OUTDOORS`, 0.6 mm deep
 
