@@ -13,4 +13,6 @@ The current measured side-panel layout is recorded in [side-panel-layout.md](sid
 
 A provisional printable fit-check panel, including four corner M3 mounting holes, is in [`side-panel`](side-panel/README.md).
 
+The matching provisional 30-degree open-back body is in [`control-pod`](control-pod/README.md). A wide bolt-through foot intended to be printed four times is in [`base-foot`](base-foot/README.md).
+
 TODO: measure the JST housing, visible OLED window, standoffs, bezel overlap, cable bend radius, service loop, RGB LED lens/body/PCB, and BME280 board envelope before producing a final dimensional drawing. Do not infer missing dimensions from a generic part name.
