@@ -170,7 +170,12 @@ def build_panel() -> m3d.Manifold:
         *anti_rotation_rails(ENCODER_CENTER, ENCODER_MODULE_WIDTH, ENCODER_STOP_LENGTH),
         *anti_rotation_rails(LED_CENTER, LED_MODULE_WIDTH, LED_STOP_LENGTH),
     ]
-    return panel + m3d.Manifold.batch_boolean(rear_stops, m3d.OpType.Add)
+    panel += m3d.Manifold.batch_boolean(rear_stops, m3d.OpType.Add)
+
+    # The engraved exterior prints against the bed. Mirror the complete part
+    # across its width so the tab-side slicer view is reversed while the
+    # finished exterior reads correctly and preserves the front-view layout.
+    return panel.mirror((1.0, 0.0, 0.0)).translate((PANEL_WIDTH, 0.0, 0.0))
 
 
 def write_binary_stl(path: Path, solid: m3d.Manifold) -> None:
