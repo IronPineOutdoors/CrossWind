@@ -42,7 +42,7 @@ ENCODER_CENTER = (105.0, OLED_PCB_BOTTOM + 43.0 / 2.0)
 LED_CENTER = ((ARM_CENTER[0] + FIRE_CENTER[0]) / 2.0, OLED_PCB_BOTTOM - 11.0)
 
 BUTTON_DIAMETER = 16.5
-ENCODER_DIAMETER = 6.0
+ENCODER_DIAMETER = 8.0  # Threaded-bushing clearance; shaft alone measured 6 mm.
 LED_DIAMETER = 5.2  # Provisional lens clearance; replace from LED measurement.
 CIRCLE_SEGMENTS = 64
 ENGRAVING_DEPTH = 0.6
