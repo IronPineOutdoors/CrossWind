@@ -51,8 +51,8 @@ ENGRAVING_DEPTH = 0.6
 # while leaving their headers and solder joints open. The module widths remain
 # provisional until checked against the installed hardware.
 STOP_CLEARANCE = 0.4
-STOP_WALL = 2.0
-STOP_HEIGHT = 3.0
+STOP_WALL = 3.0
+STOP_HEIGHT = 10.0
 STOP_PANEL_OVERLAP = 0.2
 ENCODER_MODULE_WIDTH = 18.0
 ENCODER_STOP_LENGTH = 12.0

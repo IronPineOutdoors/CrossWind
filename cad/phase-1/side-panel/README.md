@@ -12,10 +12,10 @@
 - Recessed `ARM` and `FIRE` labels above their respective buttons
 - Encoder opening: 8 mm diameter for the threaded bushing, with recessed `SPEED` and `-` / `+` direction markings
 - RGB LED opening: provisional 5.2 mm diameter, lowered 11 mm below the OLED for vertical PCB clearance
-- Paired 3 mm-tall rear anti-rotation rails around the encoder and RGB LED modules
+- Paired 10 mm-tall, 3 mm-thick rear anti-rotation rails around the encoder and RGB LED modules
 - Upper-right recessed wordmark: `CROSSWIND` / `BY IRON PINE OUTDOORS`, 0.6 mm deep
 
-The encoder rails provisionally fit an 18 mm-wide PCB and the LED rails a 15 mm-wide PCB, each with 0.4 mm total clearance. They resist rotation but do not replace the components' panel nuts or other retention hardware. The STL is oriented with the exterior/engraved face at Z=0 and the rear rails rising upward, so its default orientation prints without supports. The complete part is mirrored for face-down printing: lettering appears reversed from the tab side in the slicer and reads normally on the finished exterior. Keep the rail contact surfaces clear of solder joints and wiring.
+The encoder rails provisionally fit an 18 mm-wide PCB and the LED rails a 15 mm-wide PCB, each with 0.4 mm total clearance. Fit-print photos showed that the original 3 mm rails ended below both elevated PCBs; the revised rails rise 10 mm from the rear panel surface and are 3 mm thick so they reach the board edges. They resist rotation but do not replace the components' panel nuts or other retention hardware. The STL is oriented with the exterior/engraved face at Z=0 and the rear rails rising upward, so its default orientation prints without supports. The complete part is mirrored for face-down printing: lettering appears reversed from the tab side in the slicer and reads normally on the finished exterior. Keep the rail contact surfaces clear of solder joints and wiring.
 
 The panel size, OLED window placement, button vertical datum, LED diameter, module widths, and interpretation of the reported OLED mounting-hole spans are provisional. Use this print as a fit coupon/prototype, not as the final weather-sealed panel.
 

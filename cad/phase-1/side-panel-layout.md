@@ -26,8 +26,8 @@ The mounting-hole spans above were reported as outside-to-outside, not center-to
 | --- | --- | --- |
 | ARM button | 16.5 diameter barrel/cutout, verify fit allowance | 13 below the OLED |
 | FIRE button | Same button type unless otherwise specified | 70 right of ARM, center-to-center |
-| Rotary encoder | 8 diameter threaded-bushing hole; recessed `SPEED` and `-` / `+` markings; paired rear anti-rotation rails provisionally fit an 18-wide PCB | 30 right of OLED, vertically centered on OLED |
-| RGB status LED | 5.2 diameter provisional hole; paired rear anti-rotation rails provisionally fit a vertically oriented 15-wide PCB | Horizontally centered between ARM and FIRE; 11 below OLED, with the connector facing down |
+| Rotary encoder | 8 diameter threaded-bushing hole; recessed `SPEED` and `-` / `+` markings; paired 10-high rear anti-rotation rails provisionally fit an 18-wide PCB | 30 right of OLED, vertically centered on OLED |
+| RGB status LED | 5.2 diameter provisional hole; paired 10-high rear anti-rotation rails provisionally fit a vertically oriented 15-wide PCB | Horizontally centered between ARM and FIRE; 11 below OLED, with the connector facing down |
 | BME280 | Mounting tab with hole | Tab location and clearance envelope not yet specified; sensor mounting hole is 2 diameter |
 | Master power toggle | Cutout not yet specified | Reserve an accessible location after switch body and electrical ratings are known |
 
