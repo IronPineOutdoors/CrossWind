@@ -99,7 +99,7 @@ def anti_rotation_rails(center: tuple[float, float], module_width: float,
                         length: float) -> list[m3d.Manifold]:
     """Return paired rear rails that prevent a panel-mounted PCB rotating."""
     inside_width = module_width + STOP_CLEARANCE
-    rail_z = -STOP_HEIGHT
+    rail_z = PANEL_THICKNESS - STOP_PANEL_OVERLAP
     rail_depth = STOP_HEIGHT + STOP_PANEL_OVERLAP
     rail_y = center[1] - length / 2.0
     return [
@@ -125,7 +125,7 @@ def engraved_text(text: str, font: dict[str, tuple[str, ...]], pixel: float,
                     x = origin[0] + (char_index * (glyph_width + 1) + column) * pixel
                     y = origin[1] + (len(glyph) - 1 - row) * pixel
                     cutters.append(m3d.Manifold.cube((pixel, pixel, ENGRAVING_DEPTH + 0.1))
-                                   .translate((x, y, PANEL_THICKNESS - ENGRAVING_DEPTH)))
+                                   .translate((x, y, -0.1)))
     return cutters
 
 
@@ -153,8 +153,8 @@ def build_panel() -> m3d.Manifold:
         cutter(ENCODER_DIAMETER, ENCODER_CENTER),
         cutter(LED_DIAMETER, LED_CENTER),
     ))
-    # Upper-right recessed product/master-brand lockup. Its 0.6 mm depth leaves
-    # 2.4 mm of the panel intact and clears the corner fastener and controls.
+    # Front-face recessed labels. Their 0.6 mm depth leaves 2.4 mm of the panel
+    # intact and clears the corner fastener and controls.
     holes.extend(engraved_text("CROSSWIND", FONT_5X7, 1.0, (88.0, 84.0)))
     holes.extend(engraved_text("BY IRON PINE OUTDOORS", FONT_3X5, 0.55, (90.0, 79.0)))
     holes.extend(engraved_text("ARM", FONT_3X5, 0.7, (42.65, 31.0)))
