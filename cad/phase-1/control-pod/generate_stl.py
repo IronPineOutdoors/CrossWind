@@ -15,7 +15,11 @@ import manifold3d as m3d
 
 PANEL_WIDTH = 150.0
 PANEL_HEIGHT = 100.0
-PANEL_TILT_FROM_VERTICAL = 30.0
+PANEL_TILT_FROM_VERTICAL = 45.0
+PANEL_TOP_PROJECTION = 5.0
+PANEL_BOTTOM_PROJECTION = PANEL_TOP_PROJECTION + PANEL_HEIGHT * math.sin(
+    math.radians(PANEL_TILT_FROM_VERTICAL)
+)
 PANEL_CLEARANCE = 0.6
 BODY_WIDTH = PANEL_WIDTH + 2.0 * (3.0 + PANEL_CLEARANCE / 2.0)
 WOOD_SIDE_HEIGHT = 101.6  # 4 inches
@@ -53,7 +57,7 @@ def panel_feature(feature: m3d.Manifold, x: float, vertical: float,
         90.0 + PANEL_TILT_FROM_VERTICAL, 0.0, 0.0,
     )).translate((
         3.0 + PANEL_CLEARANCE / 2.0,
-        55.0,
+        PANEL_BOTTOM_PROJECTION,
         LOWER_EDGE_HEIGHT,
     ))
 
@@ -61,8 +65,8 @@ def panel_feature(feature: m3d.Manifold, x: float, vertical: float,
 def build_pod() -> m3d.Manifold:
     run = PANEL_HEIGHT * math.sin(math.radians(PANEL_TILT_FROM_VERTICAL))
     rise = PANEL_HEIGHT * math.cos(math.radians(PANEL_TILT_FROM_VERTICAL))
-    bottom_front = (55.0, LOWER_EDGE_HEIGHT)
-    top_front = (55.0 - run, LOWER_EDGE_HEIGHT + rise)
+    bottom_front = (PANEL_BOTTOM_PROJECTION, LOWER_EDGE_HEIGHT)
+    top_front = (PANEL_BOTTOM_PROJECTION - run, LOWER_EDGE_HEIGHT + rise)
 
     outer = wedge(BODY_WIDTH, 0.0, [
         (0.0, 0.0), bottom_front, top_front, (0.0, WOOD_SIDE_HEIGHT - 0.2),
@@ -94,18 +98,20 @@ def build_pod() -> m3d.Manifold:
     pod += m3d.Manifold.batch_boolean(face_bosses, m3d.OpType.Add)
     pod -= m3d.Manifold.batch_boolean(face_holes, m3d.OpType.Add)
 
-    # External rear ears allow the pod to screw directly to the wooden side.
+    # Recessed rear tabs allow the pod to screw directly to the wooden side
+    # without leaving external projections that cantilever during printing.
     ears: list[m3d.Manifold] = []
     ear_holes: list[m3d.Manifold] = []
     for x in (0.0, BODY_WIDTH - MOUNT_EAR_WIDTH):
         for z in (8.0, WOOD_SIDE_HEIGHT - MOUNT_EAR_HEIGHT - 8.0):
             ears.append(m3d.Manifold.cube((MOUNT_EAR_WIDTH, MOUNT_EAR_THICKNESS,
-                                           MOUNT_EAR_HEIGHT)).translate((x, -MOUNT_EAR_THICKNESS, z)))
+                                           MOUNT_EAR_HEIGHT)).translate((x, 0.0, z)))
             ear_holes.append(m3d.Manifold.cylinder(MOUNT_EAR_THICKNESS + 2.0,
                                                    WOOD_SCREW_DIAMETER / 2.0,
                                                    circular_segments=CIRCLE_SEGMENTS)
                              .rotate((90.0, 0.0, 0.0))
-                             .translate((x + MOUNT_EAR_WIDTH / 2.0, 1.0,
+                             .translate((x + MOUNT_EAR_WIDTH / 2.0,
+                                         MOUNT_EAR_THICKNESS + 1.0,
                                          z + MOUNT_EAR_HEIGHT / 2.0)))
     pod += m3d.Manifold.batch_boolean(ears, m3d.OpType.Add)
     pod -= m3d.Manifold.batch_boolean(ear_holes, m3d.OpType.Add)
@@ -120,7 +126,7 @@ def build_pod() -> m3d.Manifold:
     # inverse of the installed panel transform and avoids printing the front
     # shell as a large unsupported cantilever.
     print_ready = pod.translate((
-        -(3.0 + PANEL_CLEARANCE / 2.0), -55.0, -LOWER_EDGE_HEIGHT,
+        -(3.0 + PANEL_CLEARANCE / 2.0), -PANEL_BOTTOM_PROJECTION, -LOWER_EDGE_HEIGHT,
     )).rotate((-(90.0 + PANEL_TILT_FROM_VERTICAL), 0.0, 0.0))
     bounds = print_ready.bounding_box()
     if bounds[2] < 0.0:
