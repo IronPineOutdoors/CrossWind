@@ -15,7 +15,7 @@ import manifold3d as m3d
 
 PANEL_WIDTH = 150.0
 PANEL_HEIGHT = 100.0
-PANEL_TILT_FROM_VERTICAL = 45.0
+PANEL_TILT_FROM_VERTICAL = 47.0
 PANEL_TOP_PROJECTION = 5.0
 PANEL_BOTTOM_PROJECTION = PANEL_TOP_PROJECTION + PANEL_HEIGHT * math.sin(
     math.radians(PANEL_TILT_FROM_VERTICAL)
@@ -32,9 +32,6 @@ M3_BOSS_DIAMETER = 9.0
 M3_BOSS_DEPTH = 8.0
 CIRCLE_SEGMENTS = 64
 
-MOUNT_EAR_WIDTH = 18.0
-MOUNT_EAR_HEIGHT = 22.0
-MOUNT_EAR_THICKNESS = 4.0
 CABLE_NOTCH_WIDTH = 32.0
 CABLE_NOTCH_HEIGHT = 14.0
 
@@ -91,20 +88,14 @@ def build_pod() -> m3d.Manifold:
             boss = m3d.Manifold.cylinder(M3_BOSS_DEPTH, M3_BOSS_DIAMETER / 2.0,
                                          circular_segments=CIRCLE_SEGMENTS)
             face_bosses.append(panel_feature(boss, x, y, 0.0))
-            hole = m3d.Manifold.cylinder(M3_BOSS_DEPTH + 2.0, M3_PILOT_DIAMETER / 2.0,
+            # Extend past both ends of the boss. A cutter ending coplanar with
+            # the boss left microscopic downward-facing caps that Bambu Studio
+            # reported as floating cantilevers.
+            hole = m3d.Manifold.cylinder(100.0, M3_PILOT_DIAMETER / 2.0,
                                          circular_segments=CIRCLE_SEGMENTS)
-            face_holes.append(panel_feature(hole, x, y, -1.0))
+            face_holes.append(panel_feature(hole, x, y, -2.0))
     pod += m3d.Manifold.batch_boolean(face_bosses, m3d.OpType.Add)
     pod -= m3d.Manifold.batch_boolean(face_holes, m3d.OpType.Add)
-
-    # Recessed rear tabs allow the pod to screw directly to the wooden side
-    # without leaving external projections that cantilever during printing.
-    ears: list[m3d.Manifold] = []
-    for x in (0.0, BODY_WIDTH - MOUNT_EAR_WIDTH):
-        for z in (8.0, WOOD_SIDE_HEIGHT - MOUNT_EAR_HEIGHT - 8.0):
-            ears.append(m3d.Manifold.cube((MOUNT_EAR_WIDTH, MOUNT_EAR_THICKNESS,
-                                           MOUNT_EAR_HEIGHT)).translate((x, 0.0, z)))
-    pod += m3d.Manifold.batch_boolean(ears, m3d.OpType.Add)
 
     # A centered lower notch allows harnesses to leave the open back downward.
     notch = m3d.Manifold.cube((CABLE_NOTCH_WIDTH, 12.0, CABLE_NOTCH_HEIGHT)).translate((
