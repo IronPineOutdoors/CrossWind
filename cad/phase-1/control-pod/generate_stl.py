@@ -16,12 +16,13 @@ import manifold3d as m3d
 PANEL_WIDTH = 150.0
 PANEL_HEIGHT = 100.0
 PANEL_TILT_FROM_VERTICAL = 47.0
-PANEL_TOP_PROJECTION = 5.0
+PANEL_TOP_PROJECTION = 8.0
 PANEL_BOTTOM_PROJECTION = PANEL_TOP_PROJECTION + PANEL_HEIGHT * math.sin(
     math.radians(PANEL_TILT_FROM_VERTICAL)
 )
 PANEL_CLEARANCE = 0.6
-BODY_WIDTH = PANEL_WIDTH + 2.0 * (3.0 + PANEL_CLEARANCE / 2.0)
+BODY_WIDTH = PANEL_WIDTH
+PANEL_X_OFFSET = 0.0
 WOOD_SIDE_HEIGHT = 101.6  # 4 inches
 WOOD_TOP_THICKNESS = 19.05  # 3/4 inch; recorded as an overhead keep-out.
 WALL = 3.0
@@ -48,17 +49,17 @@ def wedge(width: float, x_offset: float, profile: list[tuple[float, float]]) -> 
 
 def panel_feature(feature: m3d.Manifold, x: float, vertical: float,
                   normal: float) -> m3d.Manifold:
-    """Place local panel geometry onto the 30-degree-from-vertical face."""
+    """Place local panel geometry onto the inclined face."""
     return feature.translate((x, vertical, normal)).rotate((
         90.0 + PANEL_TILT_FROM_VERTICAL, 0.0, 0.0,
     )).translate((
-        3.0 + PANEL_CLEARANCE / 2.0,
+        PANEL_X_OFFSET,
         PANEL_BOTTOM_PROJECTION,
         LOWER_EDGE_HEIGHT,
     ))
 
 
-def build_pod() -> m3d.Manifold:
+def build_pod(print_orientation: bool = True) -> m3d.Manifold:
     run = PANEL_HEIGHT * math.sin(math.radians(PANEL_TILT_FROM_VERTICAL))
     rise = PANEL_HEIGHT * math.cos(math.radians(PANEL_TILT_FROM_VERTICAL))
     bottom_front = (PANEL_BOTTOM_PROJECTION, LOWER_EDGE_HEIGHT)
@@ -103,11 +104,29 @@ def build_pod() -> m3d.Manifold:
     ))
     pod -= notch
 
+    # Keep the complete pod forward of the wooden mounting plane. This is a
+    # hard installation limit: no boss or wall may require routing the wood.
+    installed_bounds = pod.bounding_box()
+    if installed_bounds[1] < 0.0:
+        behind_wall = m3d.Manifold.cube((
+            installed_bounds[3] - installed_bounds[0] + 2.0,
+            -installed_bounds[1] + 1.0,
+            installed_bounds[5] - installed_bounds[2] + 2.0,
+        )).translate((
+            installed_bounds[0] - 1.0,
+            installed_bounds[1] - 1.0,
+            installed_bounds[2] - 1.0,
+        ))
+        pod -= behind_wall
+
+    if not print_orientation:
+        return pod
+
     # Save the STL with its inclined face rim on the build plate. This is the
     # inverse of the installed panel transform and avoids printing the front
     # shell as a large unsupported cantilever.
     print_ready = pod.translate((
-        -(3.0 + PANEL_CLEARANCE / 2.0), -PANEL_BOTTOM_PROJECTION, -LOWER_EDGE_HEIGHT,
+        -PANEL_X_OFFSET, -PANEL_BOTTOM_PROJECTION, -LOWER_EDGE_HEIGHT,
     )).rotate((-(90.0 + PANEL_TILT_FROM_VERTICAL), 0.0, 0.0))
     bounds = print_ready.bounding_box()
     if bounds[2] < 0.0:

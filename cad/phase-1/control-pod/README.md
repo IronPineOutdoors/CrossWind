@@ -5,7 +5,8 @@
 ## Geometry
 
 - Open rear against the wooden base
-- 156.6 mm overall width and 101.6 mm overall height
+- 150 mm overall width, flush with the faceplate sides, and 101.6 mm installed height
+- 100 mm inclined face length and approximately 81.4 mm maximum outward projection
 - 3 mm nominal walls and 7 mm faceplate rim
 - Four reinforced 9 mm-diameter x 8 mm-deep bosses with 2.7 mm M3 pilot holes, matching the existing panel
 - Solid rear side-wall margins intended to be drilled after printing for wood mounting
@@ -13,6 +14,8 @@
 - Recorded 19.05 mm (3/4 inch) wooden top thickness as an overhead keep-out
 
 The body intentionally contains no main electronics. It only protects the OLED, encoder, LED, buttons, and their harnesses. Check the cable notch, fastener lengths, button depth, and connector bend radius on a fit print before outdoor use.
+
+The top of the inclined face is held 8 mm forward of the wooden mounting plane, and the generator trims anything that would cross behind that plane. The M3 bosses therefore remain entirely inside the pod and cannot force the pod above the 4-inch side or require routing the side/top wood.
 
 The STL is saved in its print orientation with the inclined face rim on the build plate. The open shell, 47-degree side cheeks, and M3 bosses rise from that rim without the unsupported projections present in the earlier prototype. The M3 pilot bores pass completely through the corner shell so they do not end in downward-facing blind-hole ceilings.
 
