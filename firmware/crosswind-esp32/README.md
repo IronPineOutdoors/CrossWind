@@ -31,6 +31,17 @@ The code is split into beginner-readable modules:
 
 Default mode is `SWEEP`. The motor travels between the left and right limit switches, stops at each end, observes direction-change dead time, and reverses. `RANDOM` and `FLUSH` use the same bounded single-axis movement until the second axis and mode-specific motion are added. `CENTERING` establishes both endpoints, measures end-to-end travel time, returns for half that time, and stops.
 
+`MOTOR_DIRECTION_INVERTED = true` corrects the installed motor's reported reverse
+travel: logical RIGHT now drives LPWM, and logical LEFT drives RPWM. Direction
+names mean plate travel toward the corresponding physical limit, viewed from one
+consistent operator position, not shaft rotation viewed from underneath. Limit
+wiring remains Left/Green/GPIO34 and Right/Blue/GPIO35. Startup logs the inversion
+setting; output diagnostics continue to name the actual RPWM/LPWM terminals.
+Do not also swap motor leads when applying this correction, which would reverse
+it again. After flashing, first verify direction with unloaded motion away from
+endpoints and accessible power cutoff, then verify each actual endpoint causes
+reversal away and releases normally. Physical verification remains required.
+
 The Alpha limit switches are normal travel boundaries as well as safety inputs. A single active limit commands movement away from that end; the switch must release within `LIMIT_DWELL_MS`. Both limits active together, failure to release, or failure to reach an endpoint within `MAX_TRAVEL_TIME_MS` latches a fault and stops the motor. A single active limit at startup is valid and establishes the initial direction away from that endpoint.
 
 The controller permits motor START with one limit active because the mode controller selects the direction away from it. ARM and FIRE remain blocked while either limit is active, and a limit transition while armed returns the controller to SAFE. The powered limit modules provide defined HIGH outputs when released and LOW outputs when pressed; limit monitoring and fault protection are enabled. Stored settings are sanity-checked on boot, and BLE speed commands must be numeric values from `0` to `255`.

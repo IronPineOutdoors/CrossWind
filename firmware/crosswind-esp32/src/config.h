@@ -50,6 +50,10 @@ const int RPWM_PIN = 18;
 const int LPWM_PIN = 19;
 const int R_EN_PIN = 23;
 const int L_EN_PIN = 13;
+// Logical LEFT/RIGHT refer to plate travel toward the named limit switches.
+// Installed motor was observed moving LEFT on a RIGHT command (2026-09-10).
+// Invert the output mapping only; keep limit identities and displayed direction.
+const bool MOTOR_DIRECTION_INVERTED = true;
 const int LEFT_LIMIT_PIN = 34;
 const int RIGHT_LIMIT_PIN = 35;
 // The powered limit modules have been verified HIGH when released and LOW when

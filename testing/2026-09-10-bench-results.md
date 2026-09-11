@@ -17,6 +17,26 @@ PWM, supply voltage, runtime and current measurements were not supplied.
 
 ## Mechanical closeout
 
+### Follow-up: motor direction mismatch identified
+
+User reports display RIGHT produced physical LEFT travel, and vice versa; limit
+identities were not the cause. The mechanism reached the opposite endpoint to
+the one checked by the travel state, continued driving, and the threaded shaft /
+coupling loosened. This supersedes the initial suspected switch-wiring mismatch.
+The continued drive plausibly contributed to loosening; independent shaft
+retention still needs inspection and testing after direction correction.
+
+Firmware now sets `MOTOR_DIRECTION_INVERTED = true` at the output mapping only.
+Logical direction, limit identities, ramping and reversal dead time are retained.
+This source change has not been flashed or physically verified. Do not combine
+it with a motor-lead swap. Recheck both physical endpoints and starting while on
+either limit after installation. The travel routine does not immediately fault
+on the opposite limit; this correction does not add that separate protection.
+
+User accepts shared Sweep behavior for Random and Flush in Alpha; distinct
+behavior is deferred to Alpha X2 and is not a blocker for scoped Alpha testing.
+Verify selection of those modes without claiming distinct motion or auto-throws.
+
 - Mark rod-to-motor and rod-to-flange interfaces separately to identify relative
   movement during an unloaded, low-speed test. Stop if either slips.
 - Confirm rod thread diameter/pitch, engagement and the actual rotating motor

@@ -67,7 +67,8 @@ static void writeOutputs(Direction dir, uint8_t pwm) {
   rightEnableOutput = R_EN_PIN >= 0;
   leftEnableOutput = L_EN_PIN >= 0;
 
-  if (dir == DIR_RIGHT) {
+  const bool useRightPwm = (dir == DIR_RIGHT) != MOTOR_DIRECTION_INVERTED;
+  if (useRightPwm) {
     writeLeftPwm(0);
     writeRightPwm(pwm);
   } else {
@@ -123,6 +124,8 @@ bool beginMotor() {
   stopMotor();
   Serial.printf("MOTOR PWM init %s: RPWM=%d LPWM=%d freq=%dHz resolution=%dbit\n",
                 pwmReady ? "OK" : "FAILED", RPWM_PIN, LPWM_PIN, PWM_FREQ, PWM_RESOLUTION);
+  Serial.printf("MOTOR direction mapping: inverted=%s (logical plate LEFT/RIGHT)\n",
+                MOTOR_DIRECTION_INVERTED ? "YES" : "NO");
   return pwmReady;
 }
 
