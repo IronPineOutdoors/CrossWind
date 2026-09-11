@@ -19,12 +19,27 @@ JST dimensional compatibility or wire-to-wire contact engagement from the title.
 | Four-position housing width | 10.65 | Photo 185203 |
 | Four-position housing thickness | 3.85 | Photo 185220 |
 | Lip feature | 0.77 | Photo 185248; precise contact faces not established, not used yet |
+| Rib inset from each housing end | 2.51 | User confirmed nearest edge; both connector sizes, wire side |
+| Rib width | 0.71 | User confirmed; two ribs per housing |
+| Rib projection from flat body | 0.79 | User confirmed after first fit print |
 
 The complete connected pair length, header engagement, and retaining-shoulder
 geometry are not established. The full carrier is pending these dimensions; no
 claim of a finished 16-position connector is made by these gauges.
 
-## First print
+## Revised print: rib clearance
+
+The first rectangular apertures caught on the two underside ribs. Regenerated
+STLs now include two through-notches per opening, on the edge away from the
+raised identification dots. Orient the connector ribs toward those notches.
+The filenames replace the original rectangular gauges; reload the revised STL
+and slice again rather than reusing the previous print job.
+
+Rib locations use a centered housing and the measured inset from each end.
+Notch widths are 0.91, 1.11, and 1.31 mm for the one-, two-, and three-dot gauges.
+Each notch extends 0.79 mm beyond the rectangular aperture edge, preserving
+the same per-side clearance at the rib tip as at the flat body. The opening
+dimensions below describe the main rectangle, excluding these notches.
 
 Print `Connector_Fit_All_Three_PRINT.stl` on the A1 in PETG, 0.4 mm nozzle,
 0.2 mm layers, four walls, solid fill; flat as exported, no supports. Individual
