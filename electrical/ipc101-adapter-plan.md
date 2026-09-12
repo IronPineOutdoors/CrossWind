@@ -142,3 +142,15 @@ IPC101/docs/architecture/IPC101_ARCHITECTURE.md;
 IPC101/hardware/kicad/README.md (Rev C RGB assignment);
 Crosswind firmware/crosswind-esp32/src/{config.h,inputs.cpp,status_led.cpp};
 cad/phase-1/controller-connector/README.md (physical fit results).
+
+## Header pin measurements (2026-09-12)
+
+User measured a 1.83 mm clear gap between adjacent pins and a 0.64 mm pin width
+in the same direction. Calculated adjacent center spacing is 2.47 mm (1.83 +
+0.64). This is a measured estimate, not a released nominal footprint pitch;
+the header size measured was not specified. Do not assume it establishes both
+header sizes or the other dimension of the pin cross-section.
+
+Confirm the full row span before PCB layout: measure the outside-to-outside span
+of the first and last pins. For six pins, pitch = (span - 0.64 mm) / 5, assuming
+the measured pin width applies. This reduces sensitivity to a single-gap reading.
