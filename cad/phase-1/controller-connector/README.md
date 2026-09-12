@@ -134,7 +134,8 @@ housing gauges.
 
 ### Header fit feedback and refinement
 
-On 2026-09-12 the user selected the one-dot solder-tail row; original one-dot
+On 2026-09-12 the user corrected the solder-tail selection to TWO dots (1.1 mm
+square holes); ONE dot (0.9 mm) was too tight. Original one-dot
 body openings were closest but still slightly oversized. New body-only tests:
 `PCB_Header_Refine_All_PRINT.stl`, with a raised bar distinguishing this series.
 See the refinement table in the test instructions. Original files are preserved.

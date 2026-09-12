@@ -164,8 +164,9 @@ fit before fabrication. Four-pin row span remains unconfirmed.
 
 ## PCB-header coupon results (2026-09-12)
 
-User reported the one-dot pin-hole row fits: 0.9 mm square printed holes at
-provisional 2.50 mm pitch. Original one-dot body openings (18.2 x 7.2 mm six-pin,
+User corrected the pin-hole result: TWO dots fits (1.1 mm square printed holes
+at provisional 2.50 mm pitch); ONE dot (0.9 mm) was too tight. This supersedes
+the initial one-dot report. Original one-dot body openings (18.2 x 7.2 mm six-pin,
 13.2 x 7.2 mm four-pin) were closest but still slightly large. Smaller body
 coupons have been generated; final header body fit remains pending. Printed tail
 fit does not independently establish nominal pitch or final PCB drill diameter.

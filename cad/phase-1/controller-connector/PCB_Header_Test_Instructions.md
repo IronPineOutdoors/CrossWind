@@ -49,8 +49,9 @@ watertightness, winding, positive volume and the expected separate body count.
 
 ## Smaller body refinement - after physical feedback on 2026-09-12
 
-User reported the original pin coupon's one-dot row fits, selecting 0.9 mm square
-printed holes at 2.50 mm provisional pitch. This is not PCB drill qualification.
+User corrected the original pin-coupon result: TWO-dot row fits (1.1 mm square
+printed holes at 2.50 mm provisional pitch); ONE-dot (0.9 mm) was too tight.
+This supersedes the initial one-dot report and is not PCB drill qualification.
 Original one-dot body openings were closest but still a tad large. The photo
 shows both headers; exact looseness by axis was not measured.
 
