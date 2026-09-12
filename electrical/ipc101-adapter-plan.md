@@ -176,3 +176,14 @@ four-pin 13 x 7 mm), but four-pin outer side slightly snug, inducing a subtle
 angle. Six-pin dimension is the current selection; four-pin seating remains
 unresolved. New tests relieve only the presumed outboard short edge by 0.2 / 0.4
 mm. Pin coupon selection remains TWO-dot (1.1 mm square holes).
+
+## Fit clarification: raised identification dots (2026-09-12)
+
+User subsequently attributed the apparent four-pin tilt to the raised coupon
+dots preventing the plates from sitting flush together, and believes the fit is
+OK. Retain refinement THREE-dot body openings: six-pin 18.0 x 7.0 mm and four-pin
+13.0 x 7.0 mm. Retain original TWO-dot tail holes: 1.1 mm square at provisional
+2.50 mm pitch. The outer-edge-relief coupons are superseded diagnostic options;
+do not carry their enlargement into the carrier. Final mating/support surfaces
+must be flat, with identification outside those surfaces. Integrated header
+seating and mating still need an assembly fit check.

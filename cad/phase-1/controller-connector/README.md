@@ -146,3 +146,14 @@ Refinement three-dot was preferred, with the four-pin outer side still slightly
 snug and causing a subtle angle. `PCB_Header_Outer_Relief_All_PRINT.stl` tests
 0.2 / 0.4 mm relief at only the four-pin outboard short edge. Two raised bars
 identify this series; see the test instructions. Six-pin remains 18 x 7 mm.
+
+## Fit clarification: raised identification dots (2026-09-12)
+
+User subsequently attributed the apparent four-pin tilt to the raised coupon
+dots preventing the plates from sitting flush together, and believes the fit is
+OK. Retain refinement THREE-dot body openings: six-pin 18.0 x 7.0 mm and four-pin
+13.0 x 7.0 mm. Retain original TWO-dot tail holes: 1.1 mm square at provisional
+2.50 mm pitch. The outer-edge-relief coupons are superseded diagnostic options;
+do not carry their enlargement into the carrier. Final mating/support surfaces
+must be flat, with identification outside those surfaces. Integrated header
+seating and mating still need an assembly fit check.
