@@ -187,3 +187,11 @@ OK. Retain refinement THREE-dot body openings: six-pin 18.0 x 7.0 mm and four-pi
 do not carry their enlargement into the carrier. Final mating/support surfaces
 must be flat, with identification outside those surfaces. Integrated header
 seating and mating still need an assembly fit check.
+
+## Exposed solder-tail length (2026-09-12)
+
+User supplied 10.17 mm - 6.98 mm as the pin-length measurement: 3.19 mm.
+Interpret as exposed solder-tail length beyond the header plastic, for carrier
+clearance planning. The two underlying contact datums and which header size was
+measured were not explicitly identified; do not infer a confirmed body height,
+pin-row offset, or identical tail length for both sizes from this subtraction.
