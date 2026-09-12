@@ -154,3 +154,10 @@ header sizes or the other dimension of the pin cross-section.
 Confirm the full row span before PCB layout: measure the outside-to-outside span
 of the first and last pins. For six pins, pitch = (span - 0.64 mm) / 5, assuming
 the measured pin width applies. This reduces sensitivity to a single-gap reading.
+
+User subsequently measured 13.20 mm outside-to-outside across the six-pin row.
+Using the 0.64 mm pin width, the first-to-last center span is 12.56 mm and
+average pitch is 12.56 / 5 = 2.512 mm. Prefer this full-row estimate over the
+earlier 2.47 mm single-gap estimate. Use 2.50 mm as a provisional layout target,
+not a confirmed manufacturer specification; verify with a physical footprint
+fit before fabrication. Four-pin row span remains unconfirmed.
