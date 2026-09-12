@@ -105,3 +105,12 @@ retention remain to be established.
 `generate_fit_gauges.py` verifies clear apertures, manifold status, watertightness,
 consistent winding, positive volume and the expected number of separate solids.
 Physical dimensions and connector retention require printed fit verification.
+
+## IPC-101 development direction (2026-09-12)
+
+The user selected IPC-101 for Alpha and future IPC-100. The new carrier plan uses
+one accepted six-position OLED opening and one accepted four-position controls
+opening, with STOP separate. The earlier 6+6+4 description records the existing
+Alpha harness, not the new panel allocation. See the
+[IPC-101 adapter specification](../../../electrical/ipc101-adapter-plan.md) for
+circuit assignments, firmware gaps, GPIO savings and remaining mechanical inputs.
