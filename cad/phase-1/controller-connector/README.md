@@ -157,3 +157,10 @@ OK. Retain refinement THREE-dot body openings: six-pin 18.0 x 7.0 mm and four-pi
 do not carry their enlargement into the carrier. Final mating/support surfaces
 must be flat, with identification outside those surfaces. Integrated header
 seating and mating still need an assembly fit check.
+
+## Next assembled fit print
+
+`PCB_Header_Assembly_All_PRINT.stl` contains a flat guide, sliding pin plate and
+open stand. Follow [assembly instructions](PCB_Header_Assembly_Instructions.md).
+This combines the accepted body and pin fits without raised dots interfering
+with seating. It is a hand-held alignment test, not a retained final connector.
