@@ -72,11 +72,31 @@ first-layer burrs before judging fit. Report the smallest gauge that slides
 without force for EACH connector size. These are dimensional coupons, not
 electrical housings, clamps or strain relief.
 
+## Confirmed fit selections (2026-09-12)
+
+Use these separate clearances for subsequent carrier design, retaining the
+revised hooked-rib relief geometry:
+
+| Housing | Selected gauge | Total clearance | Main opening | Rib-notch width |
+| --- | --- | ---: | --- | ---: |
+| Six-position | 2-dot | 0.4 mm | 16.37 x 4.38 mm | 2.25 mm |
+| Four-position | 3-dot | 0.6 mm | 11.25 x 4.45 mm | 2.45 mm |
+
+User reported the revised 1-dot was still close on the six-position housing and
+the four-position housing did not pass through. The revised 2-dot fit the
+six-position housing well, but the four-position housing required force.
+Possible hook damage on that forced sample was not confirmed. The user then
+checked a fresh four-position housing directly in the revised 3-dot and confirmed
+that they liked its fit; the four-position selection is based on that fresh
+sample. Existing comparison-gauge STLs remain unchanged.
+
+These results establish aperture fit only; joined-pair engagement and carrier
+retention remain to be established.
+
 ## Remaining design inputs
 
 - Full joined-pair length from one housing's wire-entry face to the other's with
   the middle header fully installed; compare the six- and four-position pairs.
-- Fit-gauge results and any flange/ridge obstruction.
 - Final retention must leave the metal contacts fully engaged without pushing
   pins backward or relying on the wires for structural support.
 - USB service port remains a separate pending task: ESP socket type, mounting
