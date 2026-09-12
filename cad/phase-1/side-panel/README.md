@@ -6,7 +6,7 @@
 
 - Panel: 150 x 100 x 3 mm
 - Four panel mounting holes: 3.2 mm diameter (M3 clearance), centers 5 mm from each corner
-- OLED visible opening: 57 x 28 mm
+- OLED visible opening: 57 x 28 mm, shifted 2.75 mm upward from the PCB center
 - Four OLED PCB holes: 3.2 mm diameter; horizontal span includes the measured fit correction (left pair 1 mm outward and right pair 1 mm outward)
 - ARM and FIRE openings: 16.5 mm diameter, 70 mm center-to-center
 - Recessed `ARM` and `FIRE` labels above their respective buttons
@@ -35,3 +35,14 @@ python .\generate_stl.py
 ```
 
 Edit the constants at the top of `generate_stl.py` when measured dimensions replace the provisional assumptions.
+
+## OLED window fit correction ? 2026-09-12
+
+The installed photo showed the top text clipped and an extra gap below the OLED,
+measured by the user at approximately 2.7-2.75 mm. The viewing opening moves
+2.75 mm toward the panel top without changing its 57 x 28 mm size. All OLED and
+panel mounting holes, control cutouts, and rear rails retain their positions.
+The window now spans Y=52.25 to 80.25 mm from the panel bottom (previously
+49.5 to 77.5 mm). Reprint the faceplate and check that the top line and bottom
+pixel row are visible; this approximate fit correction still needs physical
+verification. The existing pod and OLED mounting pattern are reused.

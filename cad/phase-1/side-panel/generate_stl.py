@@ -25,6 +25,9 @@ OLED_PCB_LEFT = 10.0
 OLED_PCB_BOTTOM = PANEL_HEIGHT - 15.0 - 43.0
 OLED_WINDOW_WIDTH = 57.0
 OLED_WINDOW_HEIGHT = 28.0
+# Installed fit check: lower gap measured approximately 2.7-2.75 mm.
+# Shift only the viewing window toward the panel top; retain PCB hole datums.
+OLED_WINDOW_Y_OFFSET = 2.75
 
 # Reported mounting spans are outside-to-outside. Subtract the clearance-hole
 # diameter to obtain provisional center spans; verify against the physical PCB.
@@ -145,7 +148,7 @@ def build_panel() -> m3d.Manifold:
             holes.append(cutter(M3_CLEARANCE_DIAMETER, (pcb_center[0] + dx, pcb_center[1] + dy)))
 
     window_left = pcb_center[0] - OLED_WINDOW_WIDTH / 2.0
-    window_bottom = pcb_center[1] - OLED_WINDOW_HEIGHT / 2.0
+    window_bottom = pcb_center[1] - OLED_WINDOW_HEIGHT / 2.0 + OLED_WINDOW_Y_OFFSET
     holes.append(m3d.Manifold.cube((OLED_WINDOW_WIDTH, OLED_WINDOW_HEIGHT, PANEL_THICKNESS + 2.0))
                  .translate((window_left, window_bottom, -1.0)))
 
