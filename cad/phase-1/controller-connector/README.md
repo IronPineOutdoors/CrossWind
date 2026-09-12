@@ -21,13 +21,14 @@ JST dimensional compatibility or wire-to-wire contact engagement from the title.
 | Lip feature | 0.77 | Photo 185248; precise contact faces not established, not used yet |
 | Rib inset from each housing end | 2.51 | User confirmed nearest edge; both connector sizes, wire side |
 | Rib width | 0.71 | User confirmed; two ribs per housing |
+| Maximum hooked-tip width | 1.28 | User confirmed 2026-09-12 after all three gauges caught |
 | Rib projection from flat body | 0.79 | User confirmed after first fit print |
 
 The complete connected pair length, header engagement, and retaining-shoulder
 geometry are not established. The full carrier is pending these dimensions; no
 claim of a finished 16-position connector is made by these gauges.
 
-## Revised print: rib clearance
+## Revised print: hooked-rib clearance (2026-09-12)
 
 The first rectangular apertures caught on the two underside ribs. Regenerated
 STLs now include two through-notches per opening, on the edge away from the
@@ -35,11 +36,20 @@ raised identification dots. Orient the connector ribs toward those notches.
 The filenames replace the original rectangular gauges; reload the revised STL
 and slice again rather than reusing the previous print job.
 
-Rib locations use a centered housing and the measured inset from each end.
-Notch widths are 0.91, 1.11, and 1.31 mm for the one-, two-, and three-dot gauges.
-Each notch extends 0.79 mm beyond the rectangular aperture edge, preserving
-the same per-side clearance at the rib tip as at the flat body. The opening
-dimensions below describe the main rectangle, excluding these notches.
+All three previous gauges failed to align in the physical fit check. The new
+close-up shows angled ribs with wider hooked tips; the user measured the maximum
+tip width as 1.28 mm, versus the 0.71 mm shaft used previously.
+
+Rib locations retain the measured 2.51 mm shaft inset. Because the lateral tip
+offset and rib angle are unmeasured, this diagnostic revision allows the extra
+0.57 mm on BOTH sides of each shaft, making a 1.85 mm swept envelope before
+clearance. This is a conservative test allowance, not a measured hook profile.
+Notch widths are now 2.05, 2.25, and 2.45 mm for one, two, and three dots.
+The same allowance is provisionally used for both housing sizes; verify each.
+Each notch still extends 0.79 mm beyond the rectangular aperture edge, preserving
+the same per-side clearance at the rib tip as at the flat body. Hook projection
+has not been remeasured. The main rectangular openings are unchanged.
+Reload and reslice the regenerated STLs; dot counts and filenames are unchanged.
 
 Print `Connector_Fit_All_Three_PRINT.stl` on the A1 in PETG, 0.4 mm nozzle,
 0.2 mm layers, four walls, solid fill; flat as exported, no supports. Individual

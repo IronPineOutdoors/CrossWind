@@ -12,7 +12,11 @@ SIX = (15.97, 3.98)
 FOUR = (10.65, 3.85)
 CLEARANCES = (0.2, 0.4, 0.6)  # Added to total width AND thickness, not per side.
 RIB_END_INSET = 2.51  # Housing end to nearest rib edge, both connector sizes.
-RIB_WIDTH = 0.71
+RIB_WIDTH = 0.71  # Straight shaft width; retains the measured rib locations.
+HOOK_WIDTH = 1.28  # Maximum hooked-tip width, confirmed 2026-09-12.
+# Tip offset is unmeasured: cover the extra width on either side of the shaft.
+HOOK_SIDE_ALLOWANCE = HOOK_WIDTH - RIB_WIDTH
+RIB_ENVELOPE_WIDTH = RIB_WIDTH + 2 * HOOK_SIDE_ALLOWANCE
 RIB_PROJECTION = 0.79
 
 def cube(size, pos):
@@ -27,8 +31,8 @@ def gauge(clearance, dots):
         # Center the nominal housing in its aperture. Both ribs face -Y,
         # away from the identification dots. Expand rib sides by clearance/2.
         for rib_left in (RIB_END_INSET, width-RIB_END_INSET-RIB_WIDTH):
-            notch = cube((RIB_WIDTH+clearance,RIB_PROJECTION+clearance/2,4),
-                         (x+rib_left,4-RIB_PROJECTION,-1))
+            notch = cube((RIB_ENVELOPE_WIDTH+clearance,RIB_PROJECTION+clearance/2,4),
+                         (x+rib_left-HOOK_SIDE_ALLOWANCE,4-RIB_PROJECTION,-1))
             cutter += notch
         solid -= cutter
         assert (solid ^ cutter).volume() < 1e-6
