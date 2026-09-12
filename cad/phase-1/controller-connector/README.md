@@ -24,9 +24,9 @@ JST dimensional compatibility or wire-to-wire contact engagement from the title.
 | Maximum hooked-tip width | 1.28 | User confirmed 2026-09-12 after all three gauges caught |
 | Rib projection from flat body | 0.79 | User confirmed after first fit print |
 
-The complete connected pair length, header engagement, and retaining-shoulder
-geometry are not established. The full carrier is pending these dimensions; no
-claim of a finished 16-position connector is made by these gauges.
+The original loose middle-header arrangement below is historical. The selected
+IPC-101 carrier now uses matching PCB headers; see the confirmed mating update
+at the end of this document. These gauges establish cable-body clearance only.
 
 ## Revised print: hooked-rib clearance (2026-09-12)
 
@@ -95,8 +95,8 @@ retention remain to be established.
 
 ## Remaining design inputs
 
-- Full joined-pair length from one housing's wire-entry face to the other's with
-  the middle header fully installed; compare the six- and four-position pairs.
+- Fixed PCB-header dimensions, tail geometry, pin spacing/offset and fully mated
+  envelope for both sizes; the loose middle-header concept is superseded.
 - Final retention must leave the metal contacts fully engaged without pushing
   pins backward or relying on the wires for structural support.
 - USB service port remains a separate pending task: ESP socket type, mounting
@@ -114,3 +114,12 @@ opening, with STOP separate. The earlier 6+6+4 description records the existing
 Alpha harness, not the new panel allocation. See the
 [IPC-101 adapter specification](../../../electrical/ipc101-adapter-plan.md) for
 circuit assignments, firmware gaps, GPIO savings and remaining mechanical inputs.
+
+## Confirmed PCB-header mating (2026-09-12)
+
+User confirmed both cable housings connect to the kit's matching shrouded PCB
+headers and hold via their hooks (assembled-pair photo 20260912_100515.jpg).
+Develop the fixed side around these headers on a supported adapter PCB. Preserve
+hook engagement and release access. Existing gauge fits remain cable-clearance
+references, not dimensions for mounting the larger header bodies. Electrical
+continuity and header/PCB dimensions remain unverified.

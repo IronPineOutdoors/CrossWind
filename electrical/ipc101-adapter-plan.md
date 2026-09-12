@@ -20,11 +20,25 @@ STOP uses its own distinctive two-position connector, physically incompatible
 with K and D. Neither STOP conductor is logic ground. IPC-101 J3 is an isolated
 pass-through, not a keypad input.
 
+## Selected mating arrangement (2026-09-12)
+
+User confirmed that both four- and six-position cable housings mate with the
+kit's shrouded PCB pin headers and are retained by the previously measured hooks.
+Photo 20260912_100515.jpg shows the assembled pairs. Use these matching headers
+as the fixed halves, replacing the earlier two-cable-housings/middle-header idea.
+This confirms user-observed mechanical mating and hook retention, not electrical
+continuity, endurance or environmental qualification.
+
+Mount the headers on a small adapter PCB supported by the printed carrier.
+Keep hook engagement and unplugging access clear; the carrier supports the board
+and fixed headers and provides cable strain relief. Do not use the tested
+cable-housing apertures as header mounting-pocket dimensions.
+
 ## Circuit assignment draft
 
 K1-K4 and D1-D6 below are logical cavity labels, not a released crimp-face drawing.
 Mark and verify cavity orientation on the actual housings and continuity through
-the middle header before releasing a harness drawing; mating faces can mirror.
+the matching PCB header before releasing a harness drawing; mating faces can mirror.
 
 | Carrier circuit | IPC-101 endpoint | Alpha adapter endpoint | IPC-100 adapter endpoint |
 | --- | --- | --- | --- |
@@ -56,7 +70,7 @@ complete OLED branch, including J2-to-display wiring, <=0.20 m and 50 pF.
 Inspect pull-ups and the 3.3 V supply budget before bench operation; retain the
 IPC-100 protected power and pull-up contracts when migrating. Power-off mating.
 
-## Carrier geometry
+## Cable-housing clearance references and carrier geometry
 
 - K: 11.25 x 4.45 mm main aperture, 2.45 mm hooked-rib notches (fresh four-pin
   housing accepted in revised three-dot gauge).
@@ -65,12 +79,17 @@ IPC-100 protected power and pull-up contracts when migrating. Power-off mating.
 - Retain the gauge's rib positions and 0.79 mm notch extension.
 - Label K / CONTROLS and D / DISPLAY; use asymmetric carrier assembly features
   to prevent reversing the carrier. Housing orientation still needs verification.
-- Add a removable retainer and cable strain relief after measuring fully joined
-  pair length, flange contact faces and header engagement. Aperture fit alone
-  does not establish connector retention, contact engagement or sealing.
+- Design board supports and a removable board retainer around the fixed PCB
+  headers; leave room for the cable housings to seat and release their hooks.
+- The aperture dimensions above are accepted cable-body clearance references.
+  Final access openings must also clear the header shrouds and mating motion.
 
-No final carrier STL is released yet: joined six- and four-position pair lengths
-and the retaining-shoulder geometry are still missing.
+No final carrier STL or adapter PCB is released yet. Still needed for each
+header: plastic body width, thickness and height excluding tails; solder-tail
+length and cross-section; first-to-last pin center span; pin-row offset from the
+body edges; and the fully mated envelope. Confirm these with calipers rather than
+inferring a nominal kit pitch from ruler photos. Retainer/support geometry must
+be based on the fixed headers and board, not the superseded loose middle header.
 
 ## Alpha firmware work required
 
