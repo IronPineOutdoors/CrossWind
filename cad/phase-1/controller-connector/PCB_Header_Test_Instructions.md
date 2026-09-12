@@ -46,3 +46,28 @@ a gross fit check, not an electrical adapter board. No wiring or power is needed
 Final support height, PCB footprint, hook access and strain relief remain
 separate design steps. The generator checks manifold status, clear cutters,
 watertightness, winding, positive volume and the expected separate body count.
+
+## Smaller body refinement - after physical feedback on 2026-09-12
+
+User reported the original pin coupon's one-dot row fits, selecting 0.9 mm square
+printed holes at 2.50 mm provisional pitch. This is not PCB drill qualification.
+Original one-dot body openings were closest but still a tad large. The photo
+shows both headers; exact looseness by axis was not measured.
+
+Print PCB_Header_Refine_All_PRINT.stl: three body-only coupons, 44 x 64 mm total,
+same print settings as above. No need to repeat the tail coupon. A raised BAR at
+the other end of the dot edge identifies this refinement series. Keep original
+and refinement dot counts distinct. Both axes shrink in 0.2 mm total steps.
+
+| Refinement dots + bar | Six-pin opening | Four-pin opening |
+| --- | --- | --- |
+| 1 | 17.6 x 6.6 mm | 12.6 x 6.6 mm |
+| 2 | 17.8 x 6.8 mm | 12.8 x 6.8 mm |
+| 3 | 18.0 x 7.0 mm | 13.0 x 7.0 mm |
+
+Start with THREE dots plus bar (largest), then work down. The largest new opening
+is 0.2 mm smaller in width and thickness than the old one-dot. Use unmated PCB
+headers, tails first, without forcing. Report best fit for each size separately;
+if one axis binds while another remains loose, identify the axis so the next
+carrier can use independent width/thickness adjustments. These remain clearance
+coupons; the final board support provides retention.

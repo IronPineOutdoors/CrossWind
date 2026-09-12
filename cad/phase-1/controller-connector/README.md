@@ -131,3 +131,10 @@ New fixed-header body and solder-tail coupons are ready in
 [PCB header test instructions](PCB_Header_Test_Instructions.md); these use
 provisional photo-derived shroud sizes and do not replace the accepted cable
 housing gauges.
+
+### Header fit feedback and refinement
+
+On 2026-09-12 the user selected the one-dot solder-tail row; original one-dot
+body openings were closest but still slightly oversized. New body-only tests:
+`PCB_Header_Refine_All_PRINT.stl`, with a raised bar distinguishing this series.
+See the refinement table in the test instructions. Original files are preserved.

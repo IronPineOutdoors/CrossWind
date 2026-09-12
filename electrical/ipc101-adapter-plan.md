@@ -161,3 +161,11 @@ average pitch is 12.56 / 5 = 2.512 mm. Prefer this full-row estimate over the
 earlier 2.47 mm single-gap estimate. Use 2.50 mm as a provisional layout target,
 not a confirmed manufacturer specification; verify with a physical footprint
 fit before fabrication. Four-pin row span remains unconfirmed.
+
+## PCB-header coupon results (2026-09-12)
+
+User reported the one-dot pin-hole row fits: 0.9 mm square printed holes at
+provisional 2.50 mm pitch. Original one-dot body openings (18.2 x 7.2 mm six-pin,
+13.2 x 7.2 mm four-pin) were closest but still slightly large. Smaller body
+coupons have been generated; final header body fit remains pending. Printed tail
+fit does not independently establish nominal pitch or final PCB drill diameter.
