@@ -139,3 +139,10 @@ square holes); ONE dot (0.9 mm) was too tight. Original one-dot
 body openings were closest but still slightly oversized. New body-only tests:
 `PCB_Header_Refine_All_PRINT.stl`, with a raised bar distinguishing this series.
 See the refinement table in the test instructions. Original files are preserved.
+
+### Four-pin outer-edge adjustment
+
+Refinement three-dot was preferred, with the four-pin outer side still slightly
+snug and causing a subtle angle. `PCB_Header_Outer_Relief_All_PRINT.stl` tests
+0.2 / 0.4 mm relief at only the four-pin outboard short edge. Two raised bars
+identify this series; see the test instructions. Six-pin remains 18 x 7 mm.

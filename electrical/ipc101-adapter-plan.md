@@ -170,3 +170,9 @@ the initial one-dot report. Original one-dot body openings (18.2 x 7.2 mm six-pi
 13.2 x 7.2 mm four-pin) were closest but still slightly large. Smaller body
 coupons have been generated; final header body fit remains pending. Printed tail
 fit does not independently establish nominal pitch or final PCB drill diameter.
+
+Subsequent body result: refinement THREE-dot preferred (six-pin 18 x 7 mm,
+four-pin 13 x 7 mm), but four-pin outer side slightly snug, inducing a subtle
+angle. Six-pin dimension is the current selection; four-pin seating remains
+unresolved. New tests relieve only the presumed outboard short edge by 0.2 / 0.4
+mm. Pin coupon selection remains TWO-dot (1.1 mm square holes).

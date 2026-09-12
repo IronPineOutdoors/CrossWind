@@ -72,3 +72,25 @@ headers, tails first, without forcing. Report best fit for each size separately;
 if one axis binds while another remains loose, identify the axis so the next
 carrier can use independent width/thickness adjustments. These remain clearance
 coupons; the final board support provides retention.
+
+## Four-pin outer-edge relief - 2026-09-12
+
+User selected the refinement three-dot fit (18 x 7 mm six-pin; 13 x 7 mm
+four-pin), but reported slight snugness at the four-pin outer side causing it
+to sit at a subtle angle. Interpreted outer side as the short edge nearest the
+end of the coupon, away from the six-pin opening. This direction is an assumption;
+if a long side is the actual interference, report that before adopting the fit.
+
+Print PCB_Header_Outer_Relief_All_PRINT.stl, two coupons in a 44 x 41 mm footprint,
+using the same settings. TWO raised bars identify this series. Six-pin openings
+remain 18 x 7 mm, with the four-pin inboard edge and 7 mm thickness unchanged.
+
+| Dots + two bars | Four-pin opening | Outboard-edge relief |
+| --- | --- | --- |
+| 1 | 13.2 x 7.0 mm | 0.2 mm |
+| 2 | 13.4 x 7.0 mm | 0.4 mm |
+
+Start with one dot. Try two if it still cants. Check that the unmated header
+sits square without force, and report the preferred coupon. Inspect first-layer
+burrs before judging. Pin-hole selection remains TWO dots from the original
+separate tail coupon (1.1 mm square). These dots identify separate test series.
