@@ -195,3 +195,17 @@ Interpret as exposed solder-tail length beyond the header plastic, for carrier
 clearance planning. The two underlying contact datums and which header size was
 measured were not explicitly identified; do not infer a confirmed body height,
 pin-row offset, or identical tail length for both sizes from this subtraction.
+
+## Pin-row offset measurements (2026-09-12)
+
+User supplied 4.15 mm from the top plastic edge to the far side of the pin, and
+clarified 2.77 mm from the opposite plastic edge to the other outside side of
+the pin. Interpreted as opposite-edge-to-far-pin-side measurements. With 0.64 mm
+pin width in this direction, the inferred row-center offsets are 3.83 mm and
+2.45 mm respectively. Their sum implies a 6.28 mm plastic span across that axis
+(4.15 + 2.77 - 0.64); this is derived, not a new direct body measurement.
+
+Use these offsets provisionally for the adjustable assembly prototype. The
+physical top-side/key orientation and applicability to both header sizes remain
+to be checked during assembly. The 7.0 mm accepted body opening is a clearance
+aperture, not a measured body span; do not force these offsets to sum to 7.0 mm.
