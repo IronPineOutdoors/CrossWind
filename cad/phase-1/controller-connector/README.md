@@ -123,3 +123,11 @@ Develop the fixed side around these headers on a supported adapter PCB. Preserve
 hook engagement and release access. Existing gauge fits remain cable-clearance
 references, not dimensions for mounting the larger header bodies. Electrical
 continuity and header/PCB dimensions remain unverified.
+
+## PCB-header test prints
+
+New fixed-header body and solder-tail coupons are ready in
+`PCB_Header_All_Tests_PRINT.stl`. Follow
+[PCB header test instructions](PCB_Header_Test_Instructions.md); these use
+provisional photo-derived shroud sizes and do not replace the accepted cable
+housing gauges.
