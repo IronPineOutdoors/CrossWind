@@ -2,11 +2,11 @@
 
 Crosswind is an Iron Pine Outdoors prototype for programmable target presentation: a universal wobbler base that can add controlled yaw, and later pitch, to automatic clay throwers.
 
-Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating top plate on a lazy susan bearing, a reversing wiper-motor linkage, a BTS7960 / IBT-2 motor driver, and two YL-99 roller limit modules that define the normal left/right travel boundaries and provide fault protection.
+Phase 1 is a single-axis yaw/sweep prototype. It uses a rotating thrower deck on a lazy susan bearing, a reversing wiper-motor linkage, a BTS7960 / IBT-2 motor driver, and two YL-99 roller limit modules that define the normal left/right travel boundaries and provide fault protection.
 
 Phase 2 is planned as a dual-axis yaw + pitch system with programmable presentation modes.
 
-Current firmware release candidate: `v1.12.0-rc.1` on the `alpha-motion-rc` branch. Its bounded sweep, timed centering, STOP behavior, stuck-limit protection, both-limits fault, and travel timeout have passed Alpha bench testing.
+ESP32 source identifies as `v1.12.0-rc.1`. Earlier Alpha bench results passed bounded motion and fault checks; the later motor-direction correction still needs physical verification. See [current status](docs/STATUS.md) for evidence and remaining integration work. The hardware below describes the Alpha design, not a completed assembly checklist.
 
 ## Current Phase
 
@@ -17,7 +17,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 ## Phase 1 Hardware
 
 - ESP32 dev board
-- Optional Arduino Uno/Nano fallback controller
+- Legacy Arduino Uno/Nano fallback (not Alpha-equivalent)
 - BTS7960 / IBT-2 motor driver
 - 12V Mitsubishi Outlander rear wiper motor
 - Left and right YL-99 limit switch modules
@@ -32,7 +32,7 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 - Fused 5V buck converter for controller/support electronics
 - Waterproof electronics box
 - 28" x 28" 3/4" plywood base
-- 20" x 20" rotating top plate
+- 20" x 20" rotating thrower deck
 - 12" lazy susan bearing
 
 ## Folder Structure
@@ -59,11 +59,10 @@ The first mechanical fitment target is a VEVOR NH113 thrower, but the base, rail
 
 Crosswind moves heavy equipment with a 12V motor. Keep hands clear of linkages, rotating plates, pinch points, and the thrower arm path. Use fuses, a shared ground, strain relief, and a reachable power disconnect. Bench test without the thrower mounted before any live thrower test.
 
-## Next Milestones
+## Project Context
 
-- Finish Phase 1 wiring and enclosure layout.
-- Finalize the hardware-validated YL-99 reversal-switch placement with adjustable rotating flags/tabs.
-- Record no-load motor current and loaded sweep current.
-- Fit the VEVOR NH113 on adjustable rails.
-- Add Phase 2 pitch-axis mechanical sketches.
-- Decide whether the production controller remains ESP32-only or keeps an AVR fallback.
+- [Current status](docs/STATUS.md): implemented behavior, physical evidence and open questions.
+- [Roadmap](docs/roadmap.md): next engineering milestones.
+- [Engineering decisions](docs/DECISIONS.md): durable choices and rationale.
+- [Codex working guide](AGENTS.md): repository operating instructions.
+- [Documentation index](docs/README.md): requirements, build plans, safety and history.

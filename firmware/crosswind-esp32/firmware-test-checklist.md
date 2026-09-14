@@ -22,7 +22,7 @@ Run these checks with the thrower unloaded and the motor linkage disconnected un
 - If the OLED is unavailable during startup, confirm firmware retries and recovers after the display begins responding without rebooting the controller.
 - Confirm OLED home screen shows motor percent, safety state, relay state, and limit status.
 - Rotate encoder and confirm speed changes.
-- Press encoder switch and confirm `LOCAL CONTROL` opens. Rotate to `MOTOR: START`, press to start, then press again on `MOTOR: STOP` to stop. Select `EXIT` to return home.
+- Press the encoder switch to open the root menu, select Motor, and verify Start/Stop and explicit speed editing. Verify direction and Mode changes require stopped motion; visit Environment, Diagnostics and About, then use Back/Exit to return home.
 - Press ARM and confirm `SAFE`/`ARMED` toggles when no fault or active limit exists.
 - Press FIRE while `SAFE` and confirm relay is blocked.
 

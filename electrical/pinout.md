@@ -4,8 +4,8 @@
 
 | Function | ESP32 Pin | Notes |
 | --- | --- | --- |
-| BTS7960 RPWM | GPIO18 | Right direction PWM |
-| BTS7960 LPWM | GPIO19 | Left direction PWM |
+| BTS7960 RPWM | GPIO18 | RPWM terminal; logical LEFT with current inverted mapping |
+| BTS7960 LPWM | GPIO19 | LPWM terminal; logical RIGHT with current inverted mapping |
 | BTS7960 R_EN | GPIO23 | Right enable |
 | BTS7960 L_EN | GPIO13 | Left enable |
 | SSD1309 OLED SDA | GPIO21 | Shared I2C bus |

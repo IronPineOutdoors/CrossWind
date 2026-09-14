@@ -1,19 +1,21 @@
 # Docs
 
-This folder holds product, build, safety, and planning documentation for Crosswind.
+Start with [CrossWind overview](../README.md), then use:
 
-Start with:
+- [STATUS](STATUS.md): current implementation, test evidence and uncertainty.
+- [Roadmap](roadmap.md): future work.
+- [DECISIONS](DECISIONS.md): important choices and why.
+- [AGENTS](../AGENTS.md): how Codex should work in this repository.
+- [Product requirements](product-requirements.md): intended capabilities and constraints.
+- [Phase 1 build plan](build-plan-phase-1.md) and [Phase 2 build plan](build-plan-phase-2.md): construction plans, not completion records.
+- [Safety notes](safety-notes.md): required precautions.
+- [Changelog](changelog.md): historical changes.
 
-- `product-requirements.md`
-- `build-plan-phase-1.md`
-- `safety-notes.md`
-- `roadmap.md`
+Detailed implementation belongs with its subsystem:
 
-Firmware-aligned hardware aliases:
+- [Pinout](../electrical/pinout.md) and [wiring checklist](../electrical/wiring-checklist.md).
+- [OLED lid harness](../electrical/oled-lid-harness.md) and [limit harness](../electrical/limit-switch-harness.md).
+- [Wiper linkage](../mechanical/phase-1/linkage-notes.md) and [limit layout](../mechanical/phase-1/limit-switch-layout.md).
+- [ESP32 firmware](../firmware/crosswind-esp32/README.md), [CAD](../cad/phase-1/README.md) and [test records](../testing/README.md).
 
-- `electrical/pinout.md`
-- `electrical/wiring-checklist.md`
-- `mechanical/phase-1/wiper-motor-linkage.md`
-- `mechanical/phase-1/limit-switch-layout.md`
-
-The canonical Alpha OLED connector, pinout, harness BOM, and fabrication instructions are in `../electrical/oled-lid-harness.md`.
+Existing nested electrical/mechanical aliases are retained for compatibility; update the canonical subsystem files rather than duplicating detail here.

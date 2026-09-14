@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 repository context
+
+- Added the root working guide, evidence-based status snapshot and engineering decision record.
+- Linked the context entry points, refreshed future milestones, and corrected stale motor-direction pinout labels and menu test navigation.
+- Recorded unresolved implementation/documentation drift without changing firmware, wiring or geometry.
+
 ## v1.12.0-rc.1
 
 - Added hardware-validated left/right endpoint reversal for `SWEEP`, `RANDOM`, and `FLUSH`.
