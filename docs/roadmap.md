@@ -23,3 +23,5 @@ Current implementation and test evidence live in [STATUS](STATUS.md); rationale 
 - Qualify weather-resistant enclosure/connectors and refine serviceable harnesses.
 - Establish repeatable calibration, a validated universal rail kit and durability/runtime evidence.
 - Decide the production controller/fallback policy and refine product identity/model naming.
+
+Use the [archived feature-work assessment](branch-consolidation-2026-09-13.md) when planning battery sensing, distinct modes or menu enhancements; port selectively against current hardware and safety behavior.

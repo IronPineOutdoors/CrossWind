@@ -1,5 +1,7 @@
 # Alpha IBT-2 PWM diagnostic
 
+> Historical diagnostic report. Direction tables/procedures below predate `3563fba`. Current inverted mapping uses logical RIGHT -> LPWM and LEFT -> RPWM. Use the [current firmware guidance](../../firmware/crosswind-esp32/README.md) and verify physical travel before endpoint testing. Historical build results are not current acceptance.
+
 ## Bench symptom and root cause
 
 BLE `START` was accepted and the controller entered `RUNNING`. `R_EN` rose to

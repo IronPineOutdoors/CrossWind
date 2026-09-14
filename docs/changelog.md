@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 branch consolidation
+
+- Consolidated the complete Alpha history onto main and recorded the disposition of older motion, battery and menu branches under archive tags.
+- Established main as the default for routine work and marked historical PWM diagnostics as superseded for output direction.
+- Recorded a successful ESP32 release build; no hardware validation was performed. See [consolidation record](branch-consolidation-2026-09-13.md).
+
 ## 2026-09-13 repository context
 
 - Added the root working guide, evidence-based status snapshot and engineering decision record.

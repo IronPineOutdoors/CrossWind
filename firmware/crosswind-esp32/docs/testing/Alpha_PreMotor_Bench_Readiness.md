@@ -1,5 +1,7 @@
 # CrossWind Alpha Pre-Motor Bench Readiness
 
+> Historical diagnostic report. Direction tables/procedures below predate `3563fba`. Current inverted mapping uses logical RIGHT -> LPWM and LEFT -> RPWM. Use the [current firmware guidance](../../README.md) and verify physical travel before endpoint testing. Historical build results are not current acceptance.
+
 ## 1. Original Bench Symptoms
 
 BLE connected and accepted START/STOP. START changed the UI to RUNNING and raised R_EN to about 3.2 V, but RPWM and LPWM both remained at 0 V.

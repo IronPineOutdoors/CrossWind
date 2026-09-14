@@ -4,6 +4,10 @@
 
 CrossWind is Iron Pine Outdoors' adjustable clay-thrower wobbler base. Alpha / Phase 1 is single-axis yaw; Phase 2 adds pitch. ESP32 Arduino-framework firmware in PlatformIO controls a BTS7960 / IBT-2 and reversing wiper motor, powered YL-99 endpoints, local encoder/menu and ARM/FIRE controls, SSD1309 OLED, BME280, RGB status and dry-contact relay. BLE is optional for operation. AVR is a legacy fallback, not Alpha-equivalent. IPC-101 is a planned panel migration, not the installed input implementation.
 
+## Branch workflow
+
+Use `main` for routine project work unless the user explicitly requests an isolated branch. Check the current branch and staged/unstaged changes before editing. Keep feature branches short-lived, reconcile them into main after verification, and do not leave ordinary follow-up work on a release-candidate branch. Preserve unique deferred work with an archive tag before removing its branch; an archive is not an accepted implementation. Do not silently merge old hardware assumptions into current firmware.
+
 ## Start with evidence
 
 Read [STATUS](docs/STATUS.md), [decisions](docs/DECISIONS.md), [safety notes](docs/safety-notes.md), and affected subsystem documentation before editing. Inspect actual implementation, configuration, relevant test records and recent Git history before substantial changes.

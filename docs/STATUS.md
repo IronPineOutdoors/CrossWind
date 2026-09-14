@@ -1,6 +1,8 @@
 # CrossWind status
 
-Evidence snapshot: 2026-09-13, repository reviewed through `606cace`. This distinguishes source implementation, reported physical observations and plans; it is not a new bench acceptance record.
+Evidence snapshot: 2026-09-13, Alpha implementation reviewed through `606cace`, consolidated onto main through `dc6def9`. This distinguishes source implementation, reported physical observations and plans; it is not a new bench acceptance record.
+
+See the [branch consolidation record](branch-consolidation-2026-09-13.md) for accepted history, archived feature work and the successful ESP32 build. Archived battery/motion/menu implementations are not active main features.
 
 ## Confirmed / implemented
 
