@@ -20,6 +20,38 @@ STOP uses its own distinctive two-position connector, physically incompatible
 with K and D. Neither STOP conductor is logic ground. IPC-101 J3 is an isolated
 pass-through, not a keypad input.
 
+## As-built Alpha DT8 enclosure harness (2026-09-28)
+
+The Alpha IPC-101 enclosure harness has now been physically assembled using an
+8-position Deutsch-style DT8 connector. The following cavity assignment and
+wire colors are the **as-built Alpha harness standard** and supersede the earlier
+DT12 direction for this enclosure interface.
+
+| DT8 cavity | Signal | As-built conductor |
+| ---: | --- | --- |
+| 1 | +3.3 V | 22 AWG Red |
+| 2 | Logic GND | 22 AWG Black |
+| 3 | SDA / ESP32 GPIO21 | 22 AWG Blue |
+| 4 | SCL / ESP32 GPIO22 | 22 AWG Yellow |
+| 5 | OLED RESET / ESP32 GPIO5 | 22 AWG Green |
+| 6 | STOP_IN | 22 AWG Red with green identification |
+| 7 | STOP_RETURN | 22 AWG Black with green identification |
+| 8 | RESERVED | Empty |
+
+STOP_RETURN remains electrically separate from logic GND; cavity 7 must not be
+bonded to cavity 2. The green identification on the cavity 6/7 conductors marks
+the dedicated STOP pair and distinguishes it from the red/black logic power pair.
+
+The installed DT8 housing was measured by the user at 36.7 mm maximum width,
+25.4 mm maximum height, and 58.2 mm overall housing length. A 40.0 x 29.0 mm
+rounded-rectangle pass-through is being evaluated as prototype fit geometry.
+That opening is not fabrication-frozen until a physical coupon test passes.
+
+Before first powered operation, verify point-to-point continuity for cavities
+1-7, verify no adjacent-cavity shorts, verify no continuity between cavity 2
+(LOGIC GND) and cavity 7 (STOP_RETURN), and verify +3.3 V polarity with the
+IPC-101 disconnected.
+
 ## Selected mating arrangement (2026-09-12)
 
 User confirmed that both four- and six-position cable housings mate with the
